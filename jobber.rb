@@ -275,10 +275,10 @@ end
 def enter_message m=""
   if $options[:message]
     if $options[:message_text].nil?
-      print "Pleasse enter a message (end with empty line): "
+      print "Please enter a message (end with empty line): "
       return multi_gets m
     else
-      return $options[:message_text]    
+      return $options[:message_text].gsub(/\\n/,"\n")
     end
   end
 end
@@ -292,10 +292,12 @@ def endjob e, msg="Ending job:"
     puts "There is no open job!".red
     return false 
   elsif Job.check($jobs.last.start,e)
-    $options[:message] = true
-    $jobs.last.message = enter_message 
+    if $jobs.last.message.nil? or $jobs.last.message.empty?
+      $options[:message] = true
+      $jobs.last.message = enter_message 
+    end
     $jobs.last.end = e
-    puts msg 
+    puts "    Pos: #{$jobs.size}"
     puts $jobs.last
     return true
   else
@@ -330,6 +332,7 @@ def startjob s, msg="Starting new job:"
   job.message = enter_message
   if !msg.nil?
     puts "Starting new job:"
+    puts "    Pos: #{$jobs.size+1}"
     puts job
     puts "Stop it with -e when you're finished" if $options[:verbose]
   end
