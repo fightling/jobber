@@ -20,54 +20,65 @@ Start time tracking
 
 Start tracking now:
 
-    jobber -s
+    $ jobber -s
 
 or
 
-    jobber -s now
+    $ jobber -s now
 
 Start tracking at specific time in past:
     
-    jobber -s 12:00
+    $ jobber -s 12:00
 
 Start tracking at absolute date and time:
     
-    jobber -s 10/30/2013,12:00
+    $ jobber -s 10/30/2013,12:00
 
 Start tracking at relative time:
     
-    jobber -s 5h-
+    $ jobber -s 5h-
 
 End time tracking
 -----------------
 
 End tracking now:
     
-    jobber -e
+    $ jobber -e
 
 or
     
-    jobber -e now
+    $ jobber -e now
 
 End tracking at specific time in past:
     
-    jobber -e 14:00
+    $ jobber -e 14:00
 
 End tracking at absolute date and time:
     
-    jobber -e 10/30/2013,14:00
+    $ jobber -e 10/30/2013,14:00
 
 End tracking at relative time:
     
-    jobber -e 1m+
+    $ jobber -e 1m+
 
 List jobs
 ---------
 List all known jobs:
     
-    jobber -l
+    $ jobber -l
 
 Monthly report:
     
-    jobber -r
+    $ jobber -r
+    jobber - job time tracker
+                             4/2013                         
+         sun     mon     tue     wed     thu     fri     sat
+               11.75       -   12.75       -       -       -
+           -       -     4.5     6.5       -     7.5       -
+           -       -       -       -       -       -       -
+           -       -       -       -       -       -       -
+           -       -       -
+                   Monthly total: 43.0 hours                
+
+    Total over all: 43.0 hours
 
