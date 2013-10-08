@@ -49,9 +49,9 @@ optparse = OptionParser.new do |opts|
     $options[:end] = true
     $options[:end_time] = v 
   end
-  $options[:list] = false 
-  opts.on( '-l', '--list', 'list existing jobs' ) do  
+  opts.on( '-l', '--list [TIME|COUNT]', 'list existing jobs' ) do |v| 
     $options[:list] = true
+    $options[:list_filter] = v
   end
   $options[:report] = false 
   opts.on( '-r', '--report', 'report existing jobs' ) do  
@@ -180,10 +180,10 @@ $reg_reltime2 = /\d{1,2}(h|m)(\+|-)/
 $reg_reltime = /#{$reg_reltime1}|#{$reg_reltime2}/
 $reg_abstime = /\d{1,2}:\d{1,2}/
 $reg_time = /#{$reg_abstime}|#{$reg_reltime}/
-$reg_date1 = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
-$reg_date2 = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
+$reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
+$reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
 $reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday/
-$reg_date = /#{$reg_date1}|#{$reg_date2}|#{$reg_weekday}/
+$reg_date = /#{$reg_dategerman}|#{$reg_dateenglish}|#{$reg_weekday}/
 $reg_datetime = /#{$reg_date},#{$reg_abstime}/
 $reg_timedate = /#{$reg_abstime},#{$reg_date}/
 $reg_now = /now/
@@ -195,19 +195,20 @@ class Regexp
   end
 end
 
-def parsetime t
+def parsetime t, allow_date_only=false
+  print "parse time '#{t}': " if $options[:verbose]
   if $reg_now.check(t)
-    puts "parsetime: now #{t}" if $options[:verbose]
+    puts "now #{t}" if $options[:verbose]
     return DateTime.now
   elsif $reg_reltime1.check(t)
-    puts "parsetime: reltime0 #{t}" if $options[:verbose]
+    puts "relative time 1 #{t}" if $options[:verbose]
     a = t.split(':')
     a[1].chomp!("+");
     a[1].chomp!("-");
     return DateTime.now - a[0].to_f/24 - a[1].to_f/24/60 if t.end_with?('-')
     return DateTime.now + a[0].to_f/24 + a[1].to_f/24/60 if t.end_with?('+')
   elsif $reg_reltime2.check(t)
-    puts "parsetime: reltime2 #{t}" if $options[:verbose]
+    puts "relative time 2 #{t}" if $options[:verbose]
     f = -1 if t.end_with?('-')
     f = 1 if t.end_with?('+')
     t.chomp!("-")
@@ -215,33 +216,33 @@ def parsetime t
     return DateTime.now + f*t.chomp("h").to_f/24 if t.end_with?('h')
     return DateTime.now + f*t.chomp("m").to_f/24/60 if t.end_with?('m')
   elsif $reg_abstime.check(t)
-    puts "parsetime: abstime #{t}" if $options[:verbose]
+    puts "absolute time #{t}" if $options[:verbose]
     a = t.split(':')
     tim = DateTime.now
     tim -= tim.hour.to_f/24 + tim.min.to_f/24/60
     tim += a[0].to_f/24 + a[1].to_f/24/60 
     tim -= 1 if (tim - DateTime.now) > 0.5 
     return tim
-  elsif $reg_dateandtime.check(t)
-    puts "parsetime: dateandtime #{t}" if $options[:verbose]
+  elsif $reg_dateandtime.check(t) or (allow_date_only and $reg_date.check(t))
+    print "date and time:" if $options[:verbose]
     a = t.split(',')
-    rt = DateTime.new
+    rt = Time.at(0)
     rd = DateTime.new
     a.each do |v| 
-      if $reg_date1.check(v)
-        puts "parsetime: date1 #{v}" if $options[:verbose]
+      if $reg_dategerman.check(v)
+        print " german date" if $options[:verbose]
         b = v.split('.')
         b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
         rd = DateTime.new(b[2].to_i,b[1].to_i,b[0].to_i)
       end
-      if $reg_date2.check(v)
-        puts "parsetime: date2 #{v}" if $options[:verbose]
+      if $reg_dateenglish.check(v)
+        print " english date" if $options[:verbose]
         b = v.split('/')
         b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
         rd = DateTime.new(b[2].to_i,b[0].to_i,b[1].to_i)
       end
       if $reg_weekday.check(v)
-        puts "parsetime: weekday #{v}" if $options[:verbose]
+        print " weekday" if $options[:verbose]
         rd = DateTime.local(Time.now.year,Time.now.month,Time.now.mday)
         if v == "yesterday"
           rd -= 24*60*60
@@ -253,13 +254,15 @@ def parsetime t
         end
       end
       if $reg_abstime.check(v)
-        puts "parsetime: abstime #{v}" if $options[:verbose]
+        print " abstime" if $options[:verbose]
         a = v.split(':')
         rt = Time.at(60*60*a[0].to_i + 60*a[1].to_i)
       end
+      puts
     end
     return DateTime.new(rd.year,rd.month,rd.mday,rt.utc.hour,rt.utc.min)
   end
+  puts "invalid" if $options[:verbose]
   return nil
 end
 
@@ -370,11 +373,16 @@ def concat a
 end
 
 def listjobs
-  i = 1
+  t = parsetime($options[:list_filter],true)
+  n = $options[:list_filter].to_i if t.nil?
+  puts "listing jobs since #{t}:" if !t.nil? and $options[:verbose]
+  i = 0
   $jobs.each do |j| 
+    i += 1
+    next if !t.nil? and j.start < t
+    next if !n.nil? and i <= $jobs.size-n
     puts "    Pos: #{i}"
     puts j
-    i += 1
   end
   puts "Job running since #{fmthours($jobs.last.hours).green} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
 end
@@ -389,6 +397,7 @@ def report
     a[j.year][j.month][j.mday] += j.hours
   end
   weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat", "week"]
+  months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
   col_width = 8
   line_width = col_width*8
   all_hours = 0
@@ -404,6 +413,7 @@ def report
           puts
           m = a[year][month]
           m.fill(nil,m.size..31) 
+          wday = 0
           m.each_index do |day|
             if DateTime.valid_civil?(year,month,day)
               wday = DateTime.civil(year,month,day).wday
@@ -421,18 +431,19 @@ def report
               end
             end
           end
-          puts
-          puts "Monthly hours: #{hours}".center(line_width)
-          puts "Monthly costs: #{hours*$options[:rate].to_f}".center(line_width) if $options[:rate]
+          puts if wday != 6
+          txt = "#{months[month]} #{year}: #{hours} hrs."
+          txt += " / $#{format('%.2f',hours*$options[:rate].to_f)}" if $options[:rate]
+          puts txt.center(line_width)
           all_hours += hours
         end
       end
     end
   end
   puts
-  puts "Total over all: #{all_hours} hours"
-  puts "   Total costs: #{all_hours*$options[:rate].to_f}" if $options[:rate]
-  puts "\n"
+  txt = "Total: #{$jobs.size} jobs, #{all_hours.to_s.bold} hrs."
+  txt += " / $#{(format('%.2f',all_hours*$options[:rate].to_f)).bold}" if $options[:rate]
+  puts txt
 end
 
 start_time = DateTime.now 
