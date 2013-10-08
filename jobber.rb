@@ -6,11 +6,9 @@ require 'date'
 require 'parsedate'
 require 'time'
 
-puts "jobber - job time tracker"
-
 $options = {}
 optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: jobber [options]\n"
+  opts.banner = "jobber - job time tracker\nUsage: jobber [options]\n"
   $options[:verbose] = false
   opts.on( '-v', '--verbose', 'Output more information' ) do
     $options[:verbose] = true
@@ -390,15 +388,18 @@ def report
     a[j.year][j.month][j.mday] = 0 if a[j.year][j.month][j.mday].nil?
     a[j.year][j.month][j.mday] += j.hours
   end
-  weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
+  weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat", "week"]
   col_width = 8
+  line_width = col_width*8
   all_hours = 0
+  week_hours = 0
   a.each_index do |year|
     if !a[year].nil?
       a[year].each_index do |month|
         if !a[year][month].nil?
           hours = 0
-          puts "#{month}/#{year}".center(col_width*7)
+          puts
+          puts "#{month}/#{year}".center(line_width)
           weekdays.each { |v| print v.rjust(col_width) }
           puts
           m = a[year][month]
@@ -410,15 +411,19 @@ def report
               if !m[day].nil?
                 print "#{m[day].to_s.rjust(col_width,' ').bold}"
                 hours += a[year][month][day]
+                week_hours += a[year][month][day]
               else 
                 print "-".rjust(col_width)
               end
-              puts if wday == 6
+              if wday == 6
+                puts week_hours.to_s.rjust(col_width)
+                week_hours = 0
+              end
             end
           end
           puts
-          puts "Monthly total: #{hours} hours".center(col_width*7)
-          puts "Monthly total costs: #{hours*$options[:rate].to_f}".center(col_width*7) if $options[:rate]
+          puts "Monthly hours: #{hours}".center(line_width)
+          puts "Monthly costs: #{hours*$options[:rate].to_f}".center(line_width) if $options[:rate]
           all_hours += hours
         end
       end

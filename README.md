@@ -21,7 +21,6 @@ Start time tracking
 Start tracking now:
 
     $ jobber -s
-    jobber - job time tracker
     Starting new job:
         Pos: 1
       Start: Tue Oct 08 2013, 07:51
@@ -29,14 +28,28 @@ Start tracking now:
 Start tracking at specific time in past:
     
     $ jobber -s 12:00
+    Starting new job:
+        Pos: 1
+      Start: Tue Oct 08 2013, 12:00
+
+*The absolute time is interpreted as like it is within +/-12 hours. 
+ So if it's currently 8:00h, 21:00 will be yesterday. 17:00 would be in future.*
 
 Start tracking at absolute date and time:
     
     $ jobber -s 10/30/2013,12:00
 
+Equivalents are:
+
+    $ jobber -s 30.10.2013,12:00
+    $ jobber -s 12:00,10/30/2013
+    $ jobber -s 12:00,30.10.2013
+
 Start tracking at relative time:
     
     $ jobber -s 5h-
+
+Giving a number followed by a "h" or "m" and a "+" or "-" the resulting time will be calculated by a distance in hours or minutes from now.
 
 End time tracking
 -----------------
