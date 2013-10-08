@@ -21,10 +21,10 @@ Start time tracking
 Start tracking now:
 
     $ jobber -s
-
-or
-
-    $ jobber -s now
+    jobber - job time tracker
+    Starting new job:
+        Pos: 1
+      Start: Tue Oct 08 2013, 07:51
 
 Start tracking at specific time in past:
     
@@ -44,10 +44,6 @@ End time tracking
 End tracking now:
     
     $ jobber -e
-
-or
-    
-    $ jobber -e now
 
 End tracking at specific time in past:
     

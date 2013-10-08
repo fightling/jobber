@@ -220,9 +220,9 @@ def parsetime t
     puts "parsetime: abstime #{t}" if $options[:verbose]
     a = t.split(':')
     tim = DateTime.now
-    tim -= tim.hour*60*60 + tim.min*60 + tim.sec 
-    tim += a[0].to_i*60*60 + a[1].to_i*60 
-    tim -= 24*60*60 if tim - Time.now > 12 
+    tim -= tim.hour.to_f/24 + tim.min.to_f/24/60
+    tim += a[0].to_f/24 + a[1].to_f/24/60 
+    tim -= 1 if (tim - DateTime.now) > 0.5 
     return tim
   elsif $reg_dateandtime.check(t)
     puts "parsetime: dateandtime #{t}" if $options[:verbose]
