@@ -433,8 +433,8 @@ end
 start_time = DateTime.now 
 end_time = DateTime.now
 
-start_time = parsetime($options[:start_time]) if $options[:start]
-end_time = parsetime($options[:end_time]) if $options[:end]
+start_time = parsetime($options[:start_time]) if $options[:start_time]
+end_time = parsetime($options[:end_time]) if $options[:end_time]
 if $options[:duration]
   if !$options[:start] and  $options[:end]
     start_time = end_time - $options[:duration].to_f/24
