@@ -165,7 +165,7 @@ class Job
   def hours
     e = DateTime.now
     e = @end if @end != 0
-    return (((e - @start) * 24)/$options[:resolution]).round*$options[:resolution]
+    return (((e - @start) * 24)/$options[:resolution].to_f).round*$options[:resolution].to_f
   end
   def valid?
     return @start != 0
