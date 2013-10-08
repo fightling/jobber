@@ -59,7 +59,7 @@ End tracking at absolute date and time:
 
 End tracking at relative time:
     
-    jobber -s 1m+
+    jobber -e 1m+
 
 List jobs
 ---------
