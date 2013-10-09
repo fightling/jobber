@@ -1,8 +1,8 @@
-# Jobber
+## Jobber
 
 Command line tool for tracking work time.
 
-## Installation
+### Installation
 
 You need ruby 1.8.7 to run this script.
 
@@ -10,9 +10,9 @@ Just copy the script into your bin and do a chmod to make it executable
 
     chmod u+x jobber.rb
 
-## Usage
+### Usage
 
-### Start time tracking
+#### Start time tracking
 
 Start tracking now:
 
@@ -47,7 +47,7 @@ Start tracking at relative time:
 
 Giving a number followed by a "h" or "m" and a "+" or "-" the resulting time will be calculated by a distance in hours or minutes from now.
 
-### End time tracking
+#### End time tracking
 
 End tracking now:
     
@@ -65,7 +65,7 @@ End tracking at relative time:
     
     $ jobber -e 1m+
 
-### List jobs
+#### List jobs
 
 List all known jobs:
     
