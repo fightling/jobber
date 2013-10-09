@@ -309,11 +309,11 @@ def multi_gets all_text=""
   all_text.strip
 end
 
-def enter_message force=false
+def enter_message force=false, msg="Please enter a message (empty line quits):"
   if force or $options[:message]
     if $options[:message_text].nil?
-      print "Please enter a message (end with empty line): "
-      return multi_gets
+      puts msg
+      return multi_gets.strip
     else
       return $options[:message_text].gsub(/\\n/,"\n")
     end
@@ -536,6 +536,16 @@ elsif $options[:start]
   startjob start_time
 elsif $options[:end]
   endjob end_time 
+elsif $options[:message]
+  if !$jobs.empty? and !$jobs.last.finished?
+    puts "Appending message to running job:" if $options[:verbose]
+    puts $jobs.last
+    $jobs.last.message += ($jobs.last.message.empty? ? "" : "\n") + enter_message(true,"Please enter a text to append to this message (empty line quits):") 
+  else
+    puts "No job running.".red
+    print "Would you like to start a new one now (y/N)?"
+    startjob DateTime.now if gets.strip.casecmp("y") == 0
+  end
 end
 report if $options[:report]
 
