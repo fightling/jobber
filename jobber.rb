@@ -61,6 +61,10 @@ optparse = OptionParser.new do |opts|
     $options[:list] = true
     $options[:list_filter] = v
   end
+  opts.on( '-t', '--total [TIME|COUNT]', 'Measure exisiting jobs' ) do |v| 
+    $options[:total] = true
+    $options[:list_filter] = v
+  end
   $options[:report] = false 
   opts.on( '-r', '--report', 'Report existing jobs' ) do  
     $options[:report] = true
@@ -404,7 +408,7 @@ def concat a
   end
 end
 
-def listjobs
+def listjobs totals_only=false
   t = parsetime($options[:list_filter],true)
   n = $options[:list_filter].to_i if t.nil? and !$options[:list_filter].nil?
   puts "Listing jobs since #{t}:" if !t.nil? and $options[:verbose]
@@ -415,12 +419,16 @@ def listjobs
     pos += 1
     next if !t.nil? and j.start < t
     next if !n.nil? and pos <= $jobs.size-n
-    puts "    Pos: #{pos}"
-    puts j
+    if !totals_only 
+      puts "    Pos: #{pos}"
+      puts j
+    end
     count += 1
     hours += j.hours
   end
-  puts "Total: #{count} job(s), #{hours.to_s.bold} hrs."
+  txt = "Total: #{count} job(s), #{hours.to_s.bold} hrs."
+  txt << " / $#{(hours*$options[:rate].to_f).to_s.bold}" if !$options[:rate].nil?
+  puts txt
   puts "Job running since #{fmthours($jobs.last.hours_exact).green} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
 end
 
@@ -508,7 +516,7 @@ end_time = start_time + $options[:duration].to_i/24 if $options[:time]
 $jobs = []
 
 if File.exist?($options[:filename])
-  puts "Opening existing file #{$options[:filename]}" if $options[:verbose]
+  puts "Opening existing file '#{$options[:filename]}'" if $options[:verbose]
   File.open($options[:filename],"a+") do |f|
     f.readlines.each do |line| 
       $jobs << Job.from_s(line.chop)
@@ -520,6 +528,7 @@ end
 concat $options[:concat].collect{|c| c.to_i} if $options[:concat]
 drop $options[:drop].to_i if $options[:drop]
 listjobs if $options[:list]
+listjobs true if $options[:total]
 if $options[:start] and $options[:end]
   startjob start_time, nil 
   endjob end_time, "Adding Job:" 
