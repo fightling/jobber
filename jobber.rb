@@ -9,53 +9,76 @@ require 'time'
 $options = {}
 optparse = OptionParser.new do |opts|
   opts.banner = "jobber - job time tracker\nUsage: jobber [options]\n"
-  $options[:verbose] = false
-  opts.on( '-v', '--verbose', 'Output more information' ) do
-    $options[:verbose] = true
-  end
-  $options[:filename] = "jobber.dat"
-  opts.on( '-f', '--file FILENAME', 'file to use (default: jobber.dat)' ) do |v| 
-    $options[:filename] = v
-  end
-  $options[:resolution] = 0.25
-  opts.on( '-R', '--resolution RESOLUTION', 'time resolution (default: 0.25)' ) do |v| 
-    $options[:resolution] = v
-  end
-  opts.on( '-s', '--start [TIME]', 'start work (at TIME)' ) do |v| 
+
+  opts.separator ""
+  opts.separator "Job creation:"
+  
+  opts.on( '-s', '--start [TIME]', 'Start work now (or at given TIME)' ) do |v| 
     $options[:start] = true
     $options[:start_time] = v
   end
-  opts.on( '-d', '--duration HOURS', 'work time in hours' ) do |v| 
+  opts.on( '-e', '--end [TIME]', 'End work (at TIME)' ) do |v| 
+    $options[:end] = true
+    $options[:end_time] = v 
+  end
+  opts.on( '-d', '--duration HOURS', 'Work time in hours' ) do |v| 
     $options[:duration] = v
   end
-  opts.on( '-D', '--drop POS', 'drop job at given position' ) do |v| 
+  opts.on( '-m', '--message [MESSAGE]', 'Add message to job' ) do |v| 
+    $options[:message] = true
+    $options[:message_text] = v
+  end
+
+  opts.separator ""
+  opts.separator "    TIME can be one of the following values:"
+  opts.separator ""
+  opts.separator "    now              now"
+  opts.separator "    4:10-            4 hours and 10 minutes ago"
+  opts.separator "    1h+              in 1 hour"
+  opts.separator "    14:10            today at 14:10"
+  opts.separator "    8/1/,14:10       at 1st of August this year at 14:10"
+  opts.separator "    mon,14:10        last monday at 14:10"
+  opts.separator "    yesterday,14:10  yesterday at 14:10"
+
+  opts.separator ""
+  opts.separator "Job editing:"
+
+  opts.on( '-D', '--drop POS', 'Drop job at given position' ) do |v| 
     $options[:drop] = v
   end
-  opts.on( '-M', '--money RATE', 'display hours*RATE' ) do |v| 
-    $options[:rate] = v
-  end
-  opts.on( '-c', '--concat POS1,POS2[,...]', Array, 'Concatinate two jobs with the given positions' ) do |v| 
+  opts.on( '-c', '--concat POS1,POS2[,...]', Array, 'Concatinate two jobs at the given positions' ) do |v| 
     if v.size < 2
       puts opts 
       exit
     end
     $options[:concat] = v
   end
-  opts.on( '-m', '--message [MESSAGE]', 'add message to job' ) do |v| 
-    $options[:message] = true
-    $options[:message_text] = v
-  end
-  opts.on( '-e', '--end [TIME]', 'end work (at TIME)' ) do |v| 
-    $options[:end] = true
-    $options[:end_time] = v 
-  end
-  opts.on( '-l', '--list [TIME|COUNT]', 'list existing jobs' ) do |v| 
+
+  opts.separator ""
+  opts.separator "Reporting:"
+
+  opts.on( '-l', '--list [TIME|COUNT]', 'List existing jobs' ) do |v| 
     $options[:list] = true
     $options[:list_filter] = v
   end
   $options[:report] = false 
-  opts.on( '-r', '--report', 'report existing jobs' ) do  
+  opts.on( '-r', '--report', 'Report existing jobs' ) do  
     $options[:report] = true
+  end
+  $options[:resolution] = 0.25
+  opts.on( '-R', '--resolution RESOLUTION', 'Time resolution (default: 0.25)' ) do |v| 
+    $options[:resolution] = v
+  end
+  opts.on( '-M', '--money RATE', 'Display hours*RATE' ) do |v| 
+    $options[:rate] = v
+  end
+  
+  opts.separator ""
+  opts.separator "Miscellaneous:"
+  
+  $options[:verbose] = false
+  opts.on( '-v', '--verbose', 'Output more information' ) do
+    $options[:verbose] = true
   end
   opts.on( '-h', '--help', 'Display this screen' ) do
     puts opts
@@ -245,11 +268,11 @@ def parsetime t, allow_date_only=false
         print " weekday" if $options[:verbose]
         rd = DateTime.local(Time.now.year,Time.now.month,Time.now.mday)
         if v == "yesterday"
-          rd -= 24*60*60
+          rd -= 1
         else
           w = [ "sun", "mon", "tue", "wed", "thu", "fri", "sat" ]
           while w[rd.wday] != v
-            rd -= 24*60*60
+            rd -= 1
           end
         end
       end
@@ -376,14 +399,19 @@ def listjobs
   t = parsetime($options[:list_filter],true)
   n = $options[:list_filter].to_i if t.nil?
   puts "listing jobs since #{t}:" if !t.nil? and $options[:verbose]
-  i = 0
+  pos = 0
+  count = 0
+  hours = 0
   $jobs.each do |j| 
-    i += 1
+    pos += 1
     next if !t.nil? and j.start < t
-    next if !n.nil? and i <= $jobs.size-n
-    puts "    Pos: #{i}"
+    next if !n.nil? and pos <= $jobs.size-n
+    puts "    Pos: #{pos}"
     puts j
+    count += 1
+    hours += j.hours
   end
+  puts "Total: #{count} job(s), #{hours.to_s.bold} hrs."
   puts "Job running since #{fmthours($jobs.last.hours).green} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
 end
 
