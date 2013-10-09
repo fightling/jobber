@@ -290,7 +290,7 @@ def parsetime t, allow_date_only=false
         a = v.split(':')
         rt = Time.at(60*60*a[0].to_i + 60*a[1].to_i)
       end
-      puts
+      puts if $options[:verbose]
     end
     return DateTime.new(rd.year,rd.month,rd.mday,rt.utc.hour,rt.utc.min)
   end
