@@ -76,6 +76,10 @@ optparse = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Miscellaneous:"
   
+  $options[:filename] = "jobber.dat"
+  opts.on( '-f', '--file FILENAME', 'file to use (default: jobber.dat)' ) do |v| 
+    $options[:filename] = v
+  end  
   $options[:verbose] = false
   opts.on( '-v', '--verbose', 'Output more information' ) do
     $options[:verbose] = true
