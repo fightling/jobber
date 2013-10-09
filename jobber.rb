@@ -160,7 +160,7 @@ class Job
       s << "  Costs: #{hours*$options[:rate]}\n" if $options[:rate]
     end
     first = true
-    if !@message.nil?
+    if !@message.nil? and !message.empty?
       @message.each_line do |l|
         s << "Message: #{l.bold}" if first
         s << "         #{l.bold}" if !first
@@ -193,6 +193,11 @@ class Job
     e = DateTime.now
     e = @end if @end != 0
     return (((e - @start) * 24)/$options[:resolution].to_f).round*$options[:resolution].to_f
+  end
+  def hours_exact
+    e = DateTime.now
+    e = @end if @end != 0
+    return (e - @start) * 24
   end
   def valid?
     return @start != 0
@@ -300,11 +305,11 @@ def multi_gets all_text=""
   all_text.strip
 end
 
-def enter_message m=""
-  if $options[:message]
+def enter_message force=false
+  if force or $options[:message]
     if $options[:message_text].nil?
       print "Please enter a message (end with empty line): "
-      return multi_gets m
+      return multi_gets
     else
       return $options[:message_text].gsub(/\\n/,"\n")
     end
@@ -321,15 +326,15 @@ def endjob e, msg="Ending job:"
     return false 
   elsif Job.check($jobs.last.start,e)
     if $jobs.last.message.nil? or $jobs.last.message.empty?
-      $options[:message] = true
-      $jobs.last.message = enter_message 
+      $jobs.last.message = enter_message true
     end
+    puts msg.brown
     $jobs.last.end = e
     puts "    Pos: #{$jobs.size}"
     puts $jobs.last
     return true
   else
-    puts "End time is ahead of start time! Please retry:"
+    print "End time is ahead of start time! Please retry:"
     return false  
   end
 end
@@ -349,7 +354,7 @@ def startjob s, msg="Starting new job:"
       else 
         t = parsetime(answer)
         if t.nil?
-          puts "Please enter a valid time:"
+          print "Please enter a valid time:"
         else
           break if endjob t 
         end
@@ -359,7 +364,7 @@ def startjob s, msg="Starting new job:"
   job = Job.new(s,0,"")
   job.message = enter_message
   if !msg.nil?
-    puts "Starting new job:"
+    puts msg.brown 
     puts "    Pos: #{$jobs.size+1}"
     puts job
     puts "Stop it with -e when you're finished" if $options[:verbose]
@@ -371,7 +376,7 @@ def drop pos
   puts $jobs[pos-1]
   print "Do you really want to delete this job (y/N)?"
   if gets.strip.casecmp("y") == 0
-    puts "Deleting job ##{pos}"
+    puts "Deleting job ##{pos}".brown
     $jobs.delete_at(pos-1)
   else
     puts "Deletion canceled."
@@ -391,7 +396,7 @@ def concat a
   puts job
   print "Do you really want to merge #{a.size} jobs into the above job (y/N)?"
   if gets.strip.casecmp("y") == 0
-    puts "Merge jobs #{a.join(',')}..."
+    puts "Merge jobs #{a.join(',')}...".brown
     $jobs[a.first] = job
     a.drop(1).reverse.each { $jobs.delete_at(a[i]) }
   else
@@ -401,8 +406,8 @@ end
 
 def listjobs
   t = parsetime($options[:list_filter],true)
-  n = $options[:list_filter].to_i if t.nil?
-  puts "listing jobs since #{t}:" if !t.nil? and $options[:verbose]
+  n = $options[:list_filter].to_i if t.nil? and !$options[:list_filter].nil?
+  puts "Listing jobs since #{t}:" if !t.nil? and $options[:verbose]
   pos = 0
   count = 0
   hours = 0
@@ -416,7 +421,7 @@ def listjobs
     hours += j.hours
   end
   puts "Total: #{count} job(s), #{hours.to_s.bold} hrs."
-  puts "Job running since #{fmthours($jobs.last.hours).green} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
+  puts "Job running since #{fmthours($jobs.last.hours_exact).green} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
 end
 
 def report
