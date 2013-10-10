@@ -386,7 +386,7 @@ def startjob s, msg="Starting new job:"
       answer = gets.strip
 
       if answer.empty?
-        puts "Canceling job start."
+        puts "Canceling job start.".brown
         puts "Running job remains open!"
         exit
       else 
@@ -418,7 +418,7 @@ def drop pos
     puts "Deleting job ##{pos}".brown
     $jobs.delete_at(pos-1)
   else
-    puts "Deletion canceled."
+    puts "Deletion canceled.".brown
     exit
   end
 end
@@ -426,28 +426,30 @@ end
 # join two jobs by merging their attributes
 def join a
   a.sort!
-  job = $jobs[a.first]
-  puts "Join #{a.size} jobs:"
+  job = $jobs[a.first].dup
+  puts "Join #{a.size} jobs (#{a.join(',')}):"
   job.message = a.collect{ |i| $jobs[i-1].message }.join("\n")
   hours = 0
   a.each do |i|
     j = $jobs[i-1]
     hours += j.hours
+    puts "    Pos: #{i}"
     puts j
     job.start = (job.start < j.start) ? job.start : j.start
     job.end = (job.end > j.end) ? job.end : j.end
   end
   puts "Into this job:"
+  puts "    Pos: #{a.first}"
   puts job
-  puts "You will add #{job.hours-hours} hours!" if job.hours > hours
-  puts "You will lose #{job.hours-hours} hours!" if job.hours < hours
+  puts "You are about to add #{job.hours-hours} hours!".red if job.hours > hours
+  puts "You are about to lose #{job.hours-hours} hours!".red if job.hours < hours
   print "Do you really want to merge #{a.size} jobs into the above job (y/N)?"
   if gets.strip.casecmp("y") == 0
     puts "Merge jobs #{a.join(',')}...".brown
     $jobs[a.first] = job
     a.drop(1).reverse.each { $jobs.delete_at(a[i]) }
   else
-    puts "Join canceled"  
+    puts "Join canceled".brown
   end
 end
 
@@ -531,9 +533,9 @@ def report
     end
   end
   puts
-  txt = "Total: #{$jobs.size} jobs, #{all_hours.to_s.bold} hrs."
-  txt += " / $#{(format('%.2f',all_hours*$options[:rate].to_f)).bold}" if $options[:rate]
-  puts txt
+  print "Total: #{$jobs.size} jobs, #{all_hours.to_s.bold} hrs."
+  print " / $#{(format('%.2f',all_hours*$options[:rate].to_f)).bold}" if $options[:rate]
+  puts 
 end
 
 # accept reality
