@@ -6,6 +6,7 @@ require 'date'
 require 'parsedate'
 require 'time'
 
+# parse options
 $options = {}
 optparse = OptionParser.new do |opts|
   opts.banner = "jobber - job time tracker\nUsage: jobber [options]\n"
@@ -46,12 +47,12 @@ optparse = OptionParser.new do |opts|
   opts.on( '-D', '--drop POS', 'Drop job at given position' ) do |v| 
     $options[:drop] = v
   end
-  opts.on( '-c', '--concat POS1,POS2[,...]', Array, 'Concatinate two jobs at the given positions' ) do |v| 
+  opts.on( '-j', '--join POS1,POS2[,...]', Array, 'Join two or more jobs at the given positions' ) do |v| 
     if v.size < 2
-      puts opts 
+      puts opts
       exit
     end
-    $options[:concat] = v
+    $options[:join] = v
   end
 
   opts.separator ""
@@ -100,6 +101,7 @@ optparse = OptionParser.new do |opts|
 end
 optparse.parse!
 
+# provide some ANSI escape sequences into String to colorize output
 class String
   def black;          "\033[30m#{self}\033[0m" end
   def red;            "\033[31m#{self}\033[0m" end
@@ -121,23 +123,40 @@ class String
   def reverse_color;  "\033[7m#{self}\033[27m" end
 end
 
+# add a "humanized" output format to DateTime
 class DateTime
   def to_h
     return self.strftime("%a %b %d %Y, %H:%M") 
   end
 end
 
+class Range
+  def intersection(other)
+    return nil if (self.max < other.begin or other.max < self.begin) 
+    [self.begin, other.begin].max..[self.max, other.max].min
+  end
+  alias_method :&, :intersection
+end
+
+# a single job 
 class Job
   attr_reader :start, :end
   attr_accessor :message
+  # from scratch
   def initialize s=0, e=0, d=""
     @start = s
     @end = e 
     @message = d
   end
-  def <=> r
-    return @start <=> r.start
+  # compare start times
+  def <=> other
+    return @start <=> other.start
   end
+  # intersect with timespan of another job
+  def intersect other 
+    return (@start..@end) & (other.start..other.end)
+  end
+  # create from quoted values in CSV line
   def self.from_s line
     a = line.split(';')
     a.each do |v| 
@@ -148,13 +167,11 @@ class Job
     end
     return Job.new(DateTime.parse(a[0]),(a[1] == '0')?0:DateTime.parse(a[1]),a[2].gsub(/\\n/,"\n"))
   end
+  # pack CSV line
   def pack
-    if @message.nil?
-      return ["\"#{@start}\"", "\"#{@end}\"", "\"\""].join(";")
-    else
-      return ["\"#{@start}\"", "\"#{@end}\"", "\"#{@message.gsub(/\n/,'\\n')}\""].join(";")
-    end
+    return ["\"#{@start}\"", "\"#{@end}\"", @message.nil? ? "\"\"" : "\"#{@message.gsub(/\n/,'\\n')}\""].join(";")
   end
+  # humanized version of data
   def to_s
     s = ""
     s << "  Start: #{@start.to_h.green}\n"
@@ -175,75 +192,87 @@ class Job
     s << "\n"
     return s
   end
+  # check if job timspan is valid
   def self.check(s,e)
     return s < e 
   end
+  # set start time
   def start=(s)
     @start = s if Job.check(s,@end)
   end
+  # set end time
   def end=(e)
     @end = e if Job.check(@start,e)
   end
+  # get year of start time
   def year
     return @start.year
   end
+  # get month of start time
   def month
     return @start.month
   end
+  # get day of month from start time
   def mday
     return @start.mday
   end
-  def hours
-    e = DateTime.now
-    e = @end if @end != 0
-    return (((e - @start) * 24)/$options[:resolution].to_f).round*$options[:resolution].to_f
-  end
+  # get hours without rounding to resolution
   def hours_exact
     e = DateTime.now
     e = @end if @end != 0
     return (e - @start) * 24
   end
+  # get worked hours rounded to resolution (if job is running end time is now)
+  def hours
+    return (hours_exact/$options[:resolution].to_f).round*$options[:resolution].to_f
+  end
+  # check if start time has been set
   def valid?
     return @start != 0
   end
+  # check if job is finished
   def finished?
     return @end != 0
   end
 end
 
-$reg_reltime1 = /\d{1,2}:\d{1,2}(\+|-)/
-$reg_reltime2 = /\d{1,2}(h|m)(\+|-)/
-$reg_reltime = /#{$reg_reltime1}|#{$reg_reltime2}/
-$reg_abstime = /\d{1,2}:\d{1,2}/
-$reg_time = /#{$reg_abstime}|#{$reg_reltime}/
-$reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
-$reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
-$reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday/
-$reg_date = /#{$reg_dategerman}|#{$reg_dateenglish}|#{$reg_weekday}/
-$reg_datetime = /#{$reg_date},#{$reg_abstime}/
-$reg_timedate = /#{$reg_abstime},#{$reg_date}/
-$reg_now = /now/
-$reg_dateandtime = /#{$reg_datetime}|#{$reg_timedate}|#{$reg_now}/
-
+# enhance Regexp
 class Regexp
+  # check if t completely matches
   def check t
     return t == match(t).to_s
   end
 end
 
+# parses a string to a DateTime
 def parsetime t, allow_date_only=false
+  # accepted formats
+  reg_reltime1 = /\d{1,2}:\d{1,2}(\+|-)/
+  reg_reltime2 = /\d{1,2}(h|m)(\+|-)/
+  reg_reltime = /#{reg_reltime1}|#{reg_reltime2}/
+  reg_abstime = /\d{1,2}:\d{1,2}/
+  reg_time = /#{reg_abstime}|#{reg_reltime}/
+  reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
+  reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
+  reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday/
+  reg_date = /#{reg_dategerman}|#{reg_dateenglish}|#{reg_weekday}/
+  reg_datetime = /#{reg_date},#{reg_abstime}/
+  reg_timedate = /#{reg_abstime},#{reg_date}/
+  reg_now = /now/
+  reg_dateandtime = /#{reg_datetime}|#{reg_timedate}|#{reg_now}/
+
   print "parse time '#{t}': " if $options[:verbose]
-  if $reg_now.check(t)
+  if reg_now.check(t)
     puts "now #{t}" if $options[:verbose]
     return DateTime.now
-  elsif $reg_reltime1.check(t)
+  elsif reg_reltime1.check(t)
     puts "relative time 1 #{t}" if $options[:verbose]
     a = t.split(':')
     a[1].chomp!("+");
     a[1].chomp!("-");
     return DateTime.now - a[0].to_f/24 - a[1].to_f/24/60 if t.end_with?('-')
     return DateTime.now + a[0].to_f/24 + a[1].to_f/24/60 if t.end_with?('+')
-  elsif $reg_reltime2.check(t)
+  elsif reg_reltime2.check(t)
     puts "relative time 2 #{t}" if $options[:verbose]
     f = -1 if t.end_with?('-')
     f = 1 if t.end_with?('+')
@@ -251,7 +280,7 @@ def parsetime t, allow_date_only=false
     t.chomp!("+")
     return DateTime.now + f*t.chomp("h").to_f/24 if t.end_with?('h')
     return DateTime.now + f*t.chomp("m").to_f/24/60 if t.end_with?('m')
-  elsif $reg_abstime.check(t)
+  elsif reg_abstime.check(t)
     puts "absolute time #{t}" if $options[:verbose]
     a = t.split(':')
     tim = DateTime.now
@@ -259,25 +288,25 @@ def parsetime t, allow_date_only=false
     tim += a[0].to_f/24 + a[1].to_f/24/60 
     tim -= 1 if (tim - DateTime.now) > 0.5 
     return tim
-  elsif $reg_dateandtime.check(t) or (allow_date_only and $reg_date.check(t))
+  elsif reg_dateandtime.check(t) or (allow_date_only and reg_date.check(t))
     print "date and time:" if $options[:verbose]
     a = t.split(',')
     rt = Time.at(0)
     rd = DateTime.new
     a.each do |v| 
-      if $reg_dategerman.check(v)
+      if reg_dategerman.check(v)
         print " german date" if $options[:verbose]
         b = v.split('.')
         b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
         rd = DateTime.new(b[2].to_i,b[1].to_i,b[0].to_i)
       end
-      if $reg_dateenglish.check(v)
+      if reg_dateenglish.check(v)
         print " english date" if $options[:verbose]
         b = v.split('/')
         b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
         rd = DateTime.new(b[2].to_i,b[0].to_i,b[1].to_i)
       end
-      if $reg_weekday.check(v)
+      if reg_weekday.check(v)
         print " weekday" if $options[:verbose]
         rd = DateTime.local(Time.now.year,Time.now.month,Time.now.mday)
         if v == "yesterday"
@@ -289,7 +318,7 @@ def parsetime t, allow_date_only=false
           end
         end
       end
-      if $reg_abstime.check(v)
+      if reg_abstime.check(v)
         print " abstime" if $options[:verbose]
         a = v.split(':')
         rt = Time.at(60*60*a[0].to_i + 60*a[1].to_i)
@@ -302,6 +331,7 @@ def parsetime t, allow_date_only=false
   return nil
 end
 
+# small multi line editor
 def multi_gets all_text=""
   while (text = gets) != "\n"
     all_text << text
@@ -309,6 +339,7 @@ def multi_gets all_text=""
   all_text.strip
 end
 
+# enter a message or take it from program options
 def enter_message force=false, msg="Please enter a message (empty line quits):"
   if force or $options[:message]
     if $options[:message_text].nil?
@@ -320,10 +351,12 @@ def enter_message force=false, msg="Please enter a message (empty line quits):"
   end
 end
 
+# format hours
 def fmthours h
   return h.round.to_s + ":" + ((h - h.round)*60).round.to_s.rjust(2,'0')
 end
 
+# ends a running job
 def endjob e, msg="Ending job:"
   if $jobs.empty? or $jobs.last.end != 0
     puts "There is no open job!".red
@@ -343,6 +376,7 @@ def endjob e, msg="Ending job:"
   end
 end
 
+# start a job (asks user to stop a running job)
 def startjob s, msg="Starting new job:"
   if !$jobs.last.nil? and $jobs.last.end == 0
     puts "There is still an open job!".red
@@ -376,6 +410,7 @@ def startjob s, msg="Starting new job:"
   $jobs << job
 end
 
+# remove job
 def drop pos
   puts $jobs[pos-1]
   print "Do you really want to delete this job (y/N)?"
@@ -388,26 +423,35 @@ def drop pos
   end
 end
 
-def concat a
+# join two jobs by merging their attributes
+def join a
   a.sort!
   job = $jobs[a.first]
-  puts "Concatinating jobs #{a.join(',')}..."
+  puts "Join #{a.size} jobs:"
   job.message = a.collect{ |i| $jobs[i-1].message }.join("\n")
+  hours = 0
   a.each do |i|
-    job.start = (job.start < $jobs[i-1].start) ? job.start : $jobs[i-1].start
-    job.end = (job.end > $jobs[i-1].end) ? job.end : $jobs[i-1].end
+    j = $jobs[i-1]
+    hours += j.hours
+    puts j
+    job.start = (job.start < j.start) ? job.start : j.start
+    job.end = (job.end > j.end) ? job.end : j.end
   end
+  puts "Into this job:"
   puts job
+  puts "You will add #{job.hours-hours} hours!" if job.hours > hours
+  puts "You will lose #{job.hours-hours} hours!" if job.hours < hours
   print "Do you really want to merge #{a.size} jobs into the above job (y/N)?"
   if gets.strip.casecmp("y") == 0
     puts "Merge jobs #{a.join(',')}...".brown
     $jobs[a.first] = job
     a.drop(1).reverse.each { $jobs.delete_at(a[i]) }
   else
-    puts "Canceled concatination"  
+    puts "Join canceled"  
   end
 end
 
+# list jobs within list_filter from options
 def listjobs totals_only=false
   t = parsetime($options[:list_filter],true)
   n = $options[:list_filter].to_i if t.nil? and !$options[:list_filter].nil?
@@ -432,6 +476,7 @@ def listjobs totals_only=false
   puts "Job running since #{fmthours($jobs.last.hours_exact).green} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
 end
 
+# report monthly
 def report
   puts
   a = []
@@ -491,9 +536,11 @@ def report
   puts txt
 end
 
+# accept reality
 start_time = DateTime.now 
 end_time = DateTime.now
 
+# read console parameters
 start_time = parsetime($options[:start_time]) if $options[:start_time]
 end_time = parsetime($options[:end_time]) if $options[:end_time]
 if $options[:duration]
@@ -510,11 +557,12 @@ if $options[:duration]
   end
 end
 
+# check for duration parameter
 end_time = start_time + $options[:duration].to_i/24  and 
 end_time = start_time + $options[:duration].to_i/24 if $options[:time]
 
+# load exisiting jobs from file
 $jobs = []
-
 if File.exist?($options[:filename])
   puts "Opening existing file '#{$options[:filename]}'" if $options[:verbose]
   File.open($options[:filename],"a+") do |f|
@@ -525,7 +573,8 @@ if File.exist?($options[:filename])
   puts "read #{$jobs.size} jobs" if $options[:verbose]
 end
 
-concat $options[:concat].collect{|c| c.to_i} if $options[:concat]
+# run commands
+join $options[:join].collect{|c| c.to_i} if $options[:join]
 drop $options[:drop].to_i if $options[:drop]
 listjobs if $options[:list]
 listjobs true if $options[:total]
@@ -549,6 +598,7 @@ elsif $options[:message]
 end
 report if $options[:report]
 
+# save jobs back into file
 File.open($options[:filename],"w+") do |f|
   $jobs.each do |j|
     f.puts j.pack
