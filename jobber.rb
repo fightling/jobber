@@ -2,15 +2,15 @@
 
 require 'fileutils'
 require 'optparse'
-require 'date'
-require 'parsedate'
 require 'time'
+
+require 'datetime' if RUBY_VERSION < "1.9"
+require 'parsedate' if RUBY_VERSION < "1.9"
 
 # parse options
 $options = {}
 optparse = OptionParser.new do |opts|
-  opts.banner = "jobber - job time tracker\nUsage: jobber [options]\n"
-
+  opts.banner = "Usage: jobber [options]\nManages your work times"
   opts.separator ""
   opts.separator "Job creation:"
   
@@ -33,17 +33,6 @@ optparse = OptionParser.new do |opts|
     $options[:message] = true
     $options[:message_text] = v
   end
-
-  opts.separator ""
-  opts.separator "    TIME can be one of the following values:"
-  opts.separator ""
-  opts.separator "    now              now"
-  opts.separator "    4:10-            4 hours and 10 minutes ago"
-  opts.separator "    1h+              in 1 hour"
-  opts.separator "    14:10            today at 14:10"
-  opts.separator "    8/1/,14:10       at 1st of August this year at 14:10"
-  opts.separator "    mon,14:10        last monday at 14:10"
-  opts.separator "    yesterday,14:10  yesterday at 14:10"
 
   opts.separator ""
   opts.separator "Job editing:"
@@ -83,17 +72,34 @@ optparse = OptionParser.new do |opts|
   end
   
   opts.separator ""
-  opts.separator "Miscellaneous:"
-  
+  opts.separator "TIME can be in one of the following formats:"
+  opts.separator "    now              now"
+  opts.separator "    4:10-            4 hours and 10 minutes ago"
+  opts.separator "    1h+              in 1 hour"
+  opts.separator "    14:10            today at 14:10"
+  opts.separator "    8/1/,14:10       at 1st of August this year at 14:10"
+  opts.separator "    mon,14:10        last monday at 14:10"
+  opts.separator "    yesterday,14:10  yesterday at 14:10"
+
+  opts.separator ""
+  opts.separator "Data base options:"
   $options[:filename] = "jobber.dat"
   opts.on( '-f', '--file FILENAME', 'file to use (default: jobber.dat)' ) do |v| 
     $options[:filename] = v
   end  
+
+  opts.separator ""
+  opts.separator "Common options:"
+  
   $options[:verbose] = false
-  opts.on( '-v', '--verbose', 'Output more information' ) do
+  opts.on_tail( '-V', '--verbose', 'Output additional information while running' ) do
     $options[:verbose] = true
   end
-  opts.on( '-h', '--help', 'Display this screen' ) do
+  opts.on_tail( '-v', '--version', 'Output version information' ) do
+    puts "jobber - work time tracker version 0.1\n(see http://github.com/patgithub/jobber for more information)"
+    exit
+  end
+  opts.on_tail( '-h', '--help', 'Display this screen' ) do
     puts opts
     exit
   end
