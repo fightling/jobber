@@ -22,6 +22,10 @@ optparse = OptionParser.new do |opts|
     $options[:end] = true
     $options[:end_time] = v 
   end
+  $options[:cancel] = false
+  opts.on( '-c', '--cancel', 'Cancel running job' ) do |v| 
+    $options[:cancel] = true
+  end
   opts.on( '-d', '--duration HOURS', 'Work time in hours' ) do |v| 
     $options[:duration] = v
   end
@@ -353,7 +357,7 @@ end
 
 # format hours
 def fmthours h
-  return h.round.to_s + ":" + ((h - h.round)*60).round.to_s.rjust(2,'0')
+  return h.to_i.to_s + ":" + ((h - h.to_i)*60).round.to_s.rjust(2,'0')
 end
 
 # ends a running job
@@ -371,7 +375,8 @@ def endjob e, msg="Ending job:"
     puts $jobs.last
     return true
   else
-    print "End time is ahead of start time! Please retry:"
+    puts "End time is ahead of start time!".red
+    puts "Please retry!"
     return false  
   end
 end
@@ -398,6 +403,11 @@ def startjob s, msg="Starting new job:"
         end
       end
     end
+  end 
+  if s < $jobs.last.end
+    puts "New job intersects with:"
+    puts "    Pos: #{$jobs.size}"
+    puts $jobs.last
   end
   job = Job.new(s,0,"")
   job.message = enter_message
@@ -410,12 +420,25 @@ def startjob s, msg="Starting new job:"
   $jobs << job
 end
 
+def canceljob
+  if $jobs.empty? or $jobs.last.end != 0
+    puts "There is no open job!".red
+  else 
+    puts $jobs.last
+    puts "Cancel this job (y/N)?"
+    if gets.strip.casecmp("y") == 0
+      $jobs.delete_at($jobs.size-1)
+    end
+    puts "Running job canceled".brown
+  end
+end
+
 # remove job
 def drop pos
   puts $jobs[pos-1]
   print "Do you really want to delete this job (y/N)?"
   if gets.strip.casecmp("y") == 0
-    puts "Deleting job ##{pos}".brown
+    puts "Deleting job #{pos}".brown
     $jobs.delete_at(pos-1)
   else
     puts "Deletion canceled.".brown
@@ -426,7 +449,7 @@ end
 # join two jobs by merging their attributes
 def join a
   a.sort!
-  job = $jobs[a.first].dup
+  job = $jobs[a.first-1].dup
   puts "Join #{a.size} jobs (#{a.join(',')}):"
   job.message = a.collect{ |i| $jobs[i-1].message }.join("\n")
   hours = 0
@@ -446,8 +469,8 @@ def join a
   print "Do you really want to merge #{a.size} jobs into the above job (y/N)?"
   if gets.strip.casecmp("y") == 0
     puts "Merge jobs #{a.join(',')}...".brown
-    $jobs[a.first] = job
-    a.drop(1).reverse.each { $jobs.delete_at(a[i]) }
+    a.drop(1).reverse.each { |i| $jobs.delete_at(i-1) }
+    $jobs[a.first-1] = job
   else
     puts "Join canceled".brown
   end
@@ -576,6 +599,7 @@ if File.exist?($options[:filename])
 end
 
 # run commands
+canceljob if $options[:cancel]
 join $options[:join].collect{|c| c.to_i} if $options[:join]
 drop $options[:drop].to_i if $options[:drop]
 listjobs if $options[:list]
