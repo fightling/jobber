@@ -430,7 +430,7 @@ def startjob s, msg="Starting new job:"
     end
   end 
   if s < $jobs.last.end
-    puts "New job intersects with:"
+    puts "New job intersects with:".warning
     puts "    Pos: #{$jobs.size}"
     puts $jobs.last
   end
