@@ -7,6 +7,36 @@ require 'time'
 require 'datetime' if RUBY_VERSION < "1.9"
 require 'parsedate' if RUBY_VERSION < "1.9"
 
+# provide some ANSI escape sequences into String to colorize output
+class String
+  def black;          "\033[30m#{self}\033[0m" end
+  def red;            "\033[31m#{self}\033[0m" end
+  def green;          "\033[32m#{self}\033[0m" end
+  def brown;          "\033[33m#{self}\033[0m" end
+  def blue;           "\033[34m#{self}\033[0m" end
+  def magenta;        "\033[35m#{self}\033[0m" end
+  def cyan;           "\033[36m#{self}\033[0m" end
+  def gray;           "\033[37m#{self}\033[0m" end
+  def bg_black;       "\033[40m#{self}\0330m"  end
+  def bg_red;         "\033[41m#{self}\033[0m" end
+  def bg_green;       "\033[42m#{self}\033[0m" end
+  def bg_brown;       "\033[43m#{self}\033[0m" end
+  def bg_blue;        "\033[44m#{self}\033[0m" end
+  def bg_magenta;     "\033[45m#{self}\033[0m" end
+  def bg_cyan;        "\033[46m#{self}\033[0m" end
+  def bg_gray;        "\033[47m#{self}\033[0m" end
+  def bold;           "\033[1m#{self}\033[22m" end
+  def reverse_color;  "\033[7m#{self}\033[27m" end
+  alias_method :start, :green
+  alias_method :end, :magenta
+  alias_method :error, :red
+  alias_method :warning, :brown
+  alias_method :action, :blue
+  alias_method :message, :bold
+  alias_method :dollar, :bold
+  alias_method :hours, :bold
+end
+
 # parse options
 $options = {}
 optparse = OptionParser.new do |opts|
@@ -47,6 +77,17 @@ optparse = OptionParser.new do |opts|
     end
     $options[:join] = v
   end
+
+  opts.separator ""
+  opts.separator "Data types:"
+  opts.separator "    " + "Start times".start + " to differ them from "+ "End times".end + "."
+  opts.separator "    " + "Job messages".message + " show what you do."
+
+  opts.separator ""
+  opts.separator "Message types:"
+  opts.separator "    " + "Action messages".action + " mark the beginning of data base modifications."
+  opts.separator "    " + "Warning messages".warning + " warn you of exceptional results."
+  opts.separator "    " + "Error messages".error + " mark failed actions."
 
   opts.separator ""
   opts.separator "Reporting:"
@@ -111,28 +152,6 @@ optparse = OptionParser.new do |opts|
 end
 optparse.parse!
 
-# provide some ANSI escape sequences into String to colorize output
-class String
-  def black;          "\033[30m#{self}\033[0m" end
-  def red;            "\033[31m#{self}\033[0m" end
-  def green;          "\033[32m#{self}\033[0m" end
-  def brown;          "\033[33m#{self}\033[0m" end
-  def blue;           "\033[34m#{self}\033[0m" end
-  def magenta;        "\033[35m#{self}\033[0m" end
-  def cyan;           "\033[36m#{self}\033[0m" end
-  def gray;           "\033[37m#{self}\033[0m" end
-  def bg_black;       "\033[40m#{self}\0330m"  end
-  def bg_red;         "\033[41m#{self}\033[0m" end
-  def bg_green;       "\033[42m#{self}\033[0m" end
-  def bg_brown;       "\033[43m#{self}\033[0m" end
-  def bg_blue;        "\033[44m#{self}\033[0m" end
-  def bg_magenta;     "\033[45m#{self}\033[0m" end
-  def bg_cyan;        "\033[46m#{self}\033[0m" end
-  def bg_gray;        "\033[47m#{self}\033[0m" end
-  def bold;           "\033[1m#{self}\033[22m" end
-  def reverse_color;  "\033[7m#{self}\033[27m" end
-end
-
 # add a "humanized" output format to DateTime
 class DateTime
   def to_h
@@ -184,17 +203,17 @@ class Job
   # humanized version of data
   def to_s
     s = ""
-    s << "  Start: #{@start.to_h.green}\n"
+    s << "  Start: #{@start.to_h.start}\n"
     if finished?
-      s << "    End: #{@end.to_h.red}\n" 
+      s << "    End: #{@end.to_h.end}\n" 
       s << "  Hours: #{hours}\n" 
       s << "  Costs: #{hours*$options[:rate]}\n" if $options[:rate]
     end
     first = true
     if !@message.nil? and !message.empty?
       @message.each_line do |l|
-        s << "Message: #{l.bold}" if first
-        s << "         #{l.bold}" if !first
+        s << "Message: #{l.message}" if first
+        s << "         #{l.message}" if !first
         first = false if first
       end
       s << "\n"
@@ -369,19 +388,19 @@ end
 # ends a running job
 def endjob e, msg="Ending job:"
   if $jobs.empty? or $jobs.last.end != 0
-    puts "There is no open job!".red
+    puts "There is no open job!".error
     return false 
   elsif Job.check($jobs.last.start,e)
     if $jobs.last.message.nil? or $jobs.last.message.empty?
       $jobs.last.message = enter_message true
     end
-    puts msg.brown
+    puts msg.action
     $jobs.last.end = e
     puts "    Pos: #{$jobs.size}"
     puts $jobs.last
     return true
   else
-    puts "End time is ahead of start time!".red
+    puts "End time is ahead of start time!".error
     puts "Please retry!"
     return false  
   end
@@ -390,14 +409,14 @@ end
 # start a job (asks user to stop a running job)
 def startjob s, msg="Starting new job:"
   if !$jobs.last.nil? and $jobs.last.end == 0
-    puts "There is still an open job!".red
+    puts "There is still an open job!".error
     puts $jobs.last
     print "Do you want to close this job first (enter time or nothing to cancel)? "
     while 
       answer = gets.strip
 
       if answer.empty?
-        puts "Canceling job start.".brown
+        puts "Canceling job start.".action
         puts "Running job remains open!"
         exit
       else 
@@ -418,7 +437,7 @@ def startjob s, msg="Starting new job:"
   job = Job.new(s,0,"")
   job.message = enter_message
   if !msg.nil?
-    puts msg.brown 
+    puts msg.action
     puts "    Pos: #{$jobs.size+1}"
     puts job
     puts "Stop it with -e when you're finished" if $options[:verbose]
@@ -428,14 +447,14 @@ end
 
 def canceljob
   if $jobs.empty? or $jobs.last.end != 0
-    puts "There is no open job!".red
+    puts "There is no open job!".error
   else 
     puts $jobs.last
     puts "Cancel this job (y/N)?"
     if gets.strip.casecmp("y") == 0
       $jobs.delete_at($jobs.size-1)
     end
-    puts "Running job canceled".brown
+    puts "Running job canceled".action
   end
 end
 
@@ -444,10 +463,10 @@ def drop pos
   puts $jobs[pos-1]
   print "Do you really want to delete this job (y/N)?"
   if gets.strip.casecmp("y") == 0
-    puts "Deleting job #{pos}".brown
+    puts "Deleting job #{pos}".action
     $jobs.delete_at(pos-1)
   else
-    puts "Deletion canceled.".brown
+    puts "Deletion canceled.".action
     exit
   end
 end
@@ -470,15 +489,15 @@ def join a
   puts "Into this job:"
   puts "    Pos: #{a.first}"
   puts job
-  puts "You are about to add #{job.hours-hours} hours!".red if job.hours > hours
-  puts "You are about to lose #{job.hours-hours} hours!".red if job.hours < hours
+  puts "You are about to add #{job.hours-hours} hours!".warning if job.hours > hours
+  puts "You are about to lose #{job.hours-hours} hours!".warning if job.hours < hours
   print "Do you really want to merge #{a.size} jobs into the above job (y/N)?"
   if gets.strip.casecmp("y") == 0
-    puts "Merge jobs #{a.join(',')}...".brown
+    puts "Merge jobs #{a.join(',')}...".action
     a.drop(1).reverse.each { |i| $jobs.delete_at(i-1) }
     $jobs[a.first-1] = job
   else
-    puts "Join canceled".brown
+    puts "Join canceled".action
   end
 end
 
@@ -501,10 +520,10 @@ def listjobs totals_only=false
     count += 1
     hours += j.hours
   end
-  txt = "Total: #{count} job(s), #{hours.to_s.bold} hrs."
-  txt << " / $#{(hours*$options[:rate].to_f).to_s.bold}" if !$options[:rate].nil?
+  txt = "Total: #{count} job(s), #{hours.to_s.hours} hrs."
+  txt << " / $#{(hours*$options[:rate].to_f).to_s.dollar}" if !$options[:rate].nil?
   puts txt
-  puts "Job running since #{fmthours($jobs.last.hours_exact).green} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
+  puts "Job running since #{fmthours($jobs.last.hours_exact).start} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
 end
 
 # report monthly
@@ -540,7 +559,7 @@ def report
               wday = DateTime.civil(year,month,day).wday
               print "\r" + "\033[1C"*col_width*wday
               if !m[day].nil?
-                print "#{m[day].to_s.rjust(col_width,' ').bold}"
+                print "#{m[day].to_s.rjust(col_width,' ').hours}"
                 hours += a[year][month][day]
                 week_hours += a[year][month][day]
               else 
@@ -562,8 +581,8 @@ def report
     end
   end
   puts
-  print "Total: #{$jobs.size} jobs, #{all_hours.to_s.bold} hrs."
-  print " / $#{(format('%.2f',all_hours*$options[:rate].to_f)).bold}" if $options[:rate]
+  print "Total: #{$jobs.size} jobs, #{all_hours.to_s.hours} hrs."
+  print " / $#{(format('%.2f',all_hours*$options[:rate].to_f)).dollar}" if $options[:rate]
   puts 
 end
 
@@ -582,9 +601,9 @@ if $options[:duration]
     end_time = start_time + $options[:duration].to_f/24
     $options[:end] = true
   elsif !$options[:start] and !$options[:end]
-    puts "You gave a duration but no end or start time!".red
+    puts "You gave a duration but no end or start time!".error
   else
-    puts "You gave a duration but both end and start time!".red
+    puts "You gave a duration but both end and start time!".error
   end
 end
 
@@ -623,7 +642,7 @@ elsif $options[:message]
     puts $jobs.last
     $jobs.last.message += ($jobs.last.message.empty? ? "" : "\n") + enter_message(true,"Please enter a text to append to this message (empty line quits):") 
   else
-    puts "No job running.".red
+    puts "No job running.".error
     print "Would you like to start a new one now (y/N)?"
     startjob DateTime.now if gets.strip.casecmp("y") == 0
   end
