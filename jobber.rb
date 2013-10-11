@@ -537,7 +537,7 @@ def report
     a[j.year][j.month][j.mday] += j.hours
   end
   weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat", "week"]
-  months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
+  months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
   col_width = 8
   line_width = col_width*8
   all_hours = 0
