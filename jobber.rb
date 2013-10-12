@@ -9,6 +9,9 @@ require 'parsedate' if RUBY_VERSION < "1.9"
 
 # provide some ANSI escape sequences into String to colorize output
 class String
+  def is_i?
+    true if self.to_i.to_s == self rescue false
+  end
   def black;          "\033[30m#{self}\033[0m" end
   def red;            "\033[31m#{self}\033[0m" end
   def green;          "\033[32m#{self}\033[0m" end
@@ -52,6 +55,11 @@ optparse = OptionParser.new do |opts|
     $options[:end] = true
     $options[:end_time] = v 
   end
+  opts.on( '-b', '--back [TIME]', 'Back to work copies description from last job to start a new one (at TIME)' ) do |v| 
+    $options[:continue] = true
+    $options[:start] = true
+    $options[:start_time] = v 
+  end
   $options[:cancel] = false
   opts.on( '-c', '--cancel', 'Cancel running job' ) do |v| 
     $options[:cancel] = true
@@ -92,11 +100,11 @@ optparse = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Reporting:"
 
-  opts.on( '-l', '--list [TIME|COUNT]', 'List existing jobs' ) do |v| 
+  opts.on( '-l', '--list [TIME|RANGE|COUNT]', 'List existing jobs' ) do |v| 
     $options[:list] = true
     $options[:list_filter] = v
   end
-  opts.on( '-t', '--total [TIME|COUNT]', 'Measure exisiting jobs' ) do |v| 
+  opts.on( '-t', '--total [TIME|RANGE|COUNT]', 'Measure exisiting jobs' ) do |v| 
     $options[:total] = true
     $options[:list_filter] = v
   end
@@ -273,88 +281,111 @@ class Regexp
   end
 end
 
+# accepted formats
+$reg_reltime1 = /\d{1,2}:\d{1,2}(\+|-)/
+$reg_reltime2 = /\d{1,2}(h|m)(\+|-)/
+$reg_abstime = /\d{1,2}:\d{1,2}/
+$reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
+$reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
+$reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday/
+$reg_date = /#{$reg_dategerman}|#{$reg_dateenglish}|#{$reg_weekday}/
+$reg_datetime = /#{$reg_date},#{$reg_abstime}/
+$reg_timedate = /#{$reg_abstime},#{$reg_date}/
+$reg_now = /now/
+$reg_dateandtime = /#{$reg_datetime}|#{$reg_timedate}|#{$reg_now}/
+$reg_dateandtimeordate = /#{$reg_dateandtime}|#{$reg_date}/
+$reg_daterange = /#{$reg_dateandtimeordate}?-#{$reg_dateandtimeordate}?/
+
+def parsedatetime t
+  print "date and time '#{t}':" if $options[:verbose]
+  a = t.split(',')
+  rt = Time.at(0)
+  rd = DateTime.new
+  a.each do |v| 
+    if $reg_dategerman.check(v)
+      print " german date" if $options[:verbose]
+      b = v.split('.')
+      b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
+      rd = DateTime.new(b[2].to_i,b[1].to_i,b[0].to_i)
+    end
+    if $reg_dateenglish.check(v)
+      print " english date" if $options[:verbose]
+      b = v.split('/')
+      b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
+      rd = DateTime.new(b[2].to_i,b[0].to_i,b[1].to_i)
+    end
+    if $reg_weekday.check(v)
+      print " weekday" if $options[:verbose]
+      rd = DateTime.local(Time.now.year,Time.now.month,Time.now.mday)
+      if v == "yesterday"
+        rd -= 1
+      else
+        w = [ "sun", "mon", "tue", "wed", "thu", "fri", "sat" ]
+        while w[rd.wday] != v
+          rd -= 1
+        end
+      end
+    end
+    if $reg_abstime.check(v)
+      print " abstime" if $options[:verbose]
+      a = v.split(':')
+      rt = Time.at(60*60*a[0].to_i + 60*a[1].to_i)
+    end
+    puts if $options[:verbose]
+  end
+  return DateTime.new(rd.year,rd.month,rd.mday,rt.utc.hour,rt.utc.min)
+end
+ 
+# parse a string into two DateTime objects
+def parserange t
+  print "parse range '#{t}': " if $options[:verbose]
+  if $reg_daterange.check(t)
+    print "date range:" if $options[:verbose]
+    from = DateTime.now
+    to = DateTime.now
+    a = t.split('-')
+    from = parsedatetime(a[0]) if !a[0].nil? and $reg_dateandtimeordate.check(a[0])
+    to = parsedatetime(a[1]) if !a[1].nil? and $reg_dateandtimeordate.check(a[1])
+    to += 1 if $reg_date.check(a[1])
+    return [from,to]
+  elsif $reg_date.check(t)
+    print "day:" if $options[:verbose]
+    return [parsedatetime(t),parsedatetime(t)+1]
+  end
+  return nil
+end
+
 # parses a string to a DateTime
 def parsetime t, allow_date_only=false
-  # accepted formats
-  reg_reltime1 = /\d{1,2}:\d{1,2}(\+|-)/
-  reg_reltime2 = /\d{1,2}(h|m)(\+|-)/
-  reg_reltime = /#{reg_reltime1}|#{reg_reltime2}/
-  reg_abstime = /\d{1,2}:\d{1,2}/
-  reg_time = /#{reg_abstime}|#{reg_reltime}/
-  reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
-  reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
-  reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday/
-  reg_date = /#{reg_dategerman}|#{reg_dateenglish}|#{reg_weekday}/
-  reg_datetime = /#{reg_date},#{reg_abstime}/
-  reg_timedate = /#{reg_abstime},#{reg_date}/
-  reg_now = /now/
-  reg_dateandtime = /#{reg_datetime}|#{reg_timedate}|#{reg_now}/
-
   print "parse time '#{t}': " if $options[:verbose]
-  if reg_now.check(t)
-    puts "now #{t}" if $options[:verbose]
+  if $reg_now.check(t)
+    puts "now" if $options[:verbose]
     return DateTime.now
-  elsif reg_reltime1.check(t)
-    puts "relative time 1 #{t}" if $options[:verbose]
+  elsif $reg_reltime1.check(t)
+    puts "relative time 1" if $options[:verbose]
     a = t.split(':')
     a[1].chomp!("+");
     a[1].chomp!("-");
     return DateTime.now - a[0].to_f/24 - a[1].to_f/24/60 if t.end_with?('-')
     return DateTime.now + a[0].to_f/24 + a[1].to_f/24/60 if t.end_with?('+')
-  elsif reg_reltime2.check(t)
-    puts "relative time 2 #{t}" if $options[:verbose]
+  elsif $reg_reltime2.check(t)
+    puts "relative time 2" if $options[:verbose]
     f = -1 if t.end_with?('-')
     f = 1 if t.end_with?('+')
     t.chomp!("-")
     t.chomp!("+")
     return DateTime.now + f*t.chomp("h").to_f/24 if t.end_with?('h')
     return DateTime.now + f*t.chomp("m").to_f/24/60 if t.end_with?('m')
-  elsif reg_abstime.check(t)
-    puts "absolute time #{t}" if $options[:verbose]
+  elsif $reg_abstime.check(t)
+    puts "absolute time" if $options[:verbose]
     a = t.split(':')
     tim = DateTime.now
     tim -= tim.hour.to_f/24 + tim.min.to_f/24/60
     tim += a[0].to_f/24 + a[1].to_f/24/60 
     tim -= 1 if (tim - DateTime.now) > 0.5 
     return tim
-  elsif reg_dateandtime.check(t) or (allow_date_only and reg_date.check(t))
-    print "date and time:" if $options[:verbose]
-    a = t.split(',')
-    rt = Time.at(0)
-    rd = DateTime.new
-    a.each do |v| 
-      if reg_dategerman.check(v)
-        print " german date" if $options[:verbose]
-        b = v.split('.')
-        b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
-        rd = DateTime.new(b[2].to_i,b[1].to_i,b[0].to_i)
-      end
-      if reg_dateenglish.check(v)
-        print " english date" if $options[:verbose]
-        b = v.split('/')
-        b[2] = DateTime.now.year if b.size < 2 or b[2].nil?
-        rd = DateTime.new(b[2].to_i,b[0].to_i,b[1].to_i)
-      end
-      if reg_weekday.check(v)
-        print " weekday" if $options[:verbose]
-        rd = DateTime.local(Time.now.year,Time.now.month,Time.now.mday)
-        if v == "yesterday"
-          rd -= 1
-        else
-          w = [ "sun", "mon", "tue", "wed", "thu", "fri", "sat" ]
-          while w[rd.wday] != v
-            rd -= 1
-          end
-        end
-      end
-      if reg_abstime.check(v)
-        print " abstime" if $options[:verbose]
-        a = v.split(':')
-        rt = Time.at(60*60*a[0].to_i + 60*a[1].to_i)
-      end
-      puts if $options[:verbose]
-    end
-    return DateTime.new(rd.year,rd.month,rd.mday,rt.utc.hour,rt.utc.min)
+  elsif $reg_dateandtime.check(t) or (allow_date_only and $reg_date.check(t))
+    parsedatetime t
   end
   puts "invalid" if $options[:verbose]
   return nil
@@ -411,6 +442,7 @@ def startjob s, msg="Starting new job:"
   if !$jobs.last.nil? and $jobs.last.end == 0
     puts "There is still an open job!".error
     puts $jobs.last
+    exit if $options[:continue]
     print "Do you want to close this job first (enter time or nothing to cancel)? "
     while 
       answer = gets.strip
@@ -435,7 +467,8 @@ def startjob s, msg="Starting new job:"
     puts $jobs.last
   end
   job = Job.new(s,0,"")
-  job.message = enter_message
+  job.message = $jobs.last.message if $options[:continue]
+  job.message += enter_message if !enter_message.nil?
   if !msg.nil?
     puts msg.action
     puts "    Pos: #{$jobs.size+1}"
@@ -503,15 +536,19 @@ end
 
 # list jobs within list_filter from options
 def listjobs totals_only=false
-  t = parsetime($options[:list_filter],true)
-  n = $options[:list_filter].to_i if t.nil? and !$options[:list_filter].nil?
+  r = parserange $options[:list_filter]
+  t = parsetime($options[:list_filter],true) if r.nil?
+  n = $options[:list_filter].to_i if t.nil? and $options[:list_filter].is_i? if !$options[:list_filter].nil?
   puts "Listing jobs since #{t}:" if !t.nil? and $options[:verbose]
+  puts "Listing jobs between #{r[0]} and #{r[1]}:" if !r.nil? and $options[:verbose]
+  puts "Listing jobs from #{n} till now:" if !n.nil? and $options[:verbose]
   pos = 0
   count = 0
   hours = 0
   $jobs.each do |j| 
     pos += 1
     next if !t.nil? and j.start < t
+    next if !r.nil? and (j.end <= r[0] or j.start >= r[1])
     next if !n.nil? and pos <= $jobs.size-n
     if !totals_only 
       puts "    Pos: #{pos}"
@@ -629,6 +666,7 @@ join $options[:join].collect{|c| c.to_i} if $options[:join]
 drop $options[:drop].to_i if $options[:drop]
 listjobs if $options[:list]
 listjobs true if $options[:total]
+ 
 if $options[:start] and $options[:end]
   startjob start_time, nil 
   endjob end_time, "Adding Job:" 
@@ -655,7 +693,4 @@ File.open($options[:filename],"w+") do |f|
     f.puts j.pack
   end
 end
-
-
-
 
