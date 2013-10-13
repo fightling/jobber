@@ -604,7 +604,9 @@ def report
                 hours += a[year][month][day]
                 chart[day] += a[year][month][day]
                 week_hours += a[year][month][day]
-              else 
+              elsif DateTime.civil(year,month,day) > DateTime.now
+                print " ".rjust(col_width)
+              else
                 print "-".rjust(col_width)
               end
               if wday == 6
