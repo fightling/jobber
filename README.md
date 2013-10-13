@@ -19,17 +19,22 @@ Start tracking now:
     $ jobber -s
     Starting new job:
         Pos: 1
-      Start: Tue Oct 08 2013, 07:51
+      Start: Sun Oct 13 2013, 07:59
 
 Start tracking at specific time in past:
     
     $ jobber -s 12:00
     Starting new job:
         Pos: 1
-      Start: Tue Oct 08 2013, 12:00
+      Start: Tue Oct 13 2013, 12:00
 
 *The absolute time is interpreted as like it is within +/-12 hours. 
- So if it's currently 8:00h, 21:00 will be yesterday. 17:00 would be in future.*
+ So if it's currently 8:00h, so 21:00 will be understand as yesterday. 
+ 17:00 would be more than 12 hours in future.*
+
+Ending a started job:
+
+You can stop a running job now by simply using the option *-e* without giving any time information. 
 
 Start tracking at absolute date and time:
     
