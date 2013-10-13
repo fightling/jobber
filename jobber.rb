@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# encoding: UTF-8
 
 require 'fileutils'
 require 'optparse'
@@ -586,11 +587,14 @@ def report
           hours = 0
           puts
           puts "#{month}/#{year}".center(line_width)
-          weekdays.each { |v| print v.rjust(col_width) }
+          print weekdays[0].rjust(col_width).bold
+          weekdays.drop(1).each { |v| print v.rjust(col_width) }
           puts
           m = a[year][month]
           m.fill(nil,m.size..31) 
           wday = 0
+          chart=[]
+          chart.fill(0,0..31)
           m.each_index do |day|
             if DateTime.valid_civil?(year,month,day)
               wday = DateTime.civil(year,month,day).wday
@@ -598,6 +602,7 @@ def report
               if !m[day].nil?
                 print "#{m[day].to_s.rjust(col_width,' ').hours}"
                 hours += a[year][month][day]
+                chart[day] += a[year][month][day]
                 week_hours += a[year][month][day]
               else 
                 print "-".rjust(col_width)
@@ -606,9 +611,27 @@ def report
                 puts week_hours.to_s.rjust(col_width)
                 week_hours = 0
               end
+            else
+              chart[day] = nil
             end
           end
           puts if wday != 6
+          chart.each_index do |day|
+            d = chart[day]
+            if d.nil? 
+              txt = "  "
+            elsif d == 0
+              txt = " ."
+            else
+              txt = d.round.to_s.rjust(2) 
+            end
+            if DateTime.valid_civil?(year,month,day)
+              wday = DateTime.civil(year,month,day).wday
+              txt = txt.bold if wday == 0
+            end
+            print txt
+          end
+          puts
           txt = "#{months[month]} #{year}: #{hours} hrs."
           txt += " / $#{format('%.2f',hours*$options[:rate].to_f)}" if $options[:rate]
           puts txt.center(line_width)
