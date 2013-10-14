@@ -88,17 +88,6 @@ optparse = OptionParser.new do |opts|
   end
 
   opts.separator ""
-  opts.separator "Data types:"
-  opts.separator "    " + "Start times".start + " to differ them from "+ "End times".end + "."
-  opts.separator "    " + "Job messages".message + " show what you do."
-
-  opts.separator ""
-  opts.separator "Message types:"
-  opts.separator "    " + "Action messages".action + " mark the beginning of data base modifications."
-  opts.separator "    " + "Warning messages".warning + " warn you of exceptional results."
-  opts.separator "    " + "Error messages".error + " mark failed actions."
-
-  opts.separator ""
   opts.separator "Reporting:"
 
   opts.on( '-l', '--list [TIME|RANGE|COUNT]', 'List existing jobs' ) do |v| 
@@ -139,7 +128,7 @@ optparse = OptionParser.new do |opts|
     puts "jobber - work time tracker version 0.1\n(see http://github.com/patgithub/jobber for more information)"
     exit
   end
-  opts.on_tail( '-h', '--help', 'Display this screen' ) do
+  opts.on_tail( '-h', '--help', 'Display this screen (for more information see man page)' ) do
     puts opts
     exit
   end
