@@ -495,8 +495,8 @@ def startjob s, msg="Starting new job:"
       end
     end
   end
-  intersects = []
   if !$jobs.empty?
+    intersects = []
     $jobs.each do |j|
       intersects << j if j.intersect s
     end
