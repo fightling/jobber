@@ -222,7 +222,7 @@ class Job
     s << "  Start: #{@start.to_h.start}\n"
     if finished?
       s << "    End: #{@end.to_h.end}\n" 
-      s << "  Hours: #{hours}\n" 
+      s << "  Hours: #{hours} #{"+"*hours}\n" 
       s << "  Costs: #{hours*$options[:rate]}\n" if $options[:rate]
     end
     if !@tags.empty?
@@ -311,7 +311,7 @@ $reg_dateandtimeordate = /#{$reg_dateandtime}|#{$reg_date}/
 $reg_daterange = /#{$reg_dateandtimeordate}?-#{$reg_dateandtimeordate}?/
 
 def parsedatetime t
-  print "date and time '#{t}':" if $options[:verbose]
+  print "date and time =>" if $options[:verbose]
   a = t.split(',')
   rt = Time.at(0)
   rd = DateTime.new
@@ -345,9 +345,11 @@ def parsedatetime t
       a = v.split(':')
       rt = Time.at(60*60*a[0].to_i + 60*a[1].to_i)
     end
-    puts if $options[:verbose]
+    print ", " if $options[:verbose]
   end
-  return DateTime.new(rd.year,rd.month,rd.mday,rt.utc.hour,rt.utc.min)
+  dt = DateTime.new(rd.year,rd.month,rd.mday,rt.utc.hour,rt.utc.min)
+  puts " (#{dt})\n"
+  return dt
 end
  
 # parse a string into two DateTime objects
@@ -371,7 +373,7 @@ end
 
 # parses a string to a DateTime
 def parsetime t, allow_date_only=false
-  print "parse time '#{t}': " if $options[:verbose]
+  print "parsetime: '#{t}' = " if $options[:verbose]
   if $reg_now.check(t)
     puts "now" if $options[:verbose]
     return DateTime.now
@@ -399,7 +401,7 @@ def parsetime t, allow_date_only=false
     tim -= 1 if (tim - DateTime.now) > 0.5 
     return tim
   elsif $reg_dateandtime.check(t) or (allow_date_only and $reg_date.check(t))
-    parsedatetime t
+    return parsedatetime t
   end
   puts "invalid" if $options[:verbose]
   return nil
@@ -689,7 +691,7 @@ start_time = DateTime.now
 end_time = DateTime.now
 
 # read console parameters
-start_time = parsetime($options[:start_time]) if $options[:start_time]
+start_time = parsetime($options[:start_time]) 
 end_time = parsetime($options[:end_time]) if $options[:end_time]
 if $options[:duration]
   if !$options[:start] and  $options[:end]
