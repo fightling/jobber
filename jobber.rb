@@ -4,6 +4,7 @@
 require 'fileutils'
 require 'optparse'
 require 'time'
+require 'set'
 
 require 'datetime' if RUBY_VERSION < "1.9"
 require 'parsedate' if RUBY_VERSION < "1.9"
@@ -39,6 +40,19 @@ class String
   alias_method :message, :bold
   alias_method :dollar, :bold
   alias_method :hours, :bold
+  def color t
+    n = $tags.to_a.index t
+    c = [ 
+      cyan.reverse_color, 
+      magenta.reverse_color, 
+      brown.reverse_color, 
+      blue.reverse_color, 
+      green.reverse_color, 
+      red.reverse_color, 
+      gray.reverse_color 
+    ]
+    return c[n % c.size]
+  end
 end
 
 # parse options
@@ -72,6 +86,11 @@ optparse = OptionParser.new do |opts|
     $options[:message] = true
     $options[:message_text] = v
   end
+  opts.on( '-t', '--tag [TAG,...]', 'Add message to job' ) do |v| 
+    $options[:tag] = true
+    $options[:tags] = v
+  end
+
 
   opts.separator ""
   opts.separator "Job editing:"
@@ -94,7 +113,7 @@ optparse = OptionParser.new do |opts|
     $options[:list] = true
     $options[:list_filter] = v
   end
-  opts.on( '-t', '--total [TIME|RANGE|COUNT]', 'Measure exisiting jobs' ) do |v| 
+  opts.on( '-L', '--total [TIME|RANGE|COUNT]', 'Measure exisiting jobs' ) do |v| 
     $options[:total] = true
     $options[:list_filter] = v
   end
@@ -140,6 +159,8 @@ optparse = OptionParser.new do |opts|
 end
 optparse.parse!
 
+$modified = false
+
 # add a "humanized" output format to DateTime
 class DateTime
   def to_h
@@ -159,11 +180,13 @@ end
 class Job
   attr_reader :start, :end
   attr_accessor :message
+  attr_accessor :tags 
   # from scratch
-  def initialize s=0, e=0, d=""
+  def initialize s=0, e=0, d="", t=[]
     @start = s
     @end = e 
     @message = d
+    @tags = t
   end
   # compare start times
   def <=> other
@@ -182,11 +205,16 @@ class Job
       v.chomp!('"')
       v.reverse!
     end
-    return Job.new(DateTime.parse(a[0]),(a[1] == '0')?0:DateTime.parse(a[1]),a[2].gsub(/\\n/,"\n"))
+    return Job.new(DateTime.parse(a[0]),(a[1] == '0')?0:DateTime.parse(a[1]),a[2].gsub(/\\n/,"\n"),a[3].split(','))
   end
   # pack CSV line
   def pack
-    return ["\"#{@start}\"", "\"#{@end}\"", @message.nil? ? "\"\"" : "\"#{@message.gsub(/\n/,'\\n')}\""].join(";")
+    return [
+      "\"#{@start}\"", 
+      "\"#{@end}\"", 
+      @message.nil? ? "\"\"" : "\"#{@message.gsub(/\n/,'\\n')}\"",
+      "\"#{@tags.join(",")}\""
+      ].join(";")
   end
   # humanized version of data
   def to_s
@@ -196,6 +224,9 @@ class Job
       s << "    End: #{@end.to_h.end}\n" 
       s << "  Hours: #{hours}\n" 
       s << "  Costs: #{hours*$options[:rate]}\n" if $options[:rate]
+    end
+    if !@tags.empty?
+      s << "   Tags: #{colored_tags.join(',')}\n"
     end
     first = true
     if !@message.nil? and !message.empty?
@@ -208,6 +239,9 @@ class Job
     end
     s << "\n"
     return s
+  end
+  def colored_tags
+    @tags.collect { |t| t.color(t) }
   end
   # check if job timspan is valid
   def self.check(s,e)
@@ -391,7 +425,19 @@ def enter_message force=false, msg="Please enter a message (empty line quits):"
   end
 end
 
-# format hours
+# enter tags or take them from program options
+def enter_tags force=false, msg="Please enter tags (comma separated):"
+  if force or $options[:tag]
+    if $options[:tags].nil?
+      puts msg
+      return gets.strip.split(",")
+    else
+      return $options[:tags].to_s.split(",")
+    end
+  end
+end
+
+## format hours
 def fmthours h
   return h.to_i.to_s + ":" + ((h - h.to_i)*60).round.to_s.rjust(2,'0')
 end
@@ -409,6 +455,7 @@ def endjob e, msg="Ending job:"
     $jobs.last.end = e
     puts "    Pos: #{$jobs.size}"
     puts $jobs.last
+    $modified = true
     return true
   else
     puts "End time is ahead of start time!".error
@@ -449,6 +496,7 @@ def startjob s, msg="Starting new job:"
   job = Job.new(s,0,"")
   job.message = $jobs.last.message if $options[:continue]
   job.message += enter_message if !enter_message.nil?
+  job.tags += enter_tags if !enter_tags.nil? 
   if !msg.nil?
     puts msg.action
     puts "    Pos: #{$jobs.size+1}"
@@ -456,6 +504,7 @@ def startjob s, msg="Starting new job:"
     puts "Stop it with -e when you're finished" if $options[:verbose]
   end
   $jobs << job
+  $modified = true
 end
 
 def canceljob
@@ -466,6 +515,7 @@ def canceljob
     puts "Cancel this job (y/N)?"
     if gets.strip.casecmp("y") == 0
       $jobs.delete_at($jobs.size-1)
+      $modified = true
     end
     puts "Running job canceled".action
   end
@@ -509,6 +559,7 @@ def join a
     puts "Merge jobs #{a.join(',')}...".action
     a.drop(1).reverse.each { |i| $jobs.delete_at(i-1) }
     $jobs[a.first-1] = job
+    $modified = true
   else
     puts "Join canceled".action
   end
@@ -627,6 +678,12 @@ def report
   puts 
 end
 
+def readtags
+  tags = Set.new
+  $jobs.each { |j| j.tags.each { |t| tags.add(t) } }
+  return tags
+end
+
 # accept reality
 start_time = DateTime.now 
 end_time = DateTime.now
@@ -664,6 +721,8 @@ if File.exist?($options[:filename])
   puts "read #{$jobs.size} jobs" if $options[:verbose]
 end
 
+$tags = readtags
+
 # run commands
 canceljob if $options[:cancel]
 join $options[:join].collect{|c| c.to_i} if $options[:join]
@@ -678,23 +737,35 @@ elsif $options[:start]
   startjob start_time
 elsif $options[:end]
   endjob end_time 
-elsif $options[:message]
-  if !$jobs.empty? and !$jobs.last.finished?
-    puts "Appending message to running job:" if $options[:verbose]
-    puts $jobs.last
-    $jobs.last.message += ($jobs.last.message.empty? ? "" : "\n") + enter_message(true,"Please enter a text to append to this message (empty line quits):") 
-  else
+elsif $options[:message] or $options[:tag]
+  if $jobs.empty? or $jobs.last.finished?
     puts "No job running.".error
     print "Would you like to start a new one now (y/N)?"
     startjob DateTime.now if gets.strip.casecmp("y") == 0
+  else
+    if $options[:message]
+      puts "Appending message to running job:" if $options[:verbose]
+      puts $jobs.last
+      $jobs.last.message += ($jobs.last.message.empty? ? "" : "\n") + enter_message(true,"Please enter a text to append to this message (empty line quits):") 
+      $modified = true
+    end
+    if $options[:tag]
+      puts "Appending tags to running job:" if $options[:verbose]
+      puts $jobs.last
+      $jobs.last.tags.concat(enter_tags(true,"Please enter tags to append to this message (comma separated):"))
+      $modified = true
+    end
   end
 end
 report if $options[:report]
 
-# save jobs back into file
-File.open($options[:filename],"w+") do |f|
-  $jobs.each do |j|
-    f.puts j.pack
+if $modified
+  print "Writing data base..."
+  # save jobs back into file
+  File.open($options[:filename],"w+") do |f|
+    $jobs.each do |j|
+      f.puts j.pack
+    end
   end
+  puts " ok."
 end
-

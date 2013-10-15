@@ -26,7 +26,10 @@ Cancel the running job and delete it from data base.
 Defines the end time if you gave a starting time with \fI-s\fR and the start time if you gave an ending time with \fI-e\fR.
 
 .IP "\fB-m\fR, \fB--message\fR [\fIMESSAGE\fR]"
-Add a message to the starting, ending or running job. Asks for \fIMESSAGE\fR if not given by parameter.
+Add a \fIMESSAGE\fR to the starting, ending or running job. Asks for \fIMESSAGE\fR if not given by parameter.
+
+.IP "\fB-t\fR, \fB--tag\fR [\fITAGS\fR]"
+Add one or more comma separated fITAGS\fR to the starting, ending or running job. Asks for \fITAGS\fR if not given by parameter.
 
 .SS "Parameter Formats:"
 
@@ -79,11 +82,11 @@ from big bang until TIME
 
 .SS Job manipulation:
 
-.IP "\fB-j\fR, \fB--join\fR \fIPOS1\fR,\fIPOS2\fR,..."
-Join two or more jobs at the given positions.
+.IP "\fB-j\fR, \fB--join\fR \fIPOSITIONS\fR"
+Join two or more jobs at the given comma separated \fIPOSITIONS\fR.
 
 .IP "\fB-D\fR, \fB--drop\fR \fIPOS\fR"
-Drop job at the given position.
+Delete job at the given position.
 
 .SS Colors:
 .TP 15
@@ -110,7 +113,7 @@ Error messages mark failed actions.
 .IP "\fB-l\fR, \fB--list\fR [\fITIME\fR|\fIRANGE\fR|\fICOUNT\fR]"
 List all jobs or all jobs since \fITIME\fr, within \fIRANGE\fR or the last \fICOUNT\fR jobs.
  
-.IP "\fB-t\fR, \fB--total\fR [\fITIME\fR|\fIRANGE\fR|\fICOUNT\fR]"
+.IP "\fB-L\fR, \fB--total\fR [\fITIME\fR|\fIRANGE\fR|\fICOUNT\fR]"
 Measure totals of all jobs or all jobs since \fITIME\fr, within \fIRANGE\fR or the last \fICOUNT\fR jobs.
 
 .IP "\fB-r\fR, \fB--report\fR"
