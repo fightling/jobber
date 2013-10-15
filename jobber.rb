@@ -113,6 +113,9 @@ optparse = OptionParser.new do |opts|
     $options[:list] = true
     $options[:list_filter] = v
   end
+  opts.on( 'O', '--reverse', 'list in reverse order' ) do 
+    $options[:reverse] = true
+  end
   opts.on( '-L', '--total [TIME|RANGE|COUNT]', 'Measure exisiting jobs' ) do |v| 
     $options[:total] = true
     $options[:list_filter] = v
@@ -591,7 +594,9 @@ def listjobs totals_only=false
   pos = 0
   count = 0
   hours = 0
-  $jobs.each do |j| 
+  jobs = $jobs
+  jobs = $jobs.reverse if $options[:reverse]
+  jobs.each do |j| 
     pos += 1
     next if !t.nil? and j.start < t
     next if !r.nil? and (j.end <= r[0] or j.start >= r[1])
