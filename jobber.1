@@ -10,24 +10,23 @@ Jobber is a console tool which might help you to track your work time.
 
 .SS "Job Creation:"
 
-\fB-s\fR, \fB--start\fR [\fITIME\fR]
-        Start work now or at the given \fITIME\fR. If you add \fB-m\fR you will explicitly be asked for a message to add.
+.IP "\fB-s\fR, \fB--start\fR [\fITIME\fR]"
+Start work now or at the given \fITIME\fR. If you add \fB-m\fR you will explicitly be asked for a message to add.
 
-\fB-e\fR, \fB--end\fR [\fITIME\fR]
-        End work now or at the given \fITIME\fR. You will be asked to enter a message if none was given before for that job. 
+.IP "\fB-e\fR, \fB--end\fR [\fITIME\fR]"
+End work now or at the given \fITIME\fR. You will be asked to enter a message if none was given before for that job. 
 
-\fB-b\fR, \fB--back\fR [\fITIME\fR]
-        "Back to work" (now or at \fITIME\fR)copies message from last closed job and start a new one with that message.
+.IP "\fB-b\fR, \fB--back\fR [\fITIME\fR]"
+"Back to work" (now or at \fITIME\fR)copies message from last closed job and start a new one with that message.
 
-\fB-c\fR, \fB--cancel\fR
-        Cancel the running job and delete it from data base.
+.IP "\fB-c\fR, \fB--cancel\fR"
+Cancel the running job and delete it from data base.
 
-\fB-d\fR, \fB--duration\fR \fIHOURS\fR
-        Defines the end time if you gave a starting time with \fI-s\fR and
-        the start time if you gave an ending time with \fI-e\fR.
+.IP "\fB-d\fR, \fB--duration\fR \fIHOURS\fR"
+Defines the end time if you gave a starting time with \fI-s\fR and the start time if you gave an ending time with \fI-e\fR.
 
-\fB-m\fR, \fB--message\fR [\fIMESSAGE\fR]
-        Add a message to the starting, ending or running job. Asks for \fIMESSAGE\fR if not given by parameter.
+.IP "\fB-m\fR, \fB--message\fR [\fIMESSAGE\fR]"
+Add a message to the starting, ending or running job. Asks for \fIMESSAGE\fR if not given by parameter.
 
 .SS "Parameter Formats:"
 
@@ -80,11 +79,11 @@ from big bang until TIME
 
 .SS Job manipulation:
 
-\fB-j\fR, \fB--join\fR \fIPOS1\fR,\fIPOS2\fR,...
-        Join two or more jobs at the given positions. 
+.IP "\fB-j\fR, \fB--join\fR \fIPOS1\fR,\fIPOS2\fR,..."
+Join two or more jobs at the given positions.
 
-\fB-D\fR, \fB--drop\fR \fIPOS\fR
-        Drop job at the given position.
+.IP "\fB-D\fR, \fB--drop\fR \fIPOS\fR"
+Drop job at the given position.
 
 .SS Colors:
 .TP 15
@@ -108,34 +107,33 @@ Error messages mark failed actions.
 
 .SS Reporting:
 
-\fB-l\fR, \fB--list\fR [\fITIME\fR|\fIRANGE\fR|\fICOUNT\fR]
-        List all jobs or all jobs since \fITIME\fr, within \fIRANGE\fR or the last \fICOUNT\fR jobs.
+.IP "\fB-l\fR, \fB--list\fR [\fITIME\fR|\fIRANGE\fR|\fICOUNT\fR]"
+List all jobs or all jobs since \fITIME\fr, within \fIRANGE\fR or the last \fICOUNT\fR jobs.
  
-\fB-t\fR, \fB--total\fR [\fITIME\fR|\fIRANGE\fR|\fICOUNT\fR]
-        Measure totals of all jobs or all jobs since \fITIME\fr, within \fIRANGE\fR or the last \fICOUNT\fR jobs.
+.IP "\fB-t\fR, \fB--total\fR [\fITIME\fR|\fIRANGE\fR|\fICOUNT\fR]"
+Measure totals of all jobs or all jobs since \fITIME\fr, within \fIRANGE\fR or the last \fICOUNT\fR jobs.
 
-\fB-r\fR, \fB--report\fR
-        Monthly report existing jobs.
+.IP "\fB-r\fR, \fB--report\fR"
+Monthly report existing jobs.
 
-\fB-R\fR, \fB--resolution\fR [\fIRESOLUTION\fR]
-        Time resolution to round work times (default: 0.25).
+.IP "\fB-R\fR, \fB--resolution\fR [\fIRESOLUTION\fR]"
+Time resolution to round work times (default: 0.25).
 
-\fB-M\fR, \fB--money\fR [\fIRATE\fR]
-        Display hours*\fIRATE\fR in report and list. 
+.IP "\fB-M\fR, \fB--money\fR [\fIRATE\fR]"
+Display hours*\fIRATE\fR in report and list. 
 
 .SS "Data base configuration:"
 
-\fB-f\fR, \fB--file\fR \fIFILENAME\fR
-        Data base file to use (default: ./jobber.dat)
+.IP "\fB-f\fR, \fB--file\fR \fIFILENAME\fR"
+Data base file to use (default: ./jobber.dat)
 
 .SS "Common options:"
 
-\fB-v\fR, \fB--verbose\fR
-        Output more information
+.IP "\fB-v\fR, \fB--verbose\fR"
+Output more information
 
-\fB-h\fR, \fB--help\fR
-        Display this screen
-
+.IP "\fB-h\fR, \fB--help\fR"
+Display this screen
 
 .SH COPYRIGHT
   Free to copy. See http://github.com/patgithub/jobber for source code
