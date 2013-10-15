@@ -193,8 +193,12 @@ class Job
     return @start <=> other.start
   end
   # intersect with timespan of another job
-  def intersect other 
-    return (@start..@end) & (other.start..other.end)
+  def intersect other
+    if other.is_a? DateTime
+      return (@start..@end) & (other..other)
+    else
+      return (@start..@end) & (other.start..other.end)
+    end
   end
   # create from quoted values in CSV line
   def self.from_s line
@@ -348,7 +352,8 @@ def parsedatetime t
     print ", " if $options[:verbose]
   end
   dt = DateTime.new(rd.year,rd.month,rd.mday,rt.utc.hour,rt.utc.min)
-  puts " (#{dt})\n"
+  puts " (#{dt})\n" if $options[:verbose]
+
   return dt
 end
  
@@ -489,11 +494,19 @@ def startjob s, msg="Starting new job:"
         end
       end
     end
-  end 
-  if !$jobs.empty? and s < $jobs.last.end
-    puts "New job intersects with:".warning
-    puts "    Pos: #{$jobs.size}"
-    puts $jobs.last
+  end
+  intersects = []
+  if !$jobs.empty?
+    $jobs.each do |j|
+      intersects << j if j.intersect s
+    end
+    if !intersects.empty?
+      puts "New job would intersect with:".warning
+      intersects.each do |i|
+        puts "    Pos: #{$jobs.size}"
+        puts $jobs.last
+      end
+    end
   end
   job = Job.new(s,0,"")
   job.message = $jobs.last.message if $options[:continue]
