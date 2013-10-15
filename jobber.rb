@@ -205,7 +205,7 @@ class Job
       v.chomp!('"')
       v.reverse!
     end
-    return Job.new(DateTime.parse(a[0]),(a[1] == '0')?0:DateTime.parse(a[1]),a[2].gsub(/\\n/,"\n"),a[3].split(','))
+    return Job.new(DateTime.parse(a[0]),(a[1] == '0')?0:DateTime.parse(a[1]),a[2].gsub(/\\n/,"\n"),(a.size < 4) ? [] : a[3].split(','))
   end
   # pack CSV line
   def pack
