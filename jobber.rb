@@ -500,14 +500,14 @@ def startjob s, msg="Starting new job:"
   end
   if !$jobs.empty?
     intersects = []
-    $jobs.each_index do |j|
-      intersects << $jobs[j] if j.intersect s
+    $jobs.each_index do |i|
+      intersects << i if $jobs[i].intersect s
     end
     if !intersects.empty?
       puts "New job would intersect with:".warning
       intersects.each do |i|
-        puts "    Pos: #{}"
-        puts $jobs.last
+        puts "    Pos: #{i}"
+        puts $jobs[i]
       end
     end
   end
