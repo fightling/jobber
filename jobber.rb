@@ -500,13 +500,13 @@ def startjob s, msg="Starting new job:"
   end
   if !$jobs.empty?
     intersects = []
-    $jobs.each do |j|
-      intersects << j if j.intersect s
+    $jobs.each_index do |j|
+      intersects << $jobs[j] if j.intersect s
     end
     if !intersects.empty?
       puts "New job would intersect with:".warning
       intersects.each do |i|
-        puts "    Pos: #{$jobs.size}"
+        puts "    Pos: #{}"
         puts $jobs.last
       end
     end
@@ -592,12 +592,17 @@ def listjobs totals_only=false
   puts "Listing jobs between #{r[0]} and #{r[1]}:" if !r.nil? and $options[:verbose]
   puts "Listing jobs from #{n} till now:" if !n.nil? and $options[:verbose]
   pos = 0
+  step = 1
   count = 0
   hours = 0
   jobs = $jobs
-  jobs = $jobs.reverse if $options[:reverse]
+  if $options[:reverse]
+    jobs = $jobs.reverse 
+    step = -1
+    pos = jobs.size+1
+  end
   jobs.each do |j| 
-    pos += 1
+    pos += step
     next if !t.nil? and j.start < t
     next if !r.nil? and (j.end <= r[0] or j.start >= r[1])
     next if !n.nil? and pos <= $jobs.size-n
@@ -783,7 +788,7 @@ if $modified
   print "Writing data base..."
   # save jobs back into file
   File.open($options[:filename],"w+") do |f|
-    $jobs.each do |j|
+    $jobs.sort.each do |j|
       f.puts j.pack
     end
   end
