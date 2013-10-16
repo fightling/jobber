@@ -229,6 +229,8 @@ class Job
     s << "  Start: #{@start.to_h.start}\n"
     if finished?
       s << "    End: #{@end.to_h.end}\n" 
+    end
+    if hours > 0
       s << "  Hours: #{hours} #{"+"*hours}\n" 
       s << "  Costs: #{hours*$options[:rate]}\n" if $options[:rate]
     end
@@ -500,9 +502,7 @@ def startjob s, msg="Starting new job:"
   end
   if !$jobs.empty?
     intersects = []
-    $jobs.each_index do |i|
-      intersects << i if $jobs[i].intersect s
-    end
+    $jobs.each_index { |i| intersects << i if $jobs[i].intersect s }
     if !intersects.empty?
       puts "New job would intersect with:".warning
       intersects.each do |i|
@@ -714,7 +714,7 @@ start_time = DateTime.now
 end_time = DateTime.now
 
 # read console parameters
-start_time = parsetime($options[:start_time]) 
+start_time = parsetime($options[:start_time]) if $options[:start_time]
 end_time = parsetime($options[:end_time]) if $options[:end_time]
 if $options[:duration]
   if !$options[:start] and  $options[:end]
@@ -747,6 +747,8 @@ if File.exist?($options[:filename])
 end
 
 $tags = readtags
+
+$options[:tags].split(",").each { |t| $tags.add(t) } if !$options[:tags].nil?
 
 # run commands
 canceljob if $options[:cancel]
