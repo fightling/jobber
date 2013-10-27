@@ -772,14 +772,14 @@ elsif $options[:message] or $options[:tag]
   else
     if $options[:message]
       puts "Appending message to running job:" if $options[:verbose]
-      puts $jobs.last
       $jobs.last.message += ($jobs.last.message.empty? ? "" : "\n") + enter_message(true,"Please enter a text to append to this message (empty line quits):") 
+      puts $jobs.last
       $modified = true
     end
     if $options[:tag]
       puts "Appending tags to running job:" if $options[:verbose]
-      puts $jobs.last
       $jobs.last.tags.concat(enter_tags(true,"Please enter tags to append to this message (comma separated):"))
+      puts $jobs.last
       $modified = true
     end
   end
