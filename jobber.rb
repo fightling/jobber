@@ -306,7 +306,7 @@ end
 
 # accepted formats
 $reg_reltime1 = /\d{1,2}:\d{1,2}(\+|-)/
-$reg_reltime2 = /\d{1,2}(h|m)(\+|-)/
+$reg_reltime2 = /\d.\d(h|m)(\+|-)/
 $reg_abstime = /\d{1,2}:\d{1,2}/
 $reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
 $reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
@@ -502,6 +502,7 @@ def startjob s, msg="Starting new job:"
   end
   if !$jobs.empty?
     intersects = []
+    puts s
     $jobs.each_index { |i| intersects << i if $jobs[i].intersect s }
     if !intersects.empty?
       puts "New job would intersect with:".warning
