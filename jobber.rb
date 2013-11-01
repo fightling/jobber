@@ -310,7 +310,7 @@ $reg_reltime2 = /\d+(.\d+)?(h|m)(\+|-)/
 $reg_abstime = /\d{1,2}:\d{1,2}/
 $reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
 $reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
-$reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday/
+$reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday|today/
 $reg_date = /#{$reg_dategerman}|#{$reg_dateenglish}|#{$reg_weekday}/
 $reg_datetime = /#{$reg_date},#{$reg_abstime}/
 $reg_timedate = /#{$reg_abstime},#{$reg_date}/
@@ -339,10 +339,10 @@ def parsedatetime t
     end
     if $reg_weekday.check(v)
       print " weekday" if $options[:verbose]
-      rd = DateTime.local(Time.now.year,Time.now.month,Time.now.mday)
+      rd = DateTime.civil(Time.now.year,Time.now.month,Time.now.mday)
       if v == "yesterday"
         rd -= 1
-      else
+      elsif v != "today"
         w = [ "sun", "mon", "tue", "wed", "thu", "fri", "sat" ]
         while w[rd.wday] != v
           rd -= 1
@@ -709,31 +709,6 @@ def readtags
   return tags
 end
 
-# accept reality
-start_time = DateTime.now 
-end_time = DateTime.now
-
-# read console parameters
-start_time = parsetime($options[:start_time]) if $options[:start_time]
-end_time = parsetime($options[:end_time]) if $options[:end_time]
-if $options[:duration]
-  if !$options[:start] and  $options[:end]
-    start_time = end_time - $options[:duration].to_f/24
-    $options[:start] = true
-  elsif !$options[:end] and $options[:start]
-    end_time = start_time + $options[:duration].to_f/24
-    $options[:end] = true
-  elsif !$options[:start] and !$options[:end]
-    puts "You gave a duration but no end or start time!".error
-  else
-    puts "You gave a duration but both end and start time!".error
-  end
-end
-
-# check for duration parameter
-end_time = start_time + $options[:duration].to_i/24  and 
-end_time = start_time + $options[:duration].to_i/24 if $options[:time]
-
 # load exisiting jobs from file
 $jobs = []
 if File.exist?($options[:filename])
@@ -745,6 +720,35 @@ if File.exist?($options[:filename])
   end
   puts "read #{$jobs.size} jobs" if $options[:verbose]
 end
+
+# accept reality
+start_time = DateTime.now 
+end_time = DateTime.now
+
+# read console parameters
+start_time = parsetime($options[:start_time]) if $options[:start_time]
+end_time = parsetime($options[:end_time]) if $options[:end_time]
+if $options[:duration]
+  duration = $options[:duration].to_f/24
+  if !$options[:start] and  $options[:end]
+    start_time = end_time - duration
+    $options[:start] = true
+  elsif !$options[:end] and $options[:start]
+    end_time = start_time + duration
+    $options[:end] = true
+  elsif !$jobs.last.finished?
+    end_time = $jobs.last.start + duration 
+    $options[:end] = true
+  elsif !$options[:start] and !$options[:end]
+    puts "You gave a duration but no end or start time!".error
+  else
+    puts "You gave a duration but both end and start time!".error
+  end
+end
+
+# check for duration parameter
+end_time = start_time + $options[:duration].to_i/24  and 
+end_time = start_time + $options[:duration].to_i/24 if $options[:time]
 
 $tags = readtags
 
