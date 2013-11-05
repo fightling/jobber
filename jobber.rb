@@ -747,7 +747,6 @@ if $options[:duration]
 end
 
 # check for duration parameter
-end_time = start_time + $options[:duration].to_i/24  and 
 end_time = start_time + $options[:duration].to_i/24 if $options[:time]
 
 $tags = readtags
