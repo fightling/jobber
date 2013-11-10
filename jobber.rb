@@ -53,6 +53,16 @@ class String
     ]
     return c[n % c.size]
   end
+  def length
+    self.gsub(/\033\[\d+m/,"").size
+  end
+  def center x 
+    if x > length
+      " " * ((x-length)/2) + self + " " * ((x-length+1)/2)
+    else
+      self
+    end
+  end
 end
 
 # parse options
@@ -249,7 +259,7 @@ class Job
     s << "\n"
     return s
   end
-  def colored_tags
+  def colored_tags 
     @tags.collect { |t| t.color(t) }
   end
   # check if job timspan is valid
@@ -619,15 +629,22 @@ def listjobs totals_only=false
   puts "Job running since #{fmthours($jobs.last.hours_exact).start} hour(s)!" if !$jobs.empty? and !$jobs.last.finished?
 end
 
+class DayJob
+end
 # report monthly
 def report
   puts
   a = []
+  t = []
   $jobs.each do |j|
     a[j.year] = [] if a[j.year].nil?
     a[j.year][j.month] = [] if a[j.year][j.month].nil?
     a[j.year][j.month][j.mday] = 0 if a[j.year][j.month][j.mday].nil?
     a[j.year][j.month][j.mday] += j.hours
+    t[j.year] = [] if t[j.year].nil?
+    t[j.year][j.month] = Hash.new if t[j.year][j.month].nil?
+    t[j.year][j.month][j.colored_tags] = 0 if t[j.year][j.month][j.colored_tags].nil?
+    t[j.year][j.month][j.colored_tags] += j.hours
   end
   weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat", "week"]
   months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
@@ -689,9 +706,19 @@ def report
             print txt
           end
           puts
+          tline = ""
+          hline = ""
+          t[year][month].sort.each do |tag,h|
+            tl = tag.join(",").center(8)
+            tline += tl 
+            hline += fmthours(h).center(tl.length)
+          end
+          puts tline, hline
+
           txt = "#{months[month]} #{year}: #{hours} hrs."
           txt += " / $#{format('%.2f',hours*$options[:rate].to_f)}" if $options[:rate]
           puts txt.center(line_width)
+
           all_hours += hours
         end
       end
