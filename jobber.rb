@@ -242,7 +242,7 @@ class Job
     end
     if hours > 0
       s << "  Hours: #{hours} #{"+"*hours}\n" 
-      s << "  Costs: #{hours*$options[:rate]}\n" if $options[:rate]
+      s << "  Costs: #{hours*$options[:rate].to_f}\n" if $options[:rate]
     end
     if !@tags.empty?
       s << "   Tags: #{colored_tags.join(',')}\n"
