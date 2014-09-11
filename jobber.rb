@@ -63,6 +63,13 @@ class String
       self
     end
   end
+  def right x 
+    if x > length
+      " " * (x-length) + self
+    else
+      self
+    end
+  end
 end
 
 # parse options
@@ -133,6 +140,10 @@ optparse = OptionParser.new do |opts|
   $options[:report] = false 
   opts.on( '-r', '--report', 'Report existing jobs' ) do  
     $options[:report] = true
+  end
+  $options[:detail] = true 
+  opts.on( '-n', '--no-detail', 'Report only highes time entities in totals' ) do  
+    $options[:detail] = false 
   end
   $options[:resolution] = 0.25
   opts.on( '-R', '--resolution RESOLUTION', 'Time resolution (default: 0.25)' ) do |v| 
@@ -657,11 +668,13 @@ def report
       a[year].each_index do |month|
         if !a[year][month].nil?
           hours = 0
-          puts
-          puts "#{month}/#{year}".center(line_width)
-          print weekdays[0].rjust(col_width).bold
-          weekdays.drop(1).each { |v| print v.rjust(col_width) }
-          puts
+          if $options[:detail]
+            puts
+            puts "#{month}/#{year}".center(line_width)
+            print weekdays[0].rjust(col_width).bold
+            weekdays.drop(1).each { |v| print v.rjust(col_width) }
+            puts
+          end
           m = a[year][month]
           m.fill(nil,m.size..31) 
           wday = 0
@@ -670,54 +683,68 @@ def report
           m.each_index do |day|
             if DateTime.valid_civil?(year,month,day)
               wday = DateTime.civil(year,month,day).wday
-              print "\r" + "\033[1C"*col_width*wday
+              print "\r" + "\033[1C"*col_width*wday if $options[:detail]
               if !m[day].nil?
-                print "#{m[day].to_s.rjust(col_width,' ').hours}"
+                print "#{m[day].to_s.rjust(col_width,' ').hours}" if $options[:detail]
                 hours += a[year][month][day]
                 chart[day] += a[year][month][day]
                 week_hours += a[year][month][day]
               elsif DateTime.civil(year,month,day) > DateTime.now
-                print " ".rjust(col_width)
+                print " ".rjust(col_width) if $options[:detail]
               else
-                print "-".rjust(col_width)
+                print "-".rjust(col_width) if $options[:detail]
               end
               if wday == 6
-                puts week_hours.to_s.rjust(col_width)
+                puts week_hours.to_s.rjust(col_width) if $options[:detail]
                 week_hours = 0
               end
             else
               chart[day] = nil
             end
           end
-          puts if wday != 6
-          chart.each_index do |day|
-            d = chart[day]
-            if d.nil? 
-              txt = "  "
-            elsif d == 0
-              txt = " ."
-            else
-              txt = d.round.to_s.rjust(2) 
+          puts if wday != 6 and $options[:detail]
+          if $options[:detail]
+            chart.each_index do |day|
+              d = chart[day]
+              if d.nil? 
+                txt = "  "
+              elsif d == 0
+                txt = " ."
+              else
+                txt = d.round.to_s.rjust(2) 
+              end
+              if DateTime.valid_civil?(year,month,day)
+                wday = DateTime.civil(year,month,day).wday
+                txt = txt.bold if wday == 0
+              end
+              print txt
             end
-            if DateTime.valid_civil?(year,month,day)
-              wday = DateTime.civil(year,month,day).wday
-              txt = txt.bold if wday == 0
-            end
-            print txt
-          end
-          puts
-          tline = ""
-          hline = ""
-          t[year][month].sort.each do |tag,h|
-            tl = tag.join(",").center(8)
-            tline += tl 
-            hline += fmthours(h).center(tl.length)
-          end
-          puts tline, hline
+            puts
 
-          txt = "#{months[month]} #{year}: #{hours} hrs."
-          txt += " / $#{format('%.2f',hours*$options[:rate].to_f)}" if $options[:rate]
-          puts txt.center(line_width)
+            tline = ""
+            hline = ""
+            t[year][month].sort.each do |tag,h|
+              tl = tag.join(",").center(8)
+              tline += tl 
+              hline += fmthours(h).center(tl.length)
+            end
+            puts tline, hline
+     
+            txt = "#{months[month]} #{year}: #{hours} hrs."
+            txt += " / $#{format('%.2f',hours*$options[:rate].to_f)}" if $options[:rate]
+            puts txt.right(line_width)
+          else
+            puts "#{months[month]} #{year}:"
+            t[year][month].sort.each do |tag,h|
+              txt = tag.join(",").right(8) + ":" + fmthours(h).right(8) + " hrs."
+              txt += " / $#{format('%.2f',h*$options[:rate].to_f).right(8)}" if $options[:rate]
+              puts txt
+            end
+            txt = "   total:" + fmthours(hours).right(8).bold + " hrs."
+            txt += " / $#{format('%.2f',hours*$options[:rate].to_f).right(8).bold}" if $options[:rate]
+            puts txt
+            puts
+          end
 
           all_hours += hours
         end
