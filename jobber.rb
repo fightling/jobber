@@ -530,6 +530,11 @@ def startjob s, msg="Starting new job:"
         puts "    Pos: #{i}"
         puts $jobs[i]
       end
+      puts "Add this job anyway (y/N)?"
+      if gets.strip.casecmp("y") != 0
+        puts "Job not added."
+        exit
+      end
     end
   end
   job = Job.new(s,0,"")
@@ -684,8 +689,15 @@ def report
             if DateTime.valid_civil?(year,month,day)
               wday = DateTime.civil(year,month,day).wday
               print "\r" + "\033[1C"*col_width*wday if $options[:detail]
+              print "#{day.to_s.rjust(2,' ')} " if wday == 0 and $options[:detail]
               if !m[day].nil?
-                print "#{m[day].to_s.rjust(col_width,' ').hours}" if $options[:detail]
+                if m[day] > 24
+                  print "#{m[day].to_s.rjust(col_width,' ').hours.red}" if $options[:detail]
+                elsif m[day] > 12
+                  print "#{m[day].to_s.rjust(col_width,' ').hours.brown}" if $options[:detail]
+                else
+                  print "#{m[day].to_s.rjust(col_width,' ').hours}" if $options[:detail]
+                end
                 hours += a[year][month][day]
                 chart[day] += a[year][month][day]
                 week_hours += a[year][month][day]
@@ -724,9 +736,9 @@ def report
             tline = ""
             hline = ""
             t[year][month].sort.each do |tag,h|
-              tl = tag.join(",").center(8)
-              tline += tl 
-              hline += fmthours(h).center(tl.length)
+              tl = tag.join(",").center(6)
+              tline += tl + "|"
+              hline += fmthours(h).center(tl.length) + "|"
             end
             puts tline, hline
      
@@ -805,7 +817,18 @@ end_time = start_time + $options[:duration].to_i/24 if $options[:time]
 
 $tags = readtags
 
-$options[:tags].split(",").each { |t| $tags.add(t) } if !$options[:tags].nil?
+if !$options[:tags].nil?
+  $options[:tags].split(",").each do |t|
+    if $tags.find_index(t).nil?
+      print "The tag '#{t}' is unknown. Would you like to create a new tag? (y/N)"
+      if gets.strip.casecmp("y") != 0
+        puts "aborted."
+        exit
+      end
+    end
+    $tags.add(t) 
+  end
+end
 
 # run commands
 canceljob if $options[:cancel]
