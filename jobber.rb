@@ -42,28 +42,28 @@ class String
   alias_method :hours, :bold
   def color t
     n = $tags.to_a.index t
-    c = [ 
-      cyan.reverse_color, 
-      magenta.reverse_color, 
-      brown.reverse_color, 
-      blue.reverse_color, 
-      green.reverse_color, 
-      red.reverse_color, 
-      gray.reverse_color 
+    c = [
+      cyan.reverse_color,
+      magenta.reverse_color,
+      brown.reverse_color,
+      blue.reverse_color,
+      green.reverse_color,
+      red.reverse_color,
+      gray.reverse_color
     ]
     return c[n % c.size]
   end
   def length
     self.gsub(/\033\[\d+m/,"").size
   end
-  def center x 
+  def center x
     if x > length
       " " * ((x-length)/2) + self + " " * ((x-length+1)/2)
     else
       self
     end
   end
-  def right x 
+  def right x
     if x > length
       " " * (x-length) + self
     else
@@ -78,32 +78,32 @@ optparse = OptionParser.new do |opts|
   opts.banner = "Usage: jobber [options]\nManages your work times"
   opts.separator ""
   opts.separator "Job creation:"
-  
-  opts.on( '-s', '--start [TIME]', 'Start work now (or at given TIME)' ) do |v| 
+
+  opts.on( '-s', '--start [TIME]', 'Start work now (or at given TIME)' ) do |v|
     $options[:start] = true
     $options[:start_time] = v
   end
-  opts.on( '-e', '--end [TIME]', 'End work (at TIME)' ) do |v| 
+  opts.on( '-e', '--end [TIME]', 'End work (at TIME)' ) do |v|
     $options[:end] = true
-    $options[:end_time] = v 
+    $options[:end_time] = v
   end
-  opts.on( '-b', '--back [TIME]', 'Back to work copies description from last job to start a new one (at TIME)' ) do |v| 
+  opts.on( '-b', '--back [TIME]', 'Back to work copies description from last job to start a new one (at TIME)' ) do |v|
     $options[:continue] = true
     $options[:start] = true
-    $options[:start_time] = v 
+    $options[:start_time] = v
   end
   $options[:cancel] = false
-  opts.on( '-c', '--cancel', 'Cancel running job' ) do |v| 
+  opts.on( '-c', '--cancel', 'Cancel running job' ) do |v|
     $options[:cancel] = true
   end
-  opts.on( '-d', '--duration HOURS', 'Work time in hours' ) do |v| 
+  opts.on( '-d', '--duration HOURS', 'Work time in hours' ) do |v|
     $options[:duration] = v
   end
-  opts.on( '-m', '--message [MESSAGE]', 'Add message to job' ) do |v| 
+  opts.on( '-m', '--message [MESSAGE]', 'Add message to job' ) do |v|
     $options[:message] = true
     $options[:message_text] = v
   end
-  opts.on( '-t', '--tag [TAG,...]', 'Add message to job' ) do |v| 
+  opts.on( '-t', '--tag [TAG,...]', 'Add message to job' ) do |v|
     $options[:tag] = true
     $options[:tags] = v
   end
@@ -112,10 +112,10 @@ optparse = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Job editing:"
 
-  opts.on( '-D', '--drop POS', 'Drop job at given position' ) do |v| 
+  opts.on( '-D', '--drop POS', 'Drop job at given position' ) do |v|
     $options[:drop] = v
   end
-  opts.on( '-j', '--join POS1,POS2[,...]', Array, 'Join two or more jobs at the given positions' ) do |v| 
+  opts.on( '-j', '--join POS1,POS2[,...]', Array, 'Join two or more jobs at the given positions' ) do |v|
     if v.size < 2
       puts opts
       exit
@@ -126,43 +126,43 @@ optparse = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Reporting:"
 
-  opts.on( '-l', '--list [TIME|RANGE|COUNT]', 'List existing jobs' ) do |v| 
+  opts.on( '-l', '--list [TIME|RANGE|COUNT]', 'List existing jobs' ) do |v|
     $options[:list] = true
     $options[:list_filter] = v
   end
-  opts.on( 'O', '--reverse', 'list in reverse order' ) do 
+  opts.on( 'O', '--reverse', 'list in reverse order' ) do
     $options[:reverse] = true
   end
-  opts.on( '-L', '--total [TIME|RANGE|COUNT]', 'Measure exisiting jobs' ) do |v| 
+  opts.on( '-L', '--total [TIME|RANGE|COUNT]', 'Measure exisiting jobs' ) do |v|
     $options[:total] = true
     $options[:list_filter] = v
   end
-  $options[:report] = false 
-  opts.on( '-r', '--report', 'Report existing jobs' ) do  
+  $options[:report] = false
+  opts.on( '-r', '--report', 'Report existing jobs' ) do
     $options[:report] = true
   end
-  $options[:detail] = true 
-  opts.on( '-n', '--no-detail', 'Report only highes time entities in totals' ) do  
-    $options[:detail] = false 
+  $options[:detail] = true
+  opts.on( '-n', '--no-detail', 'Report only highes time entities in totals' ) do
+    $options[:detail] = false
   end
   $options[:resolution] = 0.25
-  opts.on( '-R', '--resolution RESOLUTION', 'Time resolution (default: 0.25)' ) do |v| 
+  opts.on( '-R', '--resolution RESOLUTION', 'Time resolution (default: 0.25)' ) do |v|
     $options[:resolution] = v
   end
-  opts.on( '-M', '--money RATE', 'Display hours*RATE' ) do |v| 
+  opts.on( '-M', '--money RATE', 'Display hours*RATE' ) do |v|
     $options[:rate] = v
   end
-  
+
   opts.separator ""
   opts.separator "Data base options:"
   $options[:filename] = "jobber.dat"
-  opts.on( '-f', '--file FILENAME', 'file to use (default: jobber.dat)' ) do |v| 
+  opts.on( '-f', '--file FILENAME', 'file to use (default: jobber.dat)' ) do |v|
     $options[:filename] = v
-  end  
+  end
 
   opts.separator ""
   opts.separator "Common options:"
-  
+
   $options[:verbose] = false
   opts.on_tail( '-V', '--verbose', 'Output additional information while running' ) do
     $options[:verbose] = true
@@ -176,7 +176,7 @@ optparse = OptionParser.new do |opts|
     exit
   end
 
-  if ARGV.size < 1 
+  if ARGV.size < 1
     puts opts
     exit
   end
@@ -188,27 +188,27 @@ $modified = false
 # add a "humanized" output format to DateTime
 class DateTime
   def to_h
-    return self.strftime("%a %b %d %Y, %H:%M") 
+    return self.strftime("%a %b %d %Y, %H:%M")
   end
 end
 
 class Range
   def intersection(other)
-    return nil if (self.max < other.begin or other.max < self.begin) 
+    return nil if (self.max < other.begin or other.max < self.begin)
     [self.begin, other.begin].max..[self.max, other.max].min
   end
   alias_method :&, :intersection
 end
 
-# a single job 
+# a single job
 class Job
   attr_reader :start, :end
   attr_accessor :message
-  attr_accessor :tags 
+  attr_accessor :tags
   # from scratch
   def initialize s=0, e=0, d="", t=[]
     @start = s
-    @end = e 
+    @end = e
     @message = d
     @tags = t
   end
@@ -227,7 +227,7 @@ class Job
   # create from quoted values in CSV line
   def self.from_s line
     a = line.split(';')
-    a.each do |v| 
+    a.each do |v|
       v.chomp!('"')
       v.reverse!
       v.chomp!('"')
@@ -238,8 +238,8 @@ class Job
   # pack CSV line
   def pack
     return [
-      "\"#{@start}\"", 
-      "\"#{@end}\"", 
+      "\"#{@start}\"",
+      "\"#{@end}\"",
       @message.nil? ? "\"\"" : "\"#{@message.gsub(/\n/,'\\n')}\"",
       "\"#{@tags.join(",")}\""
       ].join(";")
@@ -249,10 +249,10 @@ class Job
     s = ""
     s << "  Start: #{@start.to_h.start}\n"
     if finished?
-      s << "    End: #{@end.to_h.end}\n" 
+      s << "    End: #{@end.to_h.end}\n"
     end
     if hours > 0
-      s << "  Hours: #{hours} #{"+"*hours}\n" 
+      s << "  Hours: #{hours} #{"+"*hours}\n"
       s << "  Costs: #{hours*$options[:rate].to_f}\n" if $options[:rate]
     end
     if !@tags.empty?
@@ -270,12 +270,12 @@ class Job
     s << "\n"
     return s
   end
-  def colored_tags 
+  def colored_tags
     @tags.collect { |t| t.color(t) }
   end
   # check if job timspan is valid
   def self.check(s,e)
-    return s < e 
+    return s < e
   end
   # set start time
   def start=(s)
@@ -301,11 +301,14 @@ class Job
   def hours_exact
     e = DateTime.now
     e = @end if @end != 0
+    s = @start
+    s = DateTime.new(s.year,s.month,s.day,s.hour,s.min)
+    e = DateTime.new(e.year,e.month,e.day,e.hour,e.min)
     return (e - @start) * 24
   end
   # get worked hours rounded to resolution (if job is running end time is now)
   def hours
-    return (hours_exact/$options[:resolution].to_f).round*$options[:resolution].to_f
+    return (hours_exact/$options[:resolution].to_f).ceil*$options[:resolution].to_f
   end
   # check if start time has been set
   def valid?
@@ -333,7 +336,7 @@ $reg_dategerman = /\d{1,2}\.\d{1,2}((\.\d{1,4})|\.)?/
 $reg_dateenglish = /\d{1,2}\/\d{1,2}(\/\d{1,4})/
 $reg_weekday = /mon|tue|wed|thu|fri|sat|sun|yesterday|today/
 $reg_date = /#{$reg_dategerman}|#{$reg_dateenglish}|#{$reg_weekday}/
-$reg_datetime = /#{$reg_date},#{$reg_abstime}/
+$REG_DATETIME = /#{$REG_DATE},#{$REG_ABSTIME}/
 $reg_timedate = /#{$reg_abstime},#{$reg_date}/
 $reg_now = /now/
 $reg_dateandtime = /#{$reg_datetime}|#{$reg_timedate}|#{$reg_now}/
@@ -345,7 +348,7 @@ def parsedatetime t
   a = t.split(',')
   rt = Time.at(0)
   rd = DateTime.new
-  a.each do |v| 
+  a.each do |v|
     if $reg_dategerman.check(v)
       print " german date" if $options[:verbose]
       b = v.split('.')
@@ -382,7 +385,7 @@ def parsedatetime t
 
   return dt
 end
- 
+
 # parse a string into two DateTime objects
 def parserange t
   print "parse range '#{t}': " if $options[:verbose]
@@ -428,8 +431,8 @@ def parsetime t, allow_date_only=false
     a = t.split(':')
     tim = DateTime.now
     tim -= tim.hour.to_f/24 + tim.min.to_f/24/60
-    tim += a[0].to_f/24 + a[1].to_f/24/60 
-    tim -= 1 if (tim - DateTime.now) > 0.5 
+    tim += a[0].to_f/24 + a[1].to_f/24/60
+    tim -= 1 if (tim - DateTime.now) > 0.5
     return tim
   elsif $reg_dateandtime.check(t) or (allow_date_only and $reg_date.check(t))
     return parsedatetime t
@@ -479,7 +482,7 @@ end
 def endjob e, msg="Ending job:"
   if $jobs.empty? or $jobs.last.end != 0
     puts "There is no open job!".error
-    return false 
+    return false
   elsif Job.check($jobs.last.start,e)
     if $jobs.last.message.nil? or $jobs.last.message.empty?
       $jobs.last.message = enter_message true
@@ -493,7 +496,7 @@ def endjob e, msg="Ending job:"
   else
     puts "End time is ahead of start time!".error
     puts "Please retry!"
-    return false  
+    return false
   end
 end
 
@@ -504,19 +507,19 @@ def startjob s, msg="Starting new job:"
     puts $jobs.last
     exit if $options[:continue]
     print "Do you want to close this job first (enter time or nothing to cancel)? "
-    while 
+    while
       answer = gets.strip
 
       if answer.empty?
         puts "Canceling job start.".action
         puts "Running job remains open!"
         exit
-      else 
+      else
         t = parsetime(answer)
         if t.nil?
           print "Please enter a valid time:"
         else
-          break if endjob t 
+          break if endjob t
         end
       end
     end
@@ -540,7 +543,7 @@ def startjob s, msg="Starting new job:"
   job = Job.new(s,0,"")
   job.message = $jobs.last.message if $options[:continue]
   job.message += enter_message if !enter_message.nil?
-  job.tags += enter_tags if !enter_tags.nil? 
+  job.tags += enter_tags if !enter_tags.nil?
   if !msg.nil?
     puts msg.action
     puts "    Pos: #{$jobs.size+1}"
@@ -554,7 +557,7 @@ end
 def canceljob
   if $jobs.empty? or $jobs.last.end != 0
     puts "There is no open job!".error
-  else 
+  else
     puts $jobs.last
     puts "Cancel this job (y/N)?"
     if gets.strip.casecmp("y") == 0
@@ -623,16 +626,16 @@ def listjobs totals_only=false
   hours = 0
   jobs = $jobs
   if $options[:reverse]
-    jobs = $jobs.reverse 
+    jobs = $jobs.reverse
     step = -1
     pos = jobs.size+1
   end
-  jobs.each do |j| 
+  jobs.each do |j|
     pos += step
     next if !t.nil? and j.start < t
     next if !r.nil? and (j.end <= r[0] or j.start >= r[1])
     next if !n.nil? and pos <= $jobs.size-n
-    if !totals_only 
+    if !totals_only
       puts "    Pos: #{pos}"
       puts j
     end
@@ -681,7 +684,7 @@ def report
             puts
           end
           m = a[year][month]
-          m.fill(nil,m.size..31) 
+          m.fill(nil,m.size..31)
           wday = 0
           chart=[]
           chart.fill(0,0..31)
@@ -718,12 +721,12 @@ def report
           if $options[:detail]
             chart.each_index do |day|
               d = chart[day]
-              if d.nil? 
+              if d.nil?
                 txt = "  "
               elsif d == 0
                 txt = " ."
               else
-                txt = d.round.to_s.rjust(2) 
+                txt = d.round.to_s.rjust(2)
               end
               if DateTime.valid_civil?(year,month,day)
                 wday = DateTime.civil(year,month,day).wday
@@ -741,7 +744,7 @@ def report
               hline += fmthours(h).center(tl.length) + "|"
             end
             puts tline, hline
-     
+
             txt = "#{months[month]} #{year}: #{hours} hrs."
             txt += " / $#{format('%.2f',hours*$options[:rate].to_f)}" if $options[:rate]
             puts txt.right(line_width)
@@ -766,7 +769,7 @@ def report
   puts
   print "Total: #{$jobs.size} jobs, #{all_hours.to_s.hours} hrs."
   print " / $#{(format('%.2f',all_hours*$options[:rate].to_f)).dollar}" if $options[:rate]
-  puts 
+  puts
 end
 
 def readtags
@@ -780,7 +783,7 @@ $jobs = []
 if File.exist?($options[:filename])
   puts "Opening existing file '#{$options[:filename]}'" if $options[:verbose]
   File.open($options[:filename],"a+") do |f|
-    f.readlines.each do |line| 
+    f.readlines.each do |line|
       $jobs << Job.from_s(line.chop)
     end
   end
@@ -788,7 +791,7 @@ if File.exist?($options[:filename])
 end
 
 # accept reality
-start_time = DateTime.now 
+start_time = DateTime.now
 end_time = DateTime.now
 
 # read console parameters
@@ -803,7 +806,7 @@ if $options[:duration]
     end_time = start_time + duration
     $options[:end] = true
   elsif !$jobs.last.finished?
-    end_time = $jobs.last.start + duration 
+    end_time = $jobs.last.start + duration
     $options[:end] = true
   elsif !$options[:start] and !$options[:end]
     puts "You gave a duration but no end or start time!".error
@@ -826,7 +829,7 @@ if !$options[:tags].nil?
         exit
       end
     end
-    $tags.add(t) 
+    $tags.add(t)
   end
 end
 
@@ -836,14 +839,14 @@ join $options[:join].collect{|c| c.to_i} if $options[:join]
 drop $options[:drop].to_i if $options[:drop]
 listjobs if $options[:list]
 listjobs true if $options[:total]
- 
+
 if $options[:start] and $options[:end]
-  startjob start_time, nil 
-  endjob end_time, "Adding Job:" 
+  startjob start_time, nil
+  endjob end_time, "Adding Job:"
 elsif $options[:start]
   startjob start_time
 elsif $options[:end]
-  endjob end_time 
+  endjob end_time
 elsif $options[:message] or $options[:tag]
   if $jobs.empty? or $jobs.last.finished?
     puts "No job running.".error
@@ -852,7 +855,7 @@ elsif $options[:message] or $options[:tag]
   else
     if $options[:message]
       puts "Appending message to running job:" if $options[:verbose]
-      $jobs.last.message += ($jobs.last.message.empty? ? "" : "\n") + enter_message(true,"Please enter a text to append to this message (empty line quits):") 
+      $jobs.last.message += ($jobs.last.message.empty? ? "" : "\n") + enter_message(true,"Please enter a text to append to this message (empty line quits):")
       puts $jobs.last
       $modified = true
     end
