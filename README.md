@@ -4,12 +4,6 @@ Command line tool for tracking work time.
 
 ### Installation
 
-You need ruby 1.8.7 to run this script.
-
-Just copy the script into your bin and do a chmod to make it executable
-
-    chmod u+x jobber.rb
-
 ### Usage
 
 #### Start time tracking
