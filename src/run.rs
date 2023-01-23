@@ -1,7 +1,8 @@
+use crate::list::List;
 use crate::partial_date_time::PartialDateTime;
 use crate::{args::Args, date_time::current};
-
 use chrono::{DateTime, Utc};
+
 #[cfg(test)]
 use clap::Parser;
 
@@ -39,4 +40,26 @@ pub fn run(args: Args) {
     } else {
         None
     };
+
+    let list = if let Some(list) = args.list {
+        Some(List::parse(list))
+    } else {
+        None
+    };
+
+    let report = if let Some(report) = args.report {
+        Some(List::parse(report))
+    } else {
+        None
+    };
+
+    println!(
+        "
+  start: {start:?}
+    end: {end:?}
+message: {message:?}
+   tags: {tags:?}
+   list: {list:?} 
+ report: {report:?}"
+    );
 }

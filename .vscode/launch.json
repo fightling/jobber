@@ -7,40 +7,59 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'jobber3'",
+            "name": "Debug executable 'jobber'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=jobber3",
-                    "--package=jobber3"
+                    "--bin=jobber",
+                    "--package=jobber"
                 ],
                 "filter": {
-                    "name": "jobber3",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'jobber3'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=jobber3",
-                    "--package=jobber3"
-                ],
-                "filter": {
-                    "name": "jobber3",
+                    "name": "jobber",
                     "kind": "bin"
                 }
             },
             "args": [
                 "-s",
-                "12:00"
+                "1.1.2023,12:00",
+                "-e",
+                "-m",
+                "message",
+                "-t",
+                "tag,tog",
+                "-l",
+                "1-5",
+                "-r",
+                "1.1.2023..1.2.2023"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'jobber'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=jobber",
+                    "--package=jobber"
+                ],
+                "filter": {
+                    "name": "jobber",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "-s",
+                "1.1.2023,12:00",
+                "-e",
+                "-m",
+                "message",
+                "-t",
+                "tag,tog",
+                "-l",
+                "1-5"
             ],
             "cwd": "${workspaceFolder}"
         }

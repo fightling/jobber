@@ -19,4 +19,12 @@ pub struct Args {
     /// add list of tags separated by comma
     #[arg(short, long)]
     pub tags: Option<String>,
+
+    /// list all jobs or selective by position(s) or time(s)
+    #[arg(short, long)]
+    pub list: Option<Option<String>>,
+
+    /// print report for all jobs or selective by position(s) or time(s)
+    #[arg(short, long)]
+    pub report: Option<Option<String>>,
 }
