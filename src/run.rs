@@ -1,8 +1,16 @@
-use crate::partial_date_time::parse_partial_date_time;
+use crate::partial_date_time::PartialDateTime;
 use crate::{args::Args, date_time::current};
 
+use chrono::{DateTime, Utc};
 #[cfg(test)]
 use clap::Parser;
+
+struct Job {
+    start: DateTime<Utc>,
+    end: Option<DateTime<Utc>>,
+    message: String,
+    tags: Vec<String>,
+}
 
 #[cfg(test)]
 pub fn run_str(line: &str) {
@@ -11,28 +19,24 @@ pub fn run_str(line: &str) {
 
 pub fn run(args: Args) {
     let start = if let Some(start) = args.start {
-        parse_partial_date_time(&start)
+        Some(PartialDateTime::parse(start).into(current()))
     } else {
         None
     };
+
     let end = if let Some(end) = args.end {
-        parse_partial_date_time(&end)
+        let pdt = PartialDateTime::parse(end);
+        let base = start.or(Some(current())).unwrap();
+        Some(pdt.into(base))
+    } else {
+        None
+    };
+
+    let message = args.message;
+
+    let tags: Option<Vec<String>> = if let Some(tags) = args.tags {
+        Some(tags.split(",").map(|t| t.to_string()).collect())
     } else {
         None
     };
 }
-
-// let base_dt: DateTime<Local> = DateTime::from(base_dt);
-// let dt = Local
-//     .with_ymd_and_hms(
-//         base_dt.year(),
-//         cap[2].parse::<u32>().unwrap(),
-//         cap[1].parse::<u32>().unwrap(),
-//         cap[3].parse::<u32>().unwrap(),
-//         cap[4].parse::<u32>().unwrap(),
-//         0,
-//     )
-//     .unwrap();
-// let dt = DateTime::with_timezone(&dt, &Utc);
-// println!("incomplete date & time: {:?}", &dt);
-// return Some(dt);

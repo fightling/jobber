@@ -4,14 +4,19 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
-    /// start time
+    /// add job now or at the given starting time
     #[arg(short, long)]
-    pub start: Option<String>,
+    pub start: Option<Option<String>>,
 
-    /// end time
+    /// end job now or at the given time
     #[arg(short, long)]
-    pub end: Option<String>,
+    pub end: Option<Option<String>>,
 
+    /// ask for message to add or add the given one
     #[arg(short, long)]
-    pub message: Option<String>,
+    pub message: Option<Option<String>>,
+
+    /// add list of tags separated by comma
+    #[arg(short, long)]
+    pub tags: Option<String>,
 }
