@@ -1,4 +1,5 @@
 use crate::date_time::DateTime;
+use crate::duration::Duration;
 use crate::list::List;
 use crate::partial_date_time::PartialDateTime;
 use crate::{args::Args, date_time::current};
@@ -10,6 +11,17 @@ pub enum Command {
         tags: Option<Vec<String>>,
     },
     Add {
+        start: DateTime,
+        end: DateTime,
+        message: Option<Option<String>>,
+        tags: Option<Vec<String>>,
+    },
+    Back {
+        start: DateTime,
+        message: Option<Option<String>>,
+        tags: Option<Vec<String>>,
+    },
+    BackAdd {
         start: DateTime,
         end: DateTime,
         message: Option<Option<String>>,
@@ -36,15 +48,37 @@ impl Command {
             None
         };
 
+        let back = if let Some(back) = args.back {
+            Some(PartialDateTime::parse(back).into(current()))
+        } else {
+            None
+        };
+
         let end = if let Some(end) = args.end {
             let pdt = PartialDateTime::parse(end);
             let base = if PartialDateTime::None == pdt {
                 current()
-            } else {
+            } else if start.is_some() {
                 start.clone().or(Some(current())).unwrap()
+            } else {
+                back.clone().or(Some(current())).unwrap()
             };
 
             Some(pdt.into(base))
+        } else {
+            None
+        };
+
+        let duration = if let Some(duration) = args.duration {
+            let d = Duration::parse(duration);
+            if let Duration::HM { hours, minutes } = d {
+                Some(
+                    chrono::Duration::hours(hours as i64)
+                        + chrono::Duration::minutes(minutes as i64),
+                )
+            } else {
+                None
+            }
         } else {
             None
         };
@@ -77,6 +111,15 @@ impl Command {
                     message,
                     tags,
                 }
+            } else if let Some(duration) = duration {
+                Self::Add {
+                    end: DateTime {
+                        date_time: start.date_time + duration,
+                    },
+                    start,
+                    message,
+                    tags,
+                }
             } else {
                 Self::Start {
                     start,
@@ -84,8 +127,34 @@ impl Command {
                     tags,
                 }
             }
+        } else if let Some(start) = back {
+            if let Some(end) = end {
+                Self::BackAdd {
+                    start,
+                    end,
+                    message,
+                    tags,
+                }
+            } else if let Some(duration) = duration {
+                Self::BackAdd {
+                    end: DateTime {
+                        date_time: start.date_time + duration,
+                    },
+                    start,
+                    message,
+                    tags,
+                }
+            } else {
+                Self::Back {
+                    start,
+                    message,
+                    tags,
+                }
+            }
         } else if let Some(end) = end {
             Self::End { end, message, tags }
+        } else if let Some(_duration) = duration {
+            todo!("get start from open job and add duration to set end");
         } else if let Some(range) = list {
             Self::List { range }
         } else if let Some(range) = report {
@@ -112,7 +181,7 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::Start{{ start: {start:?}, message: {message:?}, tags: {tags:?} }}"
             ),
-            Command::Add {
+            Self::Add {
                 start,
                 end,
                 message,
@@ -121,16 +190,33 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::Add{{ start: {start:?}, end: {end:?}, message: {message:?}, tags: {tags:?} }}"
             ),
-            Command::End { end, message, tags } => write!(
+            Self::Back {
+                start,
+                message,
+                tags,
+            } => write!(
+                f,
+                "Command::Back{{ start: {start:?}, message: {message:?}, tags: {tags:?} }}"
+            ),
+            Self::BackAdd {
+                start,
+                end,
+                message,
+                tags,
+            } => write!(
+                f,
+                "Command::BackAdd{{ start: {start:?}, end: {end:?}, message: {message:?}, tags: {tags:?} }}"
+            ),
+            Self::End { end, message, tags } => write!(
                 f,
                 "Command::End{{ end: {end:?}, message: {message:?}, tags: {tags:?} }}"                
             ),
 
-            Command::List { range } => write!(
+            Self::List { range } => write!(
                 f,
                 "Command::List{{ list: {range:?} }}"
             ),
-            Command::Report { range } => write!(
+            Self::Report { range } => write!(
                 f,
                 "Command::Report{{ list: {range:?} }}")
         }

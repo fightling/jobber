@@ -1,6 +1,7 @@
 mod args;
 mod command;
 mod date_time;
+mod duration;
 mod job;
 mod list;
 mod partial_date_time;

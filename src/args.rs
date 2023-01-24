@@ -8,9 +8,17 @@ pub struct Args {
     #[arg(short, long)]
     pub start: Option<Option<String>>,
 
+    /// back to work copies description from last job to start now or at the given starting time
+    #[arg(short, long)]
+    pub back: Option<Option<String>>,
+
     /// end job now or at the given time
     #[arg(short, long)]
     pub end: Option<Option<String>>,
+
+    /// end job after the given duration
+    #[arg(short, long)]
+    pub duration: Option<String>,
 
     /// ask for message to add or add the given one
     #[arg(short, long)]
