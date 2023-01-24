@@ -13,7 +13,8 @@ use command::Command;
 
 fn main() {
     let args = Args::parse();
-    Command::parse(args);
+    let command = Command::parse(args);
+    println!("{command:?}")
 }
 
 #[cfg(test)]
