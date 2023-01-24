@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
+        "Datelike",
+        "datetime",
         "dmhm",
         "dmyhm",
         "hmdm",
@@ -10,6 +12,7 @@
         "mdhm",
         "MDHM",
         "mdyhm",
+        "Timelike",
         "ymdhm",
         "YMDHM"
     ]

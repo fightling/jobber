@@ -1,4 +1,5 @@
-use chrono::{prelude::*, Duration};
+use crate::date_time::DateTime;
+use chrono::{Datelike, Duration, Local, TimeZone, Timelike, Utc};
 use regex::Regex;
 
 #[derive(PartialEq, Debug)]
@@ -30,7 +31,7 @@ impl PartialDateTime {
         }
     }
 
-    fn or(self, pdt: Self) -> Self {
+    pub fn or(self, pdt: Self) -> Self {
         match self {
             Self::None => pdt,
             _ => self,
@@ -269,18 +270,50 @@ impl PartialDateTime {
         Self::None
     }
 
-    pub fn into(self, base: DateTime<Utc>) -> DateTime<Utc> {
-        let base: DateTime<Local> = DateTime::from(base);
-        DateTime::with_timezone(
-            &match self {
-                Self::HM(hour, minute) => Local
-                    .with_ymd_and_hms(base.year(), base.month(), base.day(), hour, minute, 0)
-                    .unwrap(),
-                Self::MDHM(month, day, hour, minute) => Local
-                    .with_ymd_and_hms(base.year(), month, day, hour, minute, 0)
-                    .unwrap(),
-                Self::R(days) => {
-                    Local
+    pub fn into(self, base: DateTime) -> DateTime {
+        let base: chrono::DateTime<Local> = chrono::DateTime::from(base.date_time);
+        DateTime {
+            date_time: chrono::DateTime::with_timezone(
+                &match self {
+                    Self::HM(hour, minute) => Local
+                        .with_ymd_and_hms(base.year(), base.month(), base.day(), hour, minute, 0)
+                        .unwrap(),
+                    Self::MDHM(month, day, hour, minute) => Local
+                        .with_ymd_and_hms(base.year(), month, day, hour, minute, 0)
+                        .unwrap(),
+                    Self::R(days) => {
+                        Local
+                            .with_ymd_and_hms(
+                                base.year(),
+                                base.month(),
+                                base.day(),
+                                base.hour(),
+                                base.minute(),
+                                0,
+                            )
+                            .unwrap()
+                            + Duration::days(days)
+                    }
+                    Self::RHM(days, hour, minute) => {
+                        Local
+                            .with_ymd_and_hms(
+                                base.year(),
+                                base.month(),
+                                base.day(),
+                                hour,
+                                minute,
+                                0,
+                            )
+                            .unwrap()
+                            + Duration::days(days)
+                    }
+                    Self::YMDHM(year, month, day, hour, minute) => Local
+                        .with_ymd_and_hms(year, month, day, hour, minute, 0)
+                        .unwrap(),
+                    Self::YMD(year, month, day) => {
+                        Local.with_ymd_and_hms(year, month, day, 0, 0, 0).unwrap()
+                    }
+                    Self::None => Local
                         .with_ymd_and_hms(
                             base.year(),
                             base.month(),
@@ -289,34 +322,11 @@ impl PartialDateTime {
                             base.minute(),
                             0,
                         )
-                        .unwrap()
-                        + Duration::days(days)
-                }
-                Self::RHM(days, hour, minute) => {
-                    Local
-                        .with_ymd_and_hms(base.year(), base.month(), base.day(), hour, minute, 0)
-                        .unwrap()
-                        + Duration::days(days)
-                }
-                Self::YMDHM(year, month, day, hour, minute) => Local
-                    .with_ymd_and_hms(year, month, day, hour, minute, 0)
-                    .unwrap(),
-                Self::YMD(year, month, day) => {
-                    Local.with_ymd_and_hms(year, month, day, 0, 0, 0).unwrap()
-                }
-                Self::None => Local
-                    .with_ymd_and_hms(
-                        base.year(),
-                        base.month(),
-                        base.day(),
-                        base.hour(),
-                        base.minute(),
-                        0,
-                    )
-                    .unwrap(),
-            },
-            &Utc,
-        )
+                        .unwrap(),
+                },
+                &Utc,
+            ),
+        }
     }
 }
 
@@ -398,6 +408,42 @@ fn test_parse_hmymd() {
     assert_eq!(
         PartialDateTime::parse_hmymd("1:0,2023-2-1"),
         PartialDateTime::YMDHM(2023, 2, 1, 1, 0)
+    );
+}
+
+#[test]
+fn test_parse_ymd() {
+    assert_eq!(
+        PartialDateTime::parse_ymd("2023-02-01"),
+        PartialDateTime::YMD(2023, 2, 1)
+    );
+    assert_eq!(
+        PartialDateTime::parse_ymd("2023-2-1"),
+        PartialDateTime::YMD(2023, 2, 1)
+    );
+}
+
+#[test]
+fn test_parse_mdy() {
+    assert_eq!(
+        PartialDateTime::parse_mdy("02/01/2023"),
+        PartialDateTime::YMD(2023, 2, 1)
+    );
+    assert_eq!(
+        PartialDateTime::parse_mdy("2/1/2023"),
+        PartialDateTime::YMD(2023, 2, 1)
+    );
+}
+
+#[test]
+fn test_parse_dmy() {
+    assert_eq!(
+        PartialDateTime::parse_dmy("02.01.2023"),
+        PartialDateTime::YMD(2023, 2, 1)
+    );
+    assert_eq!(
+        PartialDateTime::parse_dmy("2.1.2023"),
+        PartialDateTime::YMD(2023, 2, 1)
     );
 }
 

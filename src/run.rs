@@ -27,7 +27,12 @@ pub fn run(args: Args) {
 
     let end = if let Some(end) = args.end {
         let pdt = PartialDateTime::parse(end);
-        let base = start.or(Some(current())).unwrap();
+        let base = if PartialDateTime::None == pdt {
+            current()
+        } else {
+            start.clone().or(Some(current())).unwrap()
+        };
+
         Some(pdt.into(base))
     } else {
         None

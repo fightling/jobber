@@ -1,7 +1,7 @@
-use chrono::{DateTime, NaiveDate, TimeZone, Utc};
+use chrono::{NaiveDate, TimeZone, Utc};
 use regex::Regex;
 
-use crate::partial_date_time::PartialDateTime;
+use crate::{date_time::DateTime, partial_date_time::PartialDateTime};
 
 #[derive(Debug)]
 pub enum List {
@@ -10,7 +10,7 @@ pub enum List {
     Position(usize),
     PositionRange(usize, usize),
     Day(NaiveDate),
-    TimeRange(DateTime<Utc>, DateTime<Utc>),
+    TimeRange(DateTime, DateTime),
 }
 
 impl List {
@@ -53,7 +53,7 @@ impl List {
         let pt = PartialDateTime::parse(Some(list));
         match pt {
             PartialDateTime::None => Self::None,
-            _ => List::Day(pt.into(Utc::now()).date_naive()),
+            _ => List::Day(pt.into(DateTime::now()).date_time.date_naive()),
         }
     }
 
@@ -64,12 +64,16 @@ impl List {
             let to = PartialDateTime::parse(Some(list[1].to_string()));
             match (from, to) {
                 (PartialDateTime::None, PartialDateTime::None) => Self::None,
-                (from, PartialDateTime::None) => Self::TimeRange(from.into(Utc::now()), Utc::now()),
+                (from, PartialDateTime::None) => {
+                    Self::TimeRange(from.into(DateTime::now()), DateTime::now())
+                }
                 (PartialDateTime::None, to) => Self::TimeRange(
-                    Utc.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap(),
-                    to.into(Utc::now()),
+                    DateTime {
+                        date_time: Utc.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap(),
+                    },
+                    to.into(DateTime::now()),
                 ),
-                (from, to) => Self::TimeRange(from.into(Utc::now()), to.into(Utc::now())),
+                (from, to) => Self::TimeRange(from.into(DateTime::now()), to.into(DateTime::now())),
             }
         } else {
             Self::None
