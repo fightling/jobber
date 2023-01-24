@@ -1,7 +1,7 @@
 #[cfg(test)]
 use crate::date_time::set_current;
 #[cfg(test)]
-use crate::run::run_str;
+use crate::run_str;
 
 #[test]
 fn test_simple() {
