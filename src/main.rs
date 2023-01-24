@@ -13,10 +13,10 @@ use command::Command;
 
 fn main() {
     let args = Args::parse();
-    Command::run(args);
+    Command::parse(args);
 }
 
 #[cfg(test)]
-pub fn run_str(line: &str) {
-    Command::run(Args::parse_from(line.split(' ')));
+pub fn run_args(args: &[&str]) {
+    Command::parse(Args::parse_from(args));
 }

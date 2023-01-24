@@ -3,7 +3,7 @@ use regex::Regex;
 
 use crate::{date_time::DateTime, partial_date_time::PartialDateTime};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum List {
     None,
     All,

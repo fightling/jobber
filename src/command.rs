@@ -4,6 +4,7 @@ use crate::list::List;
 use crate::partial_date_time::PartialDateTime;
 use crate::{args::Args, date_time::current};
 
+#[derive(PartialEq)]
 pub enum Command {
     Start {
         start: DateTime,
@@ -41,7 +42,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn create(args: Args) -> Self {
+    pub fn parse(args: Args) -> Self {
         let start = if let Some(start) = args.start {
             Some(PartialDateTime::parse(start).into(current()))
         } else {
@@ -55,8 +56,8 @@ impl Command {
         };
 
         let end = if let Some(end) = args.end {
-            let pdt = PartialDateTime::parse(end);
-            let base = if PartialDateTime::None == pdt {
+            let end = PartialDateTime::parse(end);
+            let base = if PartialDateTime::None == end {
                 current()
             } else if start.is_some() {
                 start.clone().or(Some(current())).unwrap()
@@ -64,14 +65,14 @@ impl Command {
                 back.clone().or(Some(current())).unwrap()
             };
 
-            Some(pdt.into(base))
+            Some(end.into(base))
         } else {
             None
         };
 
         let duration = if let Some(duration) = args.duration {
-            let d = Duration::parse(duration);
-            if let Duration::HM { hours, minutes } = d {
+            let duration = Duration::parse(duration);
+            if let Duration::HM { hours, minutes } = duration {
                 Some(
                     chrono::Duration::hours(hours as i64)
                         + chrono::Duration::minutes(minutes as i64),
@@ -163,11 +164,6 @@ impl Command {
             panic!("unknown command")
         }
     }
-
-    pub fn run(args: Args) {
-        let command = Self::create(args);
-        println!("{:?}", command);
-    }
 }
 
 impl std::fmt::Debug for Command {
@@ -221,4 +217,43 @@ impl std::fmt::Debug for Command {
                 "Command::Report{{ list: {range:?} }}")
         }
     }
+}
+
+#[test]
+fn test_start() {
+    use clap::Parser;
+    crate::date_time::set_current("2023-01-01 12:00");
+
+    assert_eq!(
+        Command::parse(Args::parse_from(["jobber", "-s"])),
+        Command::Start {
+            start: DateTime::from_local("2023-01-01 12:00"),
+            message: None,
+            tags: None
+        }
+    );
+
+    assert_eq!(
+        Command::parse(Args::parse_from(["jobber", "-s", "1.1.,12:00"])),
+        Command::Start {
+            start: DateTime::from_local("2023-01-01 12:00"),
+            message: None,
+            tags: None
+        }
+    );
+}
+
+#[test]
+fn test_add() {
+    use clap::Parser;
+    crate::date_time::set_current("2023-01-01 12:00");
+    assert_eq!(
+        Command::parse(Args::parse_from(["jobber", "-s", "12:00", "-e", "13:00"])),
+        Command::Add {
+            start: DateTime::from_local("2023-01-01 12:00"),
+            end: DateTime::from_local("2023-01-01 13:00"),
+            message: None,
+            tags: None
+        }
+    );
 }

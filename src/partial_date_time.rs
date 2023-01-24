@@ -71,7 +71,8 @@ impl PartialDateTime {
     fn parse_date_time(dt: String) -> Self {
         let dt: Vec<&str> = dt.split(",").collect();
         match dt.len() {
-            1 => Self::parse_dmy(dt[0]).or(Self::parse_mdy(dt[0]).or(Self::parse_ymd(dt[0]))),
+            1 => Self::parse_dmy(dt[0]).or(Self::parse_mdy(dt[0]).or(Self::parse_ymd(dt[0])
+                .or(Self::parse_dm(dt[0]).or(Self::parse_md(dt[0]).or(Self::parse_hm(dt[0])))))),
             2 => {
                 Self::merge(
                     Self::parse_dmy(dt[0])
@@ -104,7 +105,7 @@ impl PartialDateTime {
 
     /// parse german date without year and time "dd.mm."
     fn parse_dm(dt: &str) -> Self {
-        let re = Regex::new(r"^(\d{1,2}).(\d{1,2}).$").unwrap();
+        let re = Regex::new(r"^(\d{1,2})\.(\d{1,2})\.$").unwrap();
         for cap in re.captures_iter(dt) {
             return Self::MD {
                 month: cap[2].parse::<u32>().unwrap(),
@@ -128,7 +129,7 @@ impl PartialDateTime {
 
     /// parse german date without year and time "dd.mm.yyyy"
     fn parse_dmy(dt: &str) -> Self {
-        let re = Regex::new(r"^(\d{1,2}).(\d{1,2}).(\d{4})$").unwrap();
+        let re = Regex::new(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})$").unwrap();
         for cap in re.captures_iter(dt) {
             return Self::YMD {
                 year: cap[3].parse::<i32>().unwrap(),
@@ -215,6 +216,10 @@ fn test_parse_hm() {
         PartialDateTime::parse_hm("1:0"),
         PartialDateTime::HM { hour: 1, minute: 0 }
     );
+    assert_ne!(
+        PartialDateTime::parse_hm("1.0"),
+        PartialDateTime::HM { hour: 1, minute: 0 }
+    );
 }
 
 #[test]
@@ -229,6 +234,14 @@ fn test_parse_ymd() {
     );
     assert_eq!(
         PartialDateTime::parse_ymd("2023-2-1"),
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
+    );
+    assert_ne!(
+        PartialDateTime::parse_ymd("2023.2.1"),
         PartialDateTime::YMD {
             year: 2023,
             month: 2,
@@ -255,6 +268,14 @@ fn test_parse_mdy() {
             day: 1
         }
     );
+    assert_ne!(
+        PartialDateTime::parse_mdy("2.1.2023"),
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
+    );
 }
 
 #[test]
@@ -275,6 +296,14 @@ fn test_parse_dmy() {
             day: 1
         }
     );
+    assert_ne!(
+        PartialDateTime::parse_dmy("1-2-2023"),
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
+    );
 }
 
 #[test]
@@ -287,6 +316,14 @@ fn test_parse_dm() {
         PartialDateTime::parse_dm("1.2."),
         PartialDateTime::MD { month: 2, day: 1 }
     );
+    assert_ne!(
+        PartialDateTime::parse_dm("1.2"),
+        PartialDateTime::MD { month: 2, day: 1 }
+    );
+    assert_ne!(
+        PartialDateTime::parse_dm("1-2-"),
+        PartialDateTime::MD { month: 2, day: 1 }
+    );
 }
 
 #[test]
@@ -297,6 +334,10 @@ fn test_parse_md() {
     );
     assert_eq!(
         PartialDateTime::parse_md("2/1"),
+        PartialDateTime::MD { month: 2, day: 1 }
+    );
+    assert_ne!(
+        PartialDateTime::parse_md("2-1"),
         PartialDateTime::MD { month: 2, day: 1 }
     );
 }

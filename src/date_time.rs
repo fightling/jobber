@@ -1,6 +1,6 @@
 use chrono::{Local, TimeZone, Utc};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct DateTime {
     pub date_time: chrono::DateTime<Utc>,
 }
@@ -31,6 +31,19 @@ impl DateTime {
             date_time: Utc::now(),
         }
     }
+    #[cfg(test)]
+    pub fn from_local(local: &str) -> DateTime {
+        Self {
+            date_time: Utc
+                .from_local_datetime(
+                    &Local
+                        .datetime_from_str(local, "%Y-%m-%d %H:%M")
+                        .unwrap()
+                        .naive_utc(),
+                )
+                .unwrap(),
+        }
+    }
 }
 
 #[cfg(not(test))]
@@ -43,12 +56,24 @@ static mut CURRENT_DT: Option<chrono::DateTime<Utc>> = None;
 
 #[cfg(test)]
 pub fn current() -> DateTime {
-    DateTime::now()
+    unsafe {
+        DateTime {
+            date_time: CURRENT_DT.unwrap(),
+        }
+    }
 }
 
 #[cfg(test)]
-pub fn set_current(date_time: &str) {
+pub fn set_current(local: &str) {
+    let dt = Utc
+        .from_local_datetime(
+            &Local
+                .datetime_from_str(local, "%Y-%m-%d %H:%M")
+                .unwrap()
+                .naive_utc(),
+        )
+        .unwrap();
     unsafe {
-        CURRENT_DT = Some(date_time.parse::<chrono::DateTime<Utc>>().unwrap());
+        CURRENT_DT = Some(dt);
     }
 }

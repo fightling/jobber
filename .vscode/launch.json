@@ -46,17 +46,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [
-                "-s",
-                "1.1.2023,12:00",
-                "-e",
-                "-m",
-                "message",
-                "-t",
-                "tag,tog",
-                "-l",
-                "1-5"
-            ],
+            "args": [],
             "cwd": "${workspaceFolder}"
         }
     ]
