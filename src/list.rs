@@ -7,17 +7,20 @@ use crate::{date_time::DateTime, partial_date_time::PartialDateTime};
 pub enum List {
     None,
     All,
-    Position(usize),
+    Count(usize),
     PositionRange(usize, usize),
+    FromPosition(usize),
     Day(NaiveDate),
     TimeRange(DateTime, DateTime),
+    Since(DateTime),
 }
 
 impl List {
     pub fn parse(list: Option<String>) -> Self {
         if let Some(list) = list {
             Self::parse_position(&list).or(Self::parse_position_range(&list)
-                .or(Self::parse_time_range(&list).or(Self::parse_day(list))))
+                .or(Self::parse_time_range(&list).or(Self::parse_day(&list)
+                    .or(Self::parse_from_position(&list).or(Self::parse_since(&list))))))
         } else {
             Self::All
         }
@@ -33,7 +36,7 @@ impl List {
     fn parse_position(list: &str) -> List {
         let re = Regex::new(r"^(\d+)$").unwrap();
         for cap in re.captures_iter(list) {
-            return Self::Position(cap[1].parse::<usize>().unwrap());
+            return Self::Count(cap[1].parse::<usize>().unwrap());
         }
         Self::None
     }
@@ -49,8 +52,16 @@ impl List {
         Self::None
     }
 
-    fn parse_day(list: String) -> List {
-        let pt = PartialDateTime::parse(Some(list));
+    fn parse_from_position(list: &str) -> List {
+        let re = Regex::new(r"^(\d+)-$").unwrap();
+        for cap in re.captures_iter(list) {
+            return Self::FromPosition(cap[1].parse::<usize>().unwrap());
+        }
+        Self::None
+    }
+
+    fn parse_day(list: &str) -> List {
+        let pt = PartialDateTime::parse(Some(list.to_string()));
         match pt {
             PartialDateTime::None => Self::None,
             _ => List::Day(pt.into(DateTime::now()).date_time.date_naive()),
@@ -78,5 +89,17 @@ impl List {
         } else {
             Self::None
         }
+    }
+
+    fn parse_since(list: &str) -> List {
+        let re = Regex::new(r"^(.+)\.\.$").unwrap();
+        for cap in re.captures_iter(list) {
+            let pt = PartialDateTime::parse(Some(cap[1].to_string()));
+            return match pt {
+                PartialDateTime::None => Self::None,
+                _ => List::Since(pt.into(DateTime::now())),
+            };
+        }
+        Self::None
     }
 }

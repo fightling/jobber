@@ -7,6 +7,55 @@ use clap::Parser;
     version,
     about,
     long_about,
+    after_help(
+        "\
+Arguments:
+    START, BACK, END
+        Date and time in one of the following formats:
+            mm/dd/yyyy,HH:MM
+            mm/dd/yyyy
+            mm/dd,HH:MM
+            mm/dd
+            dd.mm.yyyy,HH:MM
+            dd.mm.yyyy
+            dd.mm.,HH:MM
+            dd.mm.
+            yyyy-mm-dd,HH:MM
+            yyyy-mm-dd
+            HH:MM
+    DURATION
+        Duration in one of the following formats:
+            HH:MM
+            h,fr
+            h.fr
+    MESSAGE
+        Job description text or will ask for if blank
+    TAGS
+        List of comma separated tags (omit spaces)
+    LIST, REPORT
+        Time or positional range
+            f-t
+            f-
+            C
+            s..u
+            s..
+            D
+    where:
+        yyyy = year
+          mm = month
+          dd = day of month
+          HH = hour
+          MM = minute
+           h = hours 
+          fr = fraction of an hour
+           f = from position
+           t = to position
+           C = backwards count
+           s = since time (time or date format like above)
+           u = until time (time or date format like above)
+           D = single day (date format like above)
+        "
+    ),
     help_template(
         "\
 {before-help}{name} {version} - {about-with-newline}
