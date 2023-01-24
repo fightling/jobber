@@ -5,10 +5,26 @@ use regex::Regex;
 #[derive(PartialEq, Debug)]
 pub enum PartialDateTime {
     None,
-    HM(u32, u32),
-    MD(u32, u32),
-    YMDHM(i32, u32, u32, u32, u32),
-    YMD(i32, u32, u32),
+    HM {
+        hour: u32,
+        minute: u32,
+    },
+    MD {
+        month: u32,
+        day: u32,
+    },
+    YMDHM {
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+    },
+    YMD {
+        year: i32,
+        month: u32,
+        day: u32,
+    },
 }
 
 impl PartialDateTime {
@@ -28,13 +44,25 @@ impl PartialDateTime {
     }
 
     fn merge(left: Self, right: Self) -> Self {
-        if let Self::HM(hour, minute) = left {
-            if let Self::YMD(year, month, day) = right {
-                return Self::YMDHM(year, month, day, hour, minute);
+        if let Self::HM { hour, minute } = left {
+            if let Self::YMD { year, month, day } = right {
+                return Self::YMDHM {
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                };
             }
-        } else if let Self::HM(hour, minute) = right {
-            if let Self::YMD(year, month, day) = left {
-                return Self::YMDHM(year, month, day, hour, minute);
+        } else if let Self::HM { hour, minute } = right {
+            if let Self::YMD { year, month, day } = left {
+                return Self::YMDHM {
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                };
             }
         }
         Self::None
@@ -66,10 +94,10 @@ impl PartialDateTime {
     fn parse_hm(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2}):(\d{1,2})$").unwrap();
         for cap in re.captures_iter(dt) {
-            return Self::HM(
-                cap[1].parse::<u32>().unwrap(),
-                cap[2].parse::<u32>().unwrap(),
-            );
+            return Self::HM {
+                hour: cap[1].parse::<u32>().unwrap(),
+                minute: cap[2].parse::<u32>().unwrap(),
+            };
         }
         Self::None
     }
@@ -78,10 +106,10 @@ impl PartialDateTime {
     fn parse_dm(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2}).(\d{1,2}).$").unwrap();
         for cap in re.captures_iter(dt) {
-            return Self::MD(
-                cap[2].parse::<u32>().unwrap(),
-                cap[1].parse::<u32>().unwrap(),
-            );
+            return Self::MD {
+                month: cap[2].parse::<u32>().unwrap(),
+                day: cap[1].parse::<u32>().unwrap(),
+            };
         }
         Self::None
     }
@@ -90,10 +118,10 @@ impl PartialDateTime {
     fn parse_md(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})/(\d{1,2})$").unwrap();
         for cap in re.captures_iter(dt) {
-            return Self::MD(
-                cap[1].parse::<u32>().unwrap(),
-                cap[2].parse::<u32>().unwrap(),
-            );
+            return Self::MD {
+                month: cap[1].parse::<u32>().unwrap(),
+                day: cap[2].parse::<u32>().unwrap(),
+            };
         }
         Self::None
     }
@@ -102,11 +130,11 @@ impl PartialDateTime {
     fn parse_dmy(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2}).(\d{1,2}).(\d{4})$").unwrap();
         for cap in re.captures_iter(dt) {
-            return Self::YMD(
-                cap[3].parse::<i32>().unwrap(),
-                cap[2].parse::<u32>().unwrap(),
-                cap[1].parse::<u32>().unwrap(),
-            );
+            return Self::YMD {
+                year: cap[3].parse::<i32>().unwrap(),
+                month: cap[2].parse::<u32>().unwrap(),
+                day: cap[1].parse::<u32>().unwrap(),
+            };
         }
         Self::None
     }
@@ -115,11 +143,11 @@ impl PartialDateTime {
     fn parse_ymd(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{4})-(\d{1,2})-(\d{1,2})$").unwrap();
         for cap in re.captures_iter(dt) {
-            return Self::YMD(
-                cap[1].parse::<i32>().unwrap(),
-                cap[2].parse::<u32>().unwrap(),
-                cap[3].parse::<u32>().unwrap(),
-            );
+            return Self::YMD {
+                year: cap[1].parse::<i32>().unwrap(),
+                month: cap[2].parse::<u32>().unwrap(),
+                day: cap[3].parse::<u32>().unwrap(),
+            };
         }
         Self::None
     }
@@ -128,11 +156,11 @@ impl PartialDateTime {
     fn parse_mdy(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})/(\d{1,2})/(\d{4})$").unwrap();
         for cap in re.captures_iter(dt) {
-            return Self::YMD(
-                cap[3].parse::<i32>().unwrap(),
-                cap[1].parse::<u32>().unwrap(),
-                cap[2].parse::<u32>().unwrap(),
-            );
+            return Self::YMD {
+                year: cap[3].parse::<i32>().unwrap(),
+                month: cap[1].parse::<u32>().unwrap(),
+                day: cap[2].parse::<u32>().unwrap(),
+            };
         }
         Self::None
     }
@@ -142,16 +170,22 @@ impl PartialDateTime {
         DateTime {
             date_time: chrono::DateTime::with_timezone(
                 &match self {
-                    Self::HM(hour, minute) => Local
+                    Self::HM { hour, minute } => Local
                         .with_ymd_and_hms(base.year(), base.month(), base.day(), hour, minute, 0)
                         .unwrap(),
-                    Self::YMDHM(year, month, day, hour, minute) => Local
+                    Self::YMDHM {
+                        year,
+                        month,
+                        day,
+                        hour,
+                        minute,
+                    } => Local
                         .with_ymd_and_hms(year, month, day, hour, minute, 0)
                         .unwrap(),
-                    Self::YMD(year, month, day) => {
+                    Self::YMD { year, month, day } => {
                         Local.with_ymd_and_hms(year, month, day, 0, 0, 0).unwrap()
                     }
-                    Self::MD(month, day) => Local
+                    Self::MD { month, day } => Local
                         .with_ymd_and_hms(base.year(), month, day, 0, 0, 0)
                         .unwrap(),
                     Self::None => Local
@@ -175,20 +209,31 @@ impl PartialDateTime {
 fn test_parse_hm() {
     assert_eq!(
         PartialDateTime::parse_hm("01:00"),
-        PartialDateTime::HM(1, 0)
+        PartialDateTime::HM { hour: 1, minute: 0 }
     );
-    assert_eq!(PartialDateTime::parse_hm("1:0"), PartialDateTime::HM(1, 0));
+    assert_eq!(
+        PartialDateTime::parse_hm("1:0"),
+        PartialDateTime::HM { hour: 1, minute: 0 }
+    );
 }
 
 #[test]
 fn test_parse_ymd() {
     assert_eq!(
         PartialDateTime::parse_ymd("2023-02-01"),
-        PartialDateTime::YMD(2023, 2, 1)
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
     );
     assert_eq!(
         PartialDateTime::parse_ymd("2023-2-1"),
-        PartialDateTime::YMD(2023, 2, 1)
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
     );
 }
 
@@ -196,11 +241,19 @@ fn test_parse_ymd() {
 fn test_parse_mdy() {
     assert_eq!(
         PartialDateTime::parse_mdy("02/01/2023"),
-        PartialDateTime::YMD(2023, 2, 1)
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
     );
     assert_eq!(
         PartialDateTime::parse_mdy("2/1/2023"),
-        PartialDateTime::YMD(2023, 2, 1)
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
     );
 }
 
@@ -208,11 +261,19 @@ fn test_parse_mdy() {
 fn test_parse_dmy() {
     assert_eq!(
         PartialDateTime::parse_dmy("01.02.2023"),
-        PartialDateTime::YMD(2023, 2, 1)
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
     );
     assert_eq!(
         PartialDateTime::parse_dmy("1.2.2023"),
-        PartialDateTime::YMD(2023, 2, 1)
+        PartialDateTime::YMD {
+            year: 2023,
+            month: 2,
+            day: 1
+        }
     );
 }
 
@@ -220,16 +281,22 @@ fn test_parse_dmy() {
 fn test_parse_dm() {
     assert_eq!(
         PartialDateTime::parse_dm("01.02."),
-        PartialDateTime::MD(2, 1)
+        PartialDateTime::MD { month: 2, day: 1 }
     );
-    assert_eq!(PartialDateTime::parse_dm("1.2."), PartialDateTime::MD(2, 1));
+    assert_eq!(
+        PartialDateTime::parse_dm("1.2."),
+        PartialDateTime::MD { month: 2, day: 1 }
+    );
 }
 
 #[test]
 fn test_parse_md() {
     assert_eq!(
         PartialDateTime::parse_md("02/01"),
-        PartialDateTime::MD(2, 1)
+        PartialDateTime::MD { month: 2, day: 1 }
     );
-    assert_eq!(PartialDateTime::parse_md("2/1"), PartialDateTime::MD(2, 1));
+    assert_eq!(
+        PartialDateTime::parse_md("2/1"),
+        PartialDateTime::MD { month: 2, day: 1 }
+    );
 }
