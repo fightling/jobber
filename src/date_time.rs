@@ -1,6 +1,8 @@
 use chrono::{Local, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::duration::Duration;
+
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct DateTime {
     pub date_time: chrono::DateTime<Utc>,
@@ -11,7 +13,9 @@ impl std::fmt::Display for DateTime {
         write!(
             f,
             "{}",
-            Local.from_utc_datetime(&self.date_time.naive_local())
+            Local
+                .from_utc_datetime(&self.date_time.naive_local())
+                .naive_local()
         )
     }
 }
@@ -76,5 +80,12 @@ pub fn set_current(local: &str) {
         .unwrap();
     unsafe {
         CURRENT_DT = Some(dt);
+    }
+}
+
+impl std::ops::Sub for &DateTime {
+    type Output = f64;
+    fn sub(self, rhs: Self) -> Self::Output {
+        (self.date_time - rhs.date_time).num_minutes() as f64 / 60.0
     }
 }

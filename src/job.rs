@@ -1,4 +1,4 @@
-use crate::date_time::DateTime;
+use crate::{date_time::DateTime, duration::Duration};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
@@ -43,6 +43,31 @@ impl Job {
     }
     pub fn is_open(&self) -> bool {
         self.end.is_none()
+    }
+}
+
+impl std::fmt::Display for Job {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "  Start: {}", self.start)?;
+        if let Some(end) = &self.end {
+            writeln!(f, "    End: {}", end)?;
+            writeln!(f, "  Hours: {}", end - &self.start)?;
+        }
+        if let Some(message) = &self.message {
+            writeln!(f, r#"Message: {}"#, message)?;
+        }
+        if !self.tags.is_empty() {
+            writeln!(
+                f,
+                r#"   Tags: {}"#,
+                self.tags
+                    .iter()
+                    .map(|x| x.as_str())
+                    .collect::<Vec<&str>>()
+                    .join(",")
+            )?;
+        }
+        Ok(())
     }
 }
 
@@ -100,6 +125,15 @@ impl Jobs {
         // pretty print when running tests
         serde_json::to_writer_pretty(writer, self)?;
 
+        Ok(())
+    }
+}
+
+impl std::fmt::Display for Jobs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (n, job) in self.jobs.iter().enumerate() {
+            writeln!(f, "    Pos: {n}\n{job}")?
+        }
         Ok(())
     }
 }

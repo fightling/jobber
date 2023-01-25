@@ -44,7 +44,9 @@ fn main() {
             jobs.end_last(end, message.flatten(), tags)
                 .expect("no open job");
         }
-        Command::List { range } => todo!(),
+        Command::List { range } => {
+            println!("{}", jobs);
+        }
         Command::Report { range } => todo!(),
     }
 
