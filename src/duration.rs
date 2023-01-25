@@ -92,6 +92,12 @@ impl Duration {
             }
         }
     }
+    pub fn num_minutes(&self) -> i64 {
+        match self {
+            Duration::Zero => 0,
+            Duration::HM { hours, minutes } => hours * 60 + minutes,
+        }
+    }
 }
 
 impl std::fmt::Display for Duration {

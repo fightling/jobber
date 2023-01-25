@@ -6,18 +6,23 @@ mod error;
 mod job;
 mod jobs;
 mod list;
+mod parameters;
 mod partial_date_time;
 mod tags;
 mod tests;
 
-use crate::{job::Job, jobs::Jobs};
+use crate::{job::Job, jobs::Jobs, parameters::Parameters};
 use args::Args;
 use clap::Parser;
 use command::Command;
 
 fn main() {
     let args = Args::parse();
-    let mut jobs = Jobs::load("jobber.dat").unwrap();
+    let mut jobs = if let Ok(jobs) = Jobs::load("jobber.dat") {
+        jobs
+    } else {
+        Jobs::new()
+    };
     tags::init(&jobs);
     let command = Command::parse(args);
     println!("{command:?}");
@@ -52,6 +57,22 @@ fn main() {
             println!("{}", jobs);
         }
         Command::Report { range } => todo!(),
+        Command::SetParameters {
+            resolution,
+            pay,
+            tags,
+        } => {
+            if let Some(tags) = tags {
+                jobs.set_tag_parameters(&tags, resolution, pay);
+            } else {
+                if let Some(resolution) = resolution {
+                    jobs.default_parameters.resolution = resolution;
+                }
+                if let Some(pay) = pay {
+                    jobs.default_parameters.pay = Some(pay);
+                }
+            }
+        }
     }
 
     jobs.save("jobber.dat").unwrap();

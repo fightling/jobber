@@ -1,6 +1,7 @@
 use crate::date_time::DateTime;
 use crate::duration::Duration;
 use crate::list::List;
+use crate::parameters::Parameters;
 use crate::partial_date_time::PartialDateTime;
 use crate::{args::Args, date_time::current};
 
@@ -38,6 +39,11 @@ pub enum Command {
     },
     Report {
         range: List,
+    },
+    SetParameters {
+        resolution: Option<f64>,
+        pay: Option<f64>,
+        tags: Option<Vec<String>>,
     },
 }
 
@@ -113,6 +119,10 @@ impl Command {
             None
         };
 
+        let resolution = args.resolution;
+
+        let pay = args.pay;
+
         if let Some(start) = start {
             if let Some(end) = end {
                 Self::Add {
@@ -167,6 +177,12 @@ impl Command {
             Self::List { range }
         } else if let Some(range) = report {
             Self::Report { range }
+        } else if resolution.is_some() || pay.is_some() {
+            Self::SetParameters {
+                resolution,
+                pay,
+                tags,
+            }
         } else {
             panic!("unknown command")
         }
@@ -221,7 +237,12 @@ impl std::fmt::Debug for Command {
             ),
             Self::Report { range } => write!(
                 f,
-                "Command::Report{{ list: {range:?} }}")
+                "Command::Report{{ list: {range:?} }}"
+            ),
+            Self::SetParameters { resolution, pay, tags } => write!(
+                f,
+                "Command::SetParameters{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?} }}"
+            )
         }
     }
 }

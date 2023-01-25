@@ -1,5 +1,5 @@
-use crate::date_time::DateTime;
 use crate::tags;
+use crate::{date_time::DateTime, parameters::Parameters};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -36,10 +36,27 @@ impl Job {
     pub fn is_open(&self) -> bool {
         self.end.is_none()
     }
-}
-
-impl std::fmt::Display for Job {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    /// get hours without rounding to resolution
+    fn minutes(&self) -> i64 {
+        let end = if let Some(end) = self.end {
+            end
+        } else {
+            DateTime::now()
+        };
+        (&end - &self.start).num_minutes()
+    }
+    pub fn hours(&self, resolution: Option<f64>) -> f64 {
+        if let Some(resolution) = resolution {
+            (self.minutes() as f64 / 60.0 / resolution).ceil() * resolution
+        } else {
+            self.minutes() as f64 / 60.0
+        }
+    }
+    pub fn writeln(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+        parameters: Option<&Parameters>,
+    ) -> std::fmt::Result {
         use termion::*;
         writeln!(
             f,
@@ -56,8 +73,21 @@ impl std::fmt::Display for Job {
                 end,
                 color::Fg(color::Reset),
             )?;
-            writeln!(f, "  Hours: {}", end - &self.start)?;
         }
+        if let Some(parameters) = parameters {
+            let hours = self.hours(Some(parameters.resolution));
+            if hours > 0.0 {
+                write!(f, "  Hours: {}\n", hours)?;
+                if let Some(pay) = parameters.pay {
+                    write!(f, "  Costs: {}\n", hours as f64 * pay)?;
+                };
+            }
+        } else {
+            let hours = self.hours(None);
+            if hours > 0.0 {
+                write!(f, "  Hours: {}\n", hours)?;
+            }
+        };
         if !self.tags.is_empty() {
             write!(f, "   Tags: ",)?;
             for tag in &self.tags {
@@ -85,7 +115,16 @@ impl std::fmt::Display for Job {
                 }
                 write!(f, "{}{}\n", color::Fg(color::Reset), style::Reset)?;
             }
+        } else {
+            write!(f, "\n")?;
         }
+
         Ok(())
+    }
+}
+
+impl std::fmt::Display for Job {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.writeln(f, None)
     }
 }

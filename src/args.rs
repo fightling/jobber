@@ -73,7 +73,9 @@ pub struct Args {
         long,
         required_unless_present("end"),
         required_unless_present("list"),
-        required_unless_present("report")
+        required_unless_present("report"),
+        required_unless_present("resolution"),
+        required_unless_present("pay")
     )]
     pub start: Option<Option<String>>,
 
@@ -104,4 +106,12 @@ pub struct Args {
     /// Print report for all jobs or selective by position(s) or time(s)
     #[arg(short, long, conflicts_with_all(["start","end","back","message","tags"]))]
     pub report: Option<Option<String>>,
+
+    /// Print report for all jobs or selective by position(s) or time(s)
+    #[arg(short ='R', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    pub resolution: Option<f64>,
+
+    /// Print report for all jobs or selective by position(s) or time(s)
+    #[arg(short ='P', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    pub pay: Option<f64>,
 }
