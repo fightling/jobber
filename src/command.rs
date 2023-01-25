@@ -64,8 +64,17 @@ impl Command {
             } else {
                 back.clone().or(Some(current())).unwrap()
             };
-
-            Some(end.into(base))
+            let mut end = end.into(base);
+            if let Some(start) = &start {
+                if start > &end {
+                    // try to fix
+                    end -= Duration::days(1);
+                    if start > &end {
+                        panic!("ERROR: Start time {start} must be before end time {end}");
+                    }
+                }
+            }
+            Some(end)
         } else {
             None
         };
@@ -114,9 +123,7 @@ impl Command {
                 }
             } else if let Some(duration) = duration {
                 Self::Add {
-                    end: DateTime {
-                        date_time: start.date_time + duration,
-                    },
+                    end: start + duration,
                     start,
                     message,
                     tags,
