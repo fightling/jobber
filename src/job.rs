@@ -1,15 +1,7 @@
-use crate::{date_time::DateTime, duration::Duration};
+use crate::date_time::DateTime;
+use crate::tags;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    fs::File,
-    io::{BufReader, BufWriter},
-};
-
-#[derive(Debug)]
-pub enum Error {
-    NoOpenJob,
-}
+use std::collections::HashSet;
 
 #[derive(Serialize, Deserialize)]
 pub struct Job {
@@ -48,91 +40,51 @@ impl Job {
 
 impl std::fmt::Display for Job {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "  Start: {}", self.start)?;
+        use termion::*;
+        writeln!(
+            f,
+            "  Start: {}{}{}",
+            color::Fg(color::Green),
+            self.start,
+            color::Fg(color::Reset)
+        )?;
         if let Some(end) = &self.end {
-            writeln!(f, "    End: {}", end)?;
-            writeln!(f, "  Hours: {}", end - &self.start)?;
-        }
-        if let Some(message) = &self.message {
-            writeln!(f, r#"Message: {}"#, message)?;
-        }
-        if !self.tags.is_empty() {
             writeln!(
                 f,
-                r#"   Tags: {}"#,
-                self.tags
-                    .iter()
-                    .map(|x| x.as_str())
-                    .collect::<Vec<&str>>()
-                    .join(",")
+                "    End: {}{}{}",
+                color::Fg(color::Magenta),
+                end,
+                color::Fg(color::Reset),
             )?;
+            writeln!(f, "  Hours: {}", end - &self.start)?;
         }
-        Ok(())
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Jobs {
-    jobs: Vec<Job>,
-}
-
-impl Jobs {
-    pub fn new() -> Self {
-        Self { jobs: Vec::new() }
-    }
-    pub fn push(&mut self, job: Job) {
-        self.jobs.push(job);
-    }
-    pub fn end_last(
-        &mut self,
-        end: DateTime,
-        message: Option<String>,
-        tags: Option<Vec<String>>,
-    ) -> Result<(), Error> {
-        if let Some(last) = self.jobs.last() {
-            if !last.is_open() {
-                return Err(Error::NoOpenJob);
+        if !self.tags.is_empty() {
+            write!(f, "   Tags: ",)?;
+            for tag in &self.tags {
+                tags::format(f, &tag);
+                write!(f, " ")?;
             }
-            if let Some(last) = self.jobs.last_mut() {
-                last.end = Some(end);
-                last.message = message;
-                if let Some(tags) = tags {
-                    for tag in tags {
-                        last.tags.insert(tag);
-                    }
+
+            writeln!(f, "",)?
+        }
+        if let Some(message) = &self.message {
+            let mut first = true;
+            let lines = message.split('\n');
+            for line in lines {
+                if first {
+                    first = false;
+                    write!(
+                        f,
+                        "Message: {}{}{}",
+                        style::Bold,
+                        color::Fg(color::LightWhite),
+                        line
+                    )?;
+                } else {
+                    write!(f, "         {}", line)?;
                 }
+                write!(f, "{}{}\n", color::Fg(color::Reset), style::Reset)?;
             }
-        }
-        Ok(())
-    }
-    pub fn load(filename: &str) -> std::io::Result<Jobs> {
-        let file = File::options().read(true).open(filename)?;
-        let reader = BufReader::new(file);
-
-        Ok(match serde_json::from_reader::<_, Self>(reader) {
-            Ok(jobs) => jobs,
-            Err(_) => Jobs::new(),
-        })
-    }
-    pub fn save(&self, filename: &str) -> std::io::Result<()> {
-        let file = File::options()
-            .write(true)
-            .create(true)
-            .open(filename)
-            .unwrap();
-        let writer = BufWriter::new(file);
-
-        // pretty print when running tests
-        serde_json::to_writer_pretty(writer, self)?;
-
-        Ok(())
-    }
-}
-
-impl std::fmt::Display for Jobs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (n, job) in self.jobs.iter().enumerate() {
-            writeln!(f, "    Pos: {n}\n{job}")?
         }
         Ok(())
     }

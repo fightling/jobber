@@ -2,12 +2,15 @@ mod args;
 mod command;
 mod date_time;
 mod duration;
+mod error;
 mod job;
+mod jobs;
 mod list;
 mod partial_date_time;
+mod tags;
 mod tests;
 
-use crate::job::*;
+use crate::{job::Job, jobs::Jobs};
 use args::Args;
 use clap::Parser;
 use command::Command;
@@ -15,6 +18,7 @@ use command::Command;
 fn main() {
     let args = Args::parse();
     let mut jobs = Jobs::load("jobber.dat").unwrap();
+    tags::init(&jobs);
     let command = Command::parse(args);
     println!("{command:?}");
     match command {
