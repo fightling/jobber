@@ -111,17 +111,30 @@ impl Command {
         let pay = args.pay;
 
         if let Some(start) = start {
-            let start = start.into(current());
+            let mut start = start.into(current());
             if let Some(end) = end {
-                let mut end = end.into(start);
-                if end < start {
-                    end += Duration::days(1);
-                }
-                Self::Add {
-                    start,
-                    end,
-                    message,
-                    tags,
+                if end == PartialDateTime::None {
+                    let end = end.into(current());
+                    if end < start {
+                        start -= Duration::days(1);
+                    }
+                    Self::Add {
+                        start,
+                        end,
+                        message,
+                        tags,
+                    }
+                } else {
+                    let mut end = end.into(start);
+                    if end < start {
+                        end += Duration::days(1);
+                    }
+                    Self::Add {
+                        start,
+                        end,
+                        message,
+                        tags,
+                    }
                 }
             } else if let Some(duration) = duration {
                 let end = start + duration.into_chrono();
@@ -139,12 +152,33 @@ impl Command {
                 }
             }
         } else if let Some(start) = back {
-            let start = start.into(current());
+            let mut start = start.into(current());
             if let Some(end) = end {
-                let mut end = end.into(start);
-                if end < start {
-                    end += Duration::days(1);
+                if end == PartialDateTime::None {
+                    let end = end.into(current());
+                    if end < start {
+                        start -= Duration::days(1);
+                    }
+                    Self::BackAdd {
+                        start,
+                        end,
+                        message,
+                        tags,
+                    }
+                } else {
+                    let mut end = end.into(start);
+                    if end < start {
+                        end += Duration::days(1);
+                    }
+                    Self::BackAdd {
+                        start,
+                        end,
+                        message,
+                        tags,
+                    }
                 }
+            } else if let Some(duration) = duration {
+                let end = start + duration.into_chrono();
                 Self::BackAdd {
                     start,
                     end,

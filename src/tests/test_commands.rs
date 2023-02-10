@@ -34,4 +34,15 @@ fn test_add() {
             tags: None
         }
     );
+
+    // add overnight job (shall start yesterday)
+    assert_eq!(
+        test_command(&["jobber", "-s", "23:00", "-e"]),
+        Command::Add {
+            start: DateTime::from_local("2023-1-31 23:00"),
+            end: DateTime::from_local("2023-2-1 12:00"),
+            message: None,
+            tags: None
+        }
+    );
 }
