@@ -71,6 +71,7 @@ pub struct Args {
     #[arg(
         short,
         long,
+        required_unless_present("back"),
         required_unless_present("end"),
         required_unless_present("list"),
         required_unless_present("report"),
@@ -88,7 +89,7 @@ pub struct Args {
     pub end: Option<Option<String>>,
 
     /// End job after the given duration
-    #[arg(short, long)]
+    #[arg(short, long, conflicts_with("end"))]
     pub duration: Option<String>,
 
     /// Ask for message to add or add the given one

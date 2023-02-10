@@ -33,7 +33,7 @@ impl Job {
             },
         }
     }
-    pub fn is_open(&self) -> bool {
+    pub fn is_running(&self) -> bool {
         self.end.is_none()
     }
     /// get hours without rounding to resolution

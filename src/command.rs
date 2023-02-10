@@ -1,44 +1,57 @@
-use crate::date_time::DateTime;
+use crate::args::Args;
+use crate::date_time::{current, DateTime};
 use crate::duration::Duration;
 use crate::list::List;
-use crate::parameters::Parameters;
 use crate::partial_date_time::PartialDateTime;
-use crate::{args::Args, date_time::current};
 
 #[derive(PartialEq)]
 pub enum Command {
+    /// start a new job by specifying start time if no job is running
     Start {
         start: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
+    /// add a new job by specifying start and end time if no job is running
     Add {
         start: DateTime,
         end: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
+    /// like `Start` but re-use message an tags of previous job
     Back {
         start: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
+    /// like `Add` but re-use message an tags of previous job
     BackAdd {
         start: DateTime,
         end: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
+    /// end existing job by giving time
     End {
         end: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
+    /// add message or tags to a running job
+    MessageTags {
+        message: Option<String>,
+        tags: Option<Vec<String>>,
+    },
+    /// List jobs
     List {
         range: List,
+        tags: Option<Vec<String>>,
     },
+    /// Report jobs
     Report {
         range: List,
+        tags: Option<Vec<String>>,
     },
     SetParameters {
         resolution: Option<f64>,
@@ -48,53 +61,27 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn parse(args: Args) -> Self {
+    pub fn parse(args: Args, running_start: Option<DateTime>) -> Self {
         let start = if let Some(start) = args.start {
-            Some(PartialDateTime::parse(start).into(current()))
+            Some(PartialDateTime::parse(start))
         } else {
             None
         };
 
         let back = if let Some(back) = args.back {
-            Some(PartialDateTime::parse(back).into(current()))
+            Some(PartialDateTime::parse(back))
         } else {
             None
         };
 
         let end = if let Some(end) = args.end {
-            let end = PartialDateTime::parse(end);
-            let base = if PartialDateTime::None == end {
-                current()
-            } else if start.is_some() {
-                start.clone().or(Some(current())).unwrap()
-            } else {
-                back.clone().or(Some(current())).unwrap()
-            };
-            let mut end = end.into(base);
-            if let Some(start) = &start {
-                if start > &end {
-                    // try to fix
-                    end -= Duration::days(1);
-                    if start > &end {
-                        panic!("ERROR: Start time {start} must be before end time {end}");
-                    }
-                }
-            }
-            Some(end)
+            Some(PartialDateTime::parse(end))
         } else {
             None
         };
 
         let duration = if let Some(duration) = args.duration {
-            let duration = Duration::parse(duration);
-            if let Duration::HM { hours, minutes } = duration {
-                Some(
-                    chrono::Duration::hours(hours as i64)
-                        + chrono::Duration::minutes(minutes as i64),
-                )
-            } else {
-                None
-            }
+            Some(Duration::parse(duration))
         } else {
             None
         };
@@ -124,7 +111,12 @@ impl Command {
         let pay = args.pay;
 
         if let Some(start) = start {
+            let start = start.into(current());
             if let Some(end) = end {
+                let mut end = end.into(start);
+                if end < start {
+                    end += Duration::days(1);
+                }
                 Self::Add {
                     start,
                     end,
@@ -132,9 +124,10 @@ impl Command {
                     tags,
                 }
             } else if let Some(duration) = duration {
+                let end = start + duration.into_chrono();
                 Self::Add {
-                    end: start + duration,
                     start,
+                    end,
                     message,
                     tags,
                 }
@@ -146,19 +139,15 @@ impl Command {
                 }
             }
         } else if let Some(start) = back {
+            let start = start.into(current());
             if let Some(end) = end {
+                let mut end = end.into(start);
+                if end < start {
+                    end += Duration::days(1);
+                }
                 Self::BackAdd {
                     start,
                     end,
-                    message,
-                    tags,
-                }
-            } else if let Some(duration) = duration {
-                Self::BackAdd {
-                    end: DateTime {
-                        date_time: start.date_time + duration,
-                    },
-                    start,
                     message,
                     tags,
                 }
@@ -170,13 +159,21 @@ impl Command {
                 }
             }
         } else if let Some(end) = end {
+            let end = end.into(if let Some(running_start) = running_start {
+                running_start
+            } else {
+                current()
+            });
             Self::End { end, message, tags }
-        } else if let Some(_duration) = duration {
-            todo!("get start from open job and add duration to set end");
+        } else if message.is_some() | tags.is_some() {
+            Self::MessageTags {
+                message: message.unwrap(),
+                tags,
+            }
         } else if let Some(range) = list {
-            Self::List { range }
+            Self::List { range, tags }
         } else if let Some(range) = report {
-            Self::Report { range }
+            Self::Report { range, tags }
         } else if resolution.is_some() || pay.is_some() {
             Self::SetParameters {
                 resolution,
@@ -230,19 +227,22 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::End{{ end: {end:?}, message: {message:?}, tags: {tags:?} }}"                
             ),
-
-            Self::List { range } => write!(
+            Self::MessageTags { message, tags } =>  write!(
                 f,
-                "Command::List{{ list: {range:?} }}"
+                "Command::MessageTags{{ message: {message:?}, tags: {tags:?} }}"
             ),
-            Self::Report { range } => write!(
+            Self::List { range, tags } => write!(
                 f,
-                "Command::Report{{ list: {range:?} }}"
+                "Command::List{{ list: {range:?}, {tags:?} }}"
+            ),
+            Self::Report { range, tags } => write!(
+                f,
+                "Command::Report{{ list: {range:?}, {tags:?} }}"
             ),
             Self::SetParameters { resolution, pay, tags } => write!(
                 f,
                 "Command::SetParameters{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?} }}"
-            )
+            ),
         }
     }
 }
@@ -253,7 +253,7 @@ fn test_start() {
     crate::date_time::set_current("2023-01-01 12:00");
 
     assert_eq!(
-        Command::parse(Args::parse_from(["jobber", "-s"])),
+        Command::parse(Args::parse_from(["jobber", "-s"]), None),
         Command::Start {
             start: DateTime::from_local("2023-01-01 12:00"),
             message: None,
@@ -262,7 +262,7 @@ fn test_start() {
     );
 
     assert_eq!(
-        Command::parse(Args::parse_from(["jobber", "-s", "1.1.,12:00"])),
+        Command::parse(Args::parse_from(["jobber", "-s", "1.1.,12:00"]), None),
         Command::Start {
             start: DateTime::from_local("2023-01-01 12:00"),
             message: None,
@@ -276,7 +276,10 @@ fn test_add() {
     use clap::Parser;
     crate::date_time::set_current("2023-01-01 12:00");
     assert_eq!(
-        Command::parse(Args::parse_from(["jobber", "-s", "12:00", "-e", "13:00"])),
+        Command::parse(
+            Args::parse_from(["jobber", "-s", "12:00", "-e", "13:00"]),
+            None
+        ),
         Command::Add {
             start: DateTime::from_local("2023-01-01 12:00"),
             end: DateTime::from_local("2023-01-01 13:00"),

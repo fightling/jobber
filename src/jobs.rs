@@ -1,4 +1,6 @@
-use crate::{date_time::DateTime, error::Error, job::Job, parameters::Parameters};
+use crate::{
+    command::Command, date_time::DateTime, error::Error, job::Job, parameters::Parameters,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -23,8 +25,76 @@ impl Jobs {
             tag_parameters: HashMap::new(),
         }
     }
-    pub fn push(&mut self, job: Job) {
-        self.jobs.push(job);
+    pub fn proceed(&mut self, command: Command) {
+        println!("{command:?}");
+        match command {
+            Command::Start {
+                start,
+                message,
+                tags,
+            } => self
+                .jobs
+                .push(Job::new(start, None, message.flatten(), tags)),
+            Command::Add {
+                start,
+                end,
+                message,
+                tags,
+            } => self
+                .jobs
+                .push(Job::new(start, Some(end), message.flatten(), tags)),
+            Command::Back {
+                start,
+                message,
+                tags,
+            } => self
+                .jobs
+                .push(Job::new(start, None, message.flatten(), tags)),
+            Command::BackAdd {
+                start,
+                end,
+                message,
+                tags,
+            } => self
+                .jobs
+                .push(Job::new(start, Some(end), message.flatten(), tags)),
+            Command::End { end, message, tags } => {
+                self.end_last(end, message.flatten(), tags)
+                    .expect("no open job");
+            }
+            Command::List { range, tags } => {
+                println!("{}", self);
+            }
+            Command::Report { range, tags } => todo!(),
+            Command::SetParameters {
+                resolution,
+                pay,
+                tags,
+            } => {
+                if let Some(tags) = tags {
+                    self.set_tag_parameters(&tags, resolution, pay);
+                } else {
+                    if let Some(resolution) = resolution {
+                        self.default_parameters.resolution = resolution;
+                    }
+                    if let Some(pay) = pay {
+                        self.default_parameters.pay = Some(pay);
+                    }
+                }
+            }
+            Command::MessageTags { message, tags } => todo!(),
+        }
+    }
+    pub fn running_start(&self) -> Option<DateTime> {
+        if let Some(job) = self.jobs.last() {
+            if job.is_running() {
+                job.end
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
     pub fn end_last(
         &mut self,
@@ -33,7 +103,7 @@ impl Jobs {
         tags: Option<Vec<String>>,
     ) -> Result<(), Error> {
         if let Some(last) = self.jobs.last() {
-            if !last.is_open() {
+            if !last.is_running() {
                 return Err(Error::NoOpenJob);
             }
             if let Some(last) = self.jobs.last_mut() {
