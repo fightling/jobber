@@ -75,8 +75,10 @@ pub struct Args {
         required_unless_present("end"),
         required_unless_present("list"),
         required_unless_present("report"),
+        required_unless_present("configuration"),
         required_unless_present("resolution"),
-        required_unless_present("pay")
+        required_unless_present("pay"),
+        required_unless_present("max_hours")
     )]
     pub start: Option<Option<String>>,
 
@@ -108,11 +110,19 @@ pub struct Args {
     #[arg(short, long, conflicts_with_all(["start","end","back","message","tags"]))]
     pub report: Option<Option<String>>,
 
-    /// Print report for all jobs or selective by position(s) or time(s)
+    /// Show configuration parameters
+    #[arg(short ='C', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    pub configuration: bool,
+
+    /// Set the resolution for counting of hours (can be combined with --tags)
     #[arg(short ='R', long, conflicts_with_all(["start","end","back","message","list","report"]))]
     pub resolution: Option<f64>,
 
-    /// Print report for all jobs or selective by position(s) or time(s)
+    /// Set the payment for one hour (can be combined with --tags)
     #[arg(short ='P', long, conflicts_with_all(["start","end","back","message","list","report"]))]
     pub pay: Option<f64>,
+
+    /// Set maximum hours per day above you will get a warning (can be combined with --tags)
+    #[arg(short ='H', long="max-hours-day", conflicts_with_all(["start","end","back","message","list","report"]))]
+    pub max_hours: Option<u32>,
 }

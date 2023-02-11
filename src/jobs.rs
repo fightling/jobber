@@ -1,5 +1,5 @@
 use crate::{
-    command::Command, date_time::DateTime, error::Error, job::Job, parameters::Parameters,
+    command::Command, configuration::Configuration, date_time::DateTime, error::Error, job::Job,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -14,18 +14,18 @@ use crate::job_list::JobList;
 pub struct Jobs {
     /// list of jobs
     pub jobs: Vec<Job>,
-    /// Parameters by tag
-    pub tag_parameters: HashMap<String, Parameters>,
-    /// Parameters used when no tag related parameters fit
-    pub default_parameters: Parameters,
+    /// Configuration by tag
+    pub tag_configuration: HashMap<String, Configuration>,
+    /// Configuration used when no tag related configuration fit
+    pub default_configuration: Configuration,
 }
 
 impl Jobs {
     pub fn new() -> Self {
         Self {
             jobs: Vec::new(),
-            default_parameters: Default::default(),
-            tag_parameters: HashMap::new(),
+            default_configuration: Default::default(),
+            tag_configuration: HashMap::new(),
         }
     }
     pub fn proceed(&mut self, command: Command, force: bool) -> Result<(), Error> {
@@ -61,21 +61,20 @@ impl Jobs {
                 println!("{}", self);
             }
             Command::Report { range, tags } => todo!(),
-            Command::SetParameters {
+            Command::ShowConfiguration => {
+                println!("Default Configuration:\n\n{}", self.default_configuration);
+
+                for (tag, configuration) in &self.tag_configuration {
+                    println!("Configuration for tag '{}':\n\n{}", tag, configuration);
+                }
+            }
+            Command::SetConfiguration {
                 resolution,
                 pay,
                 tags,
+                max_hours,
             } => {
-                if let Some(tags) = tags {
-                    self.set_tag_parameters(&tags, resolution, pay);
-                } else {
-                    if let Some(resolution) = resolution {
-                        self.default_parameters.resolution = resolution;
-                    }
-                    if let Some(pay) = pay {
-                        self.default_parameters.pay = Some(pay);
-                    }
-                }
+                self.set_configuration(&tags, resolution, pay, max_hours);
             }
             Command::MessageTags { message, tags } => todo!(),
         }
@@ -126,6 +125,7 @@ impl Jobs {
         let file = File::options()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(filename)
             .unwrap();
         let writer = BufWriter::new(file);
@@ -135,42 +135,51 @@ impl Jobs {
 
         Ok(())
     }
-    pub fn set_tag_parameters(
+    pub fn set_configuration(
         &mut self,
-        tags: &Vec<String>,
+        tags: &Option<Vec<String>>,
         resolution: Option<f64>,
         pay: Option<f64>,
+        max_hours: Option<u32>,
     ) {
-        for tag in tags {
-            if let Some(parameters) = self.tag_parameters.get_mut(tag) {
-                if let Some(resolution) = resolution {
-                    parameters.resolution = resolution;
-                }
-                if let Some(pay) = pay {
-                    parameters.pay = Some(pay);
-                }
-            } else {
-                self.tag_parameters.insert(
-                    tag.clone(),
-                    Parameters {
-                        resolution: if let Some(resolution) = resolution {
-                            resolution
-                        } else {
-                            self.default_parameters.resolution
+        if let Some(tags) = tags {
+            for tag in tags {
+                if let Some(configuration) = self.tag_configuration.get_mut(tag) {
+                    if let Some(resolution) = resolution {
+                        configuration.resolution = resolution;
+                    }
+                    configuration.pay = pay;
+                    configuration.max_hours = max_hours;
+                } else {
+                    self.tag_configuration.insert(
+                        tag.clone(),
+                        Configuration {
+                            resolution: if let Some(resolution) = resolution {
+                                resolution
+                            } else {
+                                self.default_configuration.resolution
+                            },
+                            pay: pay,
+                            max_hours,
                         },
-                        pay: pay,
-                    },
-                );
+                    );
+                }
             }
+        } else {
+            if let Some(resolution) = resolution {
+                self.default_configuration.resolution = resolution;
+            }
+            self.default_configuration.pay = pay;
+            self.default_configuration.max_hours = max_hours;
         }
     }
-    fn get_parameters(&self, tags: &HashSet<String>) -> &Parameters {
+    fn get_configuration(&self, tags: &HashSet<String>) -> &Configuration {
         for tag in tags {
-            if let Some(parameters) = self.tag_parameters.get(tag) {
-                return parameters;
+            if let Some(configuration) = self.tag_configuration.get(tag) {
+                return configuration;
             }
         }
-        &self.default_parameters
+        &self.default_configuration
     }
     fn push(&mut self, job: Job, force: bool) -> Result<(), Error> {
         if !force {
@@ -208,7 +217,7 @@ impl Jobs {
                 }
             }
             writeln!(f, "\n    Pos: {}", n + 1)?;
-            job.writeln(f, Some(self.get_parameters(&job.tags)))?;
+            job.writeln(f, Some(self.get_configuration(&job.tags)))?;
         }
         Ok(())
     }

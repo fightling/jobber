@@ -1,5 +1,6 @@
 mod args;
 mod command;
+mod configuration;
 mod date_time;
 mod duration;
 mod error;
@@ -7,7 +8,6 @@ mod job;
 mod job_list;
 mod jobs;
 mod list;
-mod parameters;
 mod partial_date_time;
 mod tags;
 mod tests;

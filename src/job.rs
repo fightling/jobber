@@ -1,6 +1,6 @@
 use crate::error::Error;
 use crate::tags;
-use crate::{date_time::DateTime, parameters::Parameters};
+use crate::{configuration::Configuration, date_time::DateTime};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -76,7 +76,7 @@ impl Job {
     pub fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
-        parameters: Option<&Parameters>,
+        configuration: Option<&Configuration>,
     ) -> std::fmt::Result {
         use termion::*;
         writeln!(
@@ -95,11 +95,27 @@ impl Job {
                 color::Fg(color::Reset),
             )?;
         }
-        if let Some(parameters) = parameters {
-            let hours = self.hours(Some(parameters.resolution));
+        if let Some(configuration) = configuration {
+            let hours = self.hours(Some(configuration.resolution));
             if hours > 0.0 {
-                write!(f, "  Hours: {}\n", hours)?;
-                if let Some(pay) = parameters.pay {
+                if let Some(max_hours) = configuration.max_hours {
+                    if hours > max_hours as f64 {
+                        write!(
+                            f,
+                            "  Hours: {}{}{}{}{}\n",
+                            style::Bold,
+                            color::Fg(color::LightRed),
+                            hours,
+                            color::Fg(color::Reset),
+                            style::Reset
+                        )?;
+                    } else {
+                        write!(f, "  Hours: {}\n", hours)?;
+                    }
+                } else {
+                    write!(f, "  Hours: {}\n", hours)?;
+                }
+                if let Some(pay) = configuration.pay {
                     write!(f, "  Costs: {}\n", hours as f64 * pay)?;
                 };
             }

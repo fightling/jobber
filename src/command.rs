@@ -53,10 +53,12 @@ pub enum Command {
         range: List,
         tags: Option<Vec<String>>,
     },
-    SetParameters {
+    ShowConfiguration,
+    SetConfiguration {
         resolution: Option<f64>,
         pay: Option<f64>,
         tags: Option<Vec<String>>,
+        max_hours: Option<u32>,
     },
 }
 
@@ -107,8 +109,12 @@ impl Command {
         };
 
         let resolution = args.resolution;
-
         let pay = args.pay;
+        let max_hours = args.max_hours;
+        // true if any of the above is available
+        let set_configuration = resolution.is_some() || pay.is_some() || max_hours.is_some();
+
+        let configuration = args.configuration;
 
         if let Some(start) = start {
             let mut start = start.into(current());
@@ -199,20 +205,23 @@ impl Command {
                 current()
             });
             Self::End { end, message, tags }
-        } else if message.is_some() | tags.is_some() {
+        } else if !set_configuration && (message.is_some() || tags.is_some()) {
             Self::MessageTags {
-                message: message.unwrap(),
+                message: message.flatten(),
                 tags,
             }
         } else if let Some(range) = list {
             Self::List { range, tags }
         } else if let Some(range) = report {
             Self::Report { range, tags }
-        } else if resolution.is_some() || pay.is_some() {
-            Self::SetParameters {
+        } else if configuration {
+            Self::ShowConfiguration
+        } else if resolution.is_some() || pay.is_some() || max_hours.is_some() {
+            Self::SetConfiguration {
                 resolution,
                 pay,
                 tags,
+                max_hours,
             }
         } else {
             panic!("unknown command")
@@ -273,9 +282,13 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::Report{{ list: {range:?}, {tags:?} }}"
             ),
-            Self::SetParameters { resolution, pay, tags } => write!(
+            Self::ShowConfiguration => write!(
                 f,
-                "Command::SetParameters{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?} }}"
+                "Command::ShowConfiguration"
+            ),
+            Self::SetConfiguration { resolution, pay, tags, max_hours } => write!(
+                f,
+                "Command::SetConfiguration{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?}, max hours: {max_hours:?} }}"
             ),
         }
     }
