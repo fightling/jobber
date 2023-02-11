@@ -55,7 +55,7 @@ impl Job {
         if let Some(resolution) = resolution {
             (self.minutes() as f64 / 60.0 / resolution).ceil() * resolution
         } else {
-            self.minutes() as f64 / 60.0
+            (self.minutes() as f64 / 60.0 / 0.01).round() * 0.01
         }
     }
     pub fn overlaps(&self, other: &Job) -> bool {
