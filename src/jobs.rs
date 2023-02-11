@@ -135,14 +135,6 @@ impl Jobs {
 
         Ok(())
     }
-    pub fn get_parameters(&self, tags: &HashSet<String>) -> &Parameters {
-        for tag in tags {
-            if let Some(parameters) = self.tag_parameters.get(tag) {
-                return parameters;
-            }
-        }
-        &self.default_parameters
-    }
     pub fn set_tag_parameters(
         &mut self,
         tags: &Vec<String>,
@@ -172,9 +164,17 @@ impl Jobs {
             }
         }
     }
+    fn get_parameters(&self, tags: &HashSet<String>) -> &Parameters {
+        for tag in tags {
+            if let Some(parameters) = self.tag_parameters.get(tag) {
+                return parameters;
+            }
+        }
+        &self.default_parameters
+    }
     fn push(&mut self, job: Job, force: bool) -> Result<(), Error> {
         if !force {
-            let mut overlapping = JobList::new();
+            let mut overlapping = JobList::new_from(&self);
             for (n, j) in self.jobs.iter().enumerate() {
                 if job.overlaps(j) {
                     overlapping.push(n, j.clone());
@@ -207,7 +207,7 @@ impl Jobs {
                     }
                 }
             }
-            writeln!(f, "    Pos: {}", n + 1)?;
+            writeln!(f, "\n    Pos: {}", n + 1)?;
             job.writeln(f, Some(self.get_parameters(&job.tags)))?;
         }
         Ok(())
