@@ -11,6 +11,7 @@ authors = ["pat@thats-software.com"]
 [dependencies]
 chrono = { version="0.4", features = ["serde"] }
 clap = { version = "4.1", features = ["derive"] }
+itertools = "0.10.5"
 regex = "1.7"
 serde = { version="1.0.152", features = ["derive","std"] }
 serde_json = "1.0.91"

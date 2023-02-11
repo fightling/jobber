@@ -9,6 +9,7 @@ mod job_list;
 mod jobs;
 mod list;
 mod partial_date_time;
+mod tag_list;
 mod tags;
 mod tests;
 
@@ -46,12 +47,19 @@ fn run(args: Args) -> Result<(), Error> {
     };
     tags::init(&jobs);
     let command = Command::parse(args, jobs.running_start());
-    match jobs.proceed(command.clone(), false) {
-        Err(Error::Overlaps { new, existing }) => {
-            println!("{}", Error::Overlaps { new, existing });
-            if ask("Do you still want to add this job (y/N)?")? {
-                jobs.proceed(command, true)?;
+    match jobs.proceed(command.clone(), true) {
+        Err(Error::Warnings(warnings)) => {
+            println!(
+                "There where {} warning(s) you have to omit:",
+                warnings.len()
+            );
+            for (n, warning) in warnings.iter().enumerate() {
+                println!("\nWARNING {}) {}", n + 1, warning);
+                if !ask("Do you still want to add this job (y/N)?")? {
+                    return Err(Error::Cancel);
+                }
             }
+            jobs.proceed(command, false)?;
         }
         Err(err) => return Err(err),
         Ok(()) => (),

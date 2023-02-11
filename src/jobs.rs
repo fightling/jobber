@@ -1,5 +1,11 @@
 use crate::{
-    command::Command, configuration::Configuration, date_time::DateTime, error::Error, job::Job,
+    command::Command,
+    configuration::Configuration,
+    date_time::DateTime,
+    error::{Error, Warning},
+    job::Job,
+    tag_list::TagList,
+    tags,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -181,8 +187,10 @@ impl Jobs {
         }
         &self.default_configuration
     }
-    fn push(&mut self, job: Job, force: bool) -> Result<(), Error> {
-        if !force {
+    fn push(&mut self, job: Job, check: bool) -> Result<(), Error> {
+        if check {
+            let mut warnings = Vec::new();
+            // check for overlapping
             let mut overlapping = JobList::new_from(&self);
             for (n, j) in self.jobs.iter().enumerate() {
                 if job.overlaps(j) {
@@ -190,16 +198,41 @@ impl Jobs {
                 }
             }
             if !overlapping.is_empty() {
-                return Err(Error::Overlaps {
-                    new: job,
+                warnings.push(Warning::Overlaps {
+                    new: job.clone(),
                     existing: overlapping,
                 });
+            }
+
+            // check for unknown tag
+            let known_tags = self.tags();
+            let mut unknown_tags = TagList::new();
+            for tag in &job.tags {
+                if !known_tags.contains(tag) {
+                    unknown_tags.insert(tag);
+                }
+            }
+            if !unknown_tags.is_empty() {
+                warnings.push(Warning::UnknownTags(unknown_tags));
+            }
+
+            if !warnings.is_empty() {
+                return Err(Error::Warnings(warnings));
             }
         }
         self.jobs.push(job);
         Ok(())
     }
-
+    fn tags(&self) -> HashSet<String> {
+        let mut result: HashSet<String> =
+            self.tag_configuration.keys().map(|v| v.clone()).collect();
+        for job in &self.jobs {
+            for tag in &job.tags {
+                result.insert(tag.clone());
+            }
+        }
+        result
+    }
     fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
