@@ -24,6 +24,20 @@ fn main() {
         println!("ERROR: {err}");
     }
 }
+
+fn ask(question: &str) -> Result<bool, Error> {
+    println!("{}", question);
+    let mut buffer = String::new();
+    // `read_line` returns `Result` of bytes read
+    std::io::stdin()
+        .read_line(&mut buffer)
+        .map_err(|err| Error::Io(err))?;
+    Ok(match buffer.trim_end() {
+        "y" | "Y" => true,
+        _ => false,
+    })
+}
+
 fn run(args: Args) -> Result<(), Error> {
     let mut jobs = if let Ok(jobs) = Jobs::load("jobber.dat") {
         jobs
@@ -32,7 +46,16 @@ fn run(args: Args) -> Result<(), Error> {
     };
     tags::init(&jobs);
     let command = Command::parse(args, jobs.running_start());
-    jobs.proceed(command, false)?;
+    match jobs.proceed(command.clone(), false) {
+        Err(Error::Overlaps { new, existing }) => {
+            println!("{}", Error::Overlaps { new, existing });
+            if ask("Do you still want to add this job (y/N)?")? {
+                jobs.proceed(command, true)?;
+            }
+        }
+        Err(err) => return Err(err),
+        Ok(()) => (),
+    }
     jobs.save("jobber.dat")?;
     Ok(())
 }

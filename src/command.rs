@@ -4,7 +4,7 @@ use crate::duration::Duration;
 use crate::list::List;
 use crate::partial_date_time::PartialDateTime;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum Command {
     /// start a new job by specifying start time if no job is running
     Start {
