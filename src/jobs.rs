@@ -8,8 +8,9 @@ use std::{
     io::{BufReader, BufWriter},
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Jobs {
+    /// list of jobs
     pub jobs: Vec<Job>,
     /// Parameters by tag
     pub tag_parameters: HashMap<String, Parameters>,
@@ -25,39 +26,31 @@ impl Jobs {
             tag_parameters: HashMap::new(),
         }
     }
-    pub fn proceed(&mut self, command: Command) {
+    pub fn proceed(&mut self, command: Command, force: bool) -> Result<(), Error> {
         println!("{command:?}");
         match command {
             Command::Start {
                 start,
                 message,
                 tags,
-            } => self
-                .jobs
-                .push(Job::new(start, None, message.flatten(), tags)),
+            } => self.push(Job::new(start, None, message.flatten(), tags)?, force)?,
             Command::Add {
                 start,
                 end,
                 message,
                 tags,
-            } => self
-                .jobs
-                .push(Job::new(start, Some(end), message.flatten(), tags)),
+            } => self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?,
             Command::Back {
                 start,
                 message,
                 tags,
-            } => self
-                .jobs
-                .push(Job::new(start, None, message.flatten(), tags)),
+            } => self.push(Job::new(start, None, message.flatten(), tags)?, force)?,
             Command::BackAdd {
                 start,
                 end,
                 message,
                 tags,
-            } => self
-                .jobs
-                .push(Job::new(start, Some(end), message.flatten(), tags)),
+            } => self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?,
             Command::End { end, message, tags } => {
                 self.end_last(end, message.flatten(), tags)
                     .expect("no open job");
@@ -84,6 +77,7 @@ impl Jobs {
             }
             Command::MessageTags { message, tags } => todo!(),
         }
+        Ok(())
     }
     pub fn running_start(&self) -> Option<DateTime> {
         if let Some(job) = self.jobs.last() {
@@ -118,12 +112,15 @@ impl Jobs {
         }
         Ok(())
     }
-    pub fn load(filename: &str) -> std::io::Result<Jobs> {
-        let file = File::options().read(true).open(filename)?;
+    pub fn load(filename: &str) -> Result<Jobs, Error> {
+        let file = File::options()
+            .read(true)
+            .open(filename)
+            .map_err(|err| Error::Io(err))?;
         let reader = BufReader::new(file);
-        Ok(serde_json::from_reader::<_, Self>(reader)?)
+        Ok(serde_json::from_reader::<_, Self>(reader).map_err(|err| Error::Json(err))?)
     }
-    pub fn save(&self, filename: &str) -> std::io::Result<()> {
+    pub fn save(&self, filename: &str) -> Result<(), Error> {
         let file = File::options()
             .write(true)
             .create(true)
@@ -132,7 +129,7 @@ impl Jobs {
         let writer = BufWriter::new(file);
 
         // pretty print when running tests
-        serde_json::to_writer_pretty(writer, self)?;
+        serde_json::to_writer_pretty(writer, self).map_err(|err| Error::Json(err))?;
 
         Ok(())
     }
@@ -173,6 +170,25 @@ impl Jobs {
             }
         }
     }
+    fn push(&mut self, job: Job, force: bool) -> Result<(), Error> {
+        if !force {
+            let mut overlapping = Jobs::new();
+            for j in &self.jobs {
+                if job.overlaps(j) {
+                    overlapping.jobs.push(j.clone());
+                }
+            }
+            if !overlapping.jobs.is_empty() {
+                return Err(Error::Overlaps {
+                    new: job,
+                    existing: overlapping,
+                });
+            }
+        }
+        self.jobs.push(job);
+        Ok(())
+    }
+
     fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,

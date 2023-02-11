@@ -1,9 +1,10 @@
+use crate::error::Error;
 use crate::tags;
 use crate::{date_time::DateTime, parameters::Parameters};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Job {
     pub start: DateTime,
     pub end: Option<DateTime>,
@@ -17,8 +18,13 @@ impl Job {
         end: Option<DateTime>,
         message: Option<String>,
         tags: Option<Vec<String>>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, Error> {
+        if let Some(end) = end {
+            if start >= end {
+                return Err(Error::EndBeforeStart(start, end));
+            }
+        }
+        Ok(Self {
             start,
             end,
             message,
@@ -31,7 +37,7 @@ impl Job {
             } else {
                 HashSet::new()
             },
-        }
+        })
     }
     pub fn is_running(&self) -> bool {
         self.end.is_none()
@@ -50,6 +56,21 @@ impl Job {
             (self.minutes() as f64 / 60.0 / resolution).ceil() * resolution
         } else {
             self.minutes() as f64 / 60.0
+        }
+    }
+    pub fn overlaps(&self, other: &Job) -> bool {
+        if let Some(self_end) = self.end {
+            if let Some(other_end) = other.end {
+                self.start < other_end && self_end > other.start
+            } else {
+                self_end < other.start
+            }
+        } else {
+            if let Some(other_end) = other.end {
+                self.start < other_end
+            } else {
+                panic!("checking intersection of two open jobs!")
+            }
         }
     }
     pub fn writeln(
@@ -127,4 +148,75 @@ impl std::fmt::Display for Job {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.writeln(f, None)
     }
+}
+
+#[cfg(test)]
+fn test_overlap(
+    left_start: &str,
+    left_end: Option<&str>,
+    right_start: &str,
+    right_end: Option<&str>,
+) -> bool {
+    Job::new(
+        DateTime::from_local(left_start),
+        if let Some(left_end) = left_end {
+            Some(DateTime::from_local(left_end))
+        } else {
+            None
+        },
+        None,
+        None,
+    )
+    .unwrap()
+    .overlaps(
+        &Job::new(
+            DateTime::from_local(right_start),
+            if let Some(right_end) = right_end {
+                Some(DateTime::from_local(right_end))
+            } else {
+                None
+            },
+            None,
+            None,
+        )
+        .unwrap(),
+    )
+}
+
+#[test]
+fn test_overlaps() {
+    assert!(test_overlap(
+        "2023-1-1 12:00",
+        Some("2023-1-1 13:00"),
+        "2023-1-1 12:00",
+        Some("2023-1-1 13:00")
+    ));
+
+    assert!(test_overlap(
+        "2023-1-1 12:30",
+        Some("2023-1-1 13:30"),
+        "2023-1-1 12:00",
+        Some("2023-1-1 13:00")
+    ));
+
+    assert!(test_overlap(
+        "2023-1-1 12:00",
+        Some("2023-1-1 13:00"),
+        "2023-1-1 12:30",
+        Some("2023-1-1 13:30")
+    ));
+
+    assert!(!test_overlap(
+        "2023-1-1 11:00",
+        Some("2023-1-1 12:00"),
+        "2023-1-1 12:00",
+        Some("2023-1-1 13:00")
+    ));
+
+    assert!(!test_overlap(
+        "2023-1-1 12:00",
+        Some("2023-1-1 13:00"),
+        "2023-1-1 11:00",
+        Some("2023-1-1 12:00")
+    ));
 }
