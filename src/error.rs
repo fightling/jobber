@@ -11,6 +11,6 @@ pub enum Error {
     NoOpenJob,
     #[error("End {0} of the job is before it's start {1}")]
     EndBeforeStart(DateTime, DateTime),
-    #[error("The job you want to add overlaps existing one(s):\n\njob to insert:\n\n{new}\noverlapping jobs:\n\n{existing}")]
+    #[error("The job you want to add overlaps existing one(s):\n\nJob you want to add:\n\n{new}\nExisting overlapping jobs:\n{existing}")]
     Overlaps { new: Job, existing: JobList },
 }

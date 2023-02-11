@@ -14,7 +14,7 @@ pub struct JobList {
 impl std::fmt::Display for JobList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (pos, job) in &self.jobs {
-            writeln!(f, "    Pos: {}", pos + 1)?;
+            writeln!(f, "\n    Pos: {}", pos + 1)?;
             job.writeln(f, Some(self.get_parameters(&job.tags)))?;
         }
         Ok(())
