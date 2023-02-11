@@ -8,6 +8,8 @@ use std::{
     io::{BufReader, BufWriter},
 };
 
+use crate::job_list::JobList;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Jobs {
     /// list of jobs
@@ -172,13 +174,13 @@ impl Jobs {
     }
     fn push(&mut self, job: Job, force: bool) -> Result<(), Error> {
         if !force {
-            let mut overlapping = Jobs::new();
-            for j in &self.jobs {
+            let mut overlapping = JobList::new();
+            for (n, j) in self.jobs.iter().enumerate() {
                 if job.overlaps(j) {
-                    overlapping.jobs.push(j.clone());
+                    overlapping.push(n, j.clone());
                 }
             }
-            if !overlapping.jobs.is_empty() {
+            if !overlapping.is_empty() {
                 return Err(Error::Overlaps {
                     new: job,
                     existing: overlapping,
