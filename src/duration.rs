@@ -25,20 +25,20 @@ impl Duration {
     }
     /// parse time "HH:MM"
     fn parse_hm(d: &str) -> Self {
-        let re = Regex::new(r"^(\d{1,2}):(\d{1,2})$").unwrap();
+        let re = Regex::new(r"^(\d+):(\d{1,2})$").unwrap();
         for cap in re.captures_iter(d) {
             return Self::HM {
-                hours: cap[1].parse::<u32>().unwrap() as i64,
-                minutes: cap[2].parse::<u32>().unwrap() as i64,
+                hours: cap[1].parse::<i64>().unwrap(),
+                minutes: cap[2].parse::<i64>().unwrap(),
             };
         }
         Self::Zero
     }
     fn parse_hours(d: &str) -> Self {
-        let re = Regex::new(r"^(\d{1,2})[,.](\d{1,2})$").unwrap();
+        let re = Regex::new(r"^(\d+)[,.](\d{1,2})$").unwrap();
         for cap in re.captures_iter(d) {
             return Self::HM {
-                hours: cap[1].parse::<u32>().unwrap() as i64,
+                hours: cap[1].parse::<i64>().unwrap(),
                 minutes: (format!(".{}", cap[2].to_string()).parse::<f64>().unwrap() * 60f64)
                     as i64,
             };
@@ -88,7 +88,7 @@ impl Duration {
         match self {
             Duration::Zero => chrono::Duration::zero(),
             Duration::HM { hours, minutes } => {
-                chrono::Duration::hours(*hours as i64) + chrono::Duration::hours(*minutes as i64)
+                chrono::Duration::hours(*hours) + chrono::Duration::minutes(*minutes as i64)
             }
         }
     }
