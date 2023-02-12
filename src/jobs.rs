@@ -4,12 +4,12 @@ use crate::{
     date_time::DateTime,
     error::{Error, Warning},
     job::Job,
-    tag_list::TagList,
+    tag_set::TagSet,
     tags,
 };
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fs::File,
     io::{BufReader, BufWriter},
 };
@@ -34,37 +34,51 @@ impl Jobs {
             tag_configuration: HashMap::new(),
         }
     }
-    pub fn proceed(&mut self, command: Command, force: bool) -> Result<(), Error> {
+    pub fn proceed(&mut self, command: Command, force: bool) -> Result<Option<&mut Job>, Error> {
         println!("{command:?}");
         match command {
             Command::Start {
                 start,
                 message,
                 tags,
-            } => self.push(Job::new(start, None, message.flatten(), tags)?, force)?,
+            } => {
+                self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
+                Ok(self.jobs.last_mut())
+            }
             Command::Add {
                 start,
                 end,
                 message,
                 tags,
-            } => self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?,
+            } => {
+                self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
+                Ok(self.jobs.last_mut())
+            }
             Command::Back {
                 start,
                 message,
                 tags,
-            } => self.push(Job::new(start, None, message.flatten(), tags)?, force)?,
+            } => {
+                self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
+                Ok(self.jobs.last_mut())
+            }
             Command::BackAdd {
                 start,
                 end,
                 message,
                 tags,
-            } => self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?,
+            } => {
+                self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
+                Ok(self.jobs.last_mut())
+            }
             Command::End { end, message, tags } => {
                 self.end_last(end, message.flatten(), tags)
                     .expect("no open job");
+                Ok(self.jobs.last_mut())
             }
             Command::List { range, tags } => {
                 println!("{}", self);
+                Ok(None)
             }
             Command::Report { range, tags } => todo!(),
             Command::ShowConfiguration => {
@@ -73,6 +87,7 @@ impl Jobs {
                 for (tag, configuration) in &self.tag_configuration {
                     println!("Configuration for tag '{}':\n\n{}", tag, configuration);
                 }
+                Ok(None)
             }
             Command::SetConfiguration {
                 resolution,
@@ -81,10 +96,10 @@ impl Jobs {
                 max_hours,
             } => {
                 self.set_configuration(&tags, resolution, pay, max_hours);
+                Ok(None)
             }
             Command::MessageTags { message, tags } => todo!(),
         }
-        Ok(())
     }
     pub fn running_start(&self) -> Option<DateTime> {
         if let Some(job) = self.jobs.last() {
@@ -112,7 +127,7 @@ impl Jobs {
                 last.message = message;
                 if let Some(tags) = tags {
                     for tag in tags {
-                        last.tags.insert(tag);
+                        last.tags.insert(&tag);
                     }
                 }
             }
@@ -125,7 +140,9 @@ impl Jobs {
             .open(filename)
             .map_err(|err| Error::Io(err))?;
         let reader = BufReader::new(file);
-        Ok(serde_json::from_reader::<_, Self>(reader).map_err(|err| Error::Json(err))?)
+        let jobs = serde_json::from_reader::<_, Self>(reader).map_err(|err| Error::Json(err))?;
+        tags::init(&jobs);
+        Ok(jobs)
     }
     pub fn save(&self, filename: &str) -> Result<(), Error> {
         let file = File::options()
@@ -179,8 +196,8 @@ impl Jobs {
             self.default_configuration.max_hours = max_hours;
         }
     }
-    fn get_configuration(&self, tags: &HashSet<String>) -> &Configuration {
-        for tag in tags {
+    fn get_configuration(&self, tags: &TagSet) -> &Configuration {
+        for tag in &tags.0 {
             if let Some(configuration) = self.tag_configuration.get(tag) {
                 return configuration;
             }
@@ -190,6 +207,7 @@ impl Jobs {
     fn push(&mut self, job: Job, check: bool) -> Result<(), Error> {
         if check {
             let mut warnings = Vec::new();
+
             // check for overlapping
             let mut overlapping = JobList::new_from(&self);
             for (n, j) in self.jobs.iter().enumerate() {
@@ -205,17 +223,12 @@ impl Jobs {
             }
 
             // check for unknown tag
-            let known_tags = self.tags();
-            let mut unknown_tags = TagList::new();
-            for tag in &job.tags {
-                if !known_tags.contains(tag) {
-                    unknown_tags.insert(tag);
-                }
-            }
-            if !unknown_tags.is_empty() {
+            let unknown_tags: TagSet = job.tags.filter(|tag| !tags::is_known(tag));
+            if !unknown_tags.0.is_empty() {
                 warnings.push(Warning::UnknownTags(unknown_tags));
             }
 
+            // react if any warnings
             if !warnings.is_empty() {
                 return Err(Error::Warnings(warnings));
             }
@@ -223,31 +236,14 @@ impl Jobs {
         self.jobs.push(job);
         Ok(())
     }
-    fn tags(&self) -> HashSet<String> {
-        let mut result: HashSet<String> =
-            self.tag_configuration.keys().map(|v| v.clone()).collect();
-        for job in &self.jobs {
-            for tag in &job.tags {
-                result.insert(tag.clone());
-            }
-        }
-        result
-    }
     fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
-        first: usize,
-        last: Option<usize>,
+        filter: fn(pos: usize, job: &Job) -> bool,
     ) -> std::fmt::Result {
         for (n, job) in self.jobs.iter().enumerate() {
-            if n < first {
+            if !filter(n, job) {
                 continue;
-            } else {
-                if let Some(last) = last {
-                    if n > last {
-                        continue;
-                    }
-                }
             }
             writeln!(f, "\n    Pos: {}", n + 1)?;
             job.writeln(f, Some(self.get_configuration(&job.tags)))?;
@@ -258,6 +254,6 @@ impl Jobs {
 
 impl std::fmt::Display for Jobs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.writeln(f, 0, None)
+        self.writeln(f, |_, _| true)
     }
 }

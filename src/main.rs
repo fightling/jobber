@@ -9,7 +9,7 @@ mod job_list;
 mod jobs;
 mod list;
 mod partial_date_time;
-mod tag_list;
+mod tag_set;
 mod tags;
 mod tests;
 
@@ -39,8 +39,26 @@ fn ask(question: &str) -> Result<bool, Error> {
     })
 }
 
+fn enter(question: &str) -> Result<String, Error> {
+    println!("{}", question);
+    let mut result = String::new();
+    loop {
+        let mut buffer = String::new();
+        // `read_line` returns `Result` of bytes read
+        std::io::stdin()
+            .read_line(&mut buffer)
+            .map_err(|err| Error::Io(err))?;
+
+        let line = buffer.trim_end();
+        if line.is_empty() {
+            return Ok(result);
+        }
+        result += line;
+    }
+}
+
 fn run(args: Args) -> Result<(), Error> {
-    let filename = &args.filename;
+    let filename = &args.filename.clone();
     let mut jobs = if let Ok(jobs) = Jobs::load(filename) {
         println!("Loaded data file '{filename}'");
         jobs
@@ -48,8 +66,16 @@ fn run(args: Args) -> Result<(), Error> {
         println!("Beginning new data file '{filename}'");
         Jobs::new()
     };
-    tags::init(&jobs);
+
+    // check if -m was given without parameter
+    let enter_message = if let Some(message) = &args.message {
+        message.is_none()
+    } else {
+        false
+    };
+
     let command = Command::parse(args, jobs.running_start());
+
     match jobs.proceed(command.clone(), true) {
         Err(Error::Warnings(warnings)) => {
             println!("There {} warning(s) you have to omit:", warnings.len());
@@ -62,9 +88,20 @@ fn run(args: Args) -> Result<(), Error> {
             jobs.proceed(command, false)?;
         }
         Err(err) => return Err(err),
-        Ok(()) => (),
+        Ok(Some(job)) => {
+            if enter_message {
+                job.message = Some(enter(
+                    "Enter message (end with empty line or Ctrl+C to cancel):",
+                )?);
+            }
+        }
+        Ok(None) => {
+            if enter_message {
+                panic!("giving message with no purpose")
+            }
+        }
     }
-    jobs.save("jobber.dat")?;
+    jobs.save(filename)?;
     Ok(())
 }
 

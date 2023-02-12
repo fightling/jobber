@@ -1,4 +1,4 @@
-use crate::{date_time::DateTime, job::Job, job_list::JobList, tag_list::TagList};
+use crate::{date_time::DateTime, job::Job, job_list::JobList, tag_set::TagSet};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -15,6 +15,8 @@ pub enum Error {
     Warnings(Vec<Warning>),
     #[error("You canceled.")]
     Cancel,
+    #[error("Can not chose tags which have different configurations: {0}")]
+    TagCollision(TagSet),
 }
 
 #[derive(Error, Debug)]
@@ -22,7 +24,7 @@ pub enum Warning {
     #[error("The job you want to add overlaps existing one(s):\n\nJob you want to add:\n\n{new}\nExisting overlapping jobs:\n{existing}")]
     Overlaps { new: Job, existing: JobList },
     #[error(
-        "You have used new tags ({0}) which are unknown so far. Continue if you want to create them."
+        "You have used some tags ({0}) which are unknown so far. Continue if you want to create them."
     )]
-    UnknownTags(TagList),
+    UnknownTags(TagSet),
 }

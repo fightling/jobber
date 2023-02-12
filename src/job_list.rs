@@ -1,5 +1,5 @@
-use crate::{configuration::Configuration, job::Job, jobs::Jobs};
-use std::collections::{HashMap, HashSet};
+use crate::{configuration::Configuration, job::Job, jobs::Jobs, tag_set::TagSet};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct JobList {
@@ -35,8 +35,8 @@ impl JobList {
     pub fn is_empty(&self) -> bool {
         self.jobs.is_empty()
     }
-    fn get_configuration(&self, tags: &HashSet<String>) -> &Configuration {
-        for tag in tags {
+    fn get_configuration(&self, tags: &TagSet) -> &Configuration {
+        for tag in &tags.0 {
             if let Some(configuration) = self.tag_configuration.get(tag) {
                 return configuration;
             }

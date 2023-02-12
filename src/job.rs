@@ -1,15 +1,15 @@
 use crate::error::Error;
+use crate::tag_set::TagSet;
 use crate::tags;
 use crate::{configuration::Configuration, date_time::DateTime};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Job {
     pub start: DateTime,
     pub end: Option<DateTime>,
     pub message: Option<String>,
-    pub tags: HashSet<String>,
+    pub tags: TagSet,
 }
 
 impl Job {
@@ -29,13 +29,13 @@ impl Job {
             end,
             message,
             tags: if let Some(tags) = tags {
-                let mut set = HashSet::new();
+                let mut set = TagSet::new();
                 for tag in tags {
-                    set.insert(tag);
+                    set.insert(&tag);
                 }
                 set
             } else {
-                HashSet::new()
+                TagSet::new()
             },
         })
     }
@@ -125,10 +125,10 @@ impl Job {
                 write!(f, "  Hours: {}\n", hours)?;
             }
         };
-        if !self.tags.is_empty() {
+        if !self.tags.0.is_empty() {
             write!(f, "   Tags: ",)?;
-            for tag in &self.tags {
-                tags::format(f, &tag);
+            for tag in &self.tags.0 {
+                tags::format(f, &tag)?;
                 write!(f, " ")?;
             }
 
