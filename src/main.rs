@@ -40,19 +40,19 @@ fn ask(question: &str) -> Result<bool, Error> {
 }
 
 fn run(args: Args) -> Result<(), Error> {
-    let mut jobs = if let Ok(jobs) = Jobs::load("jobber.dat") {
+    let filename = &args.filename;
+    let mut jobs = if let Ok(jobs) = Jobs::load(filename) {
+        println!("Loaded data file '{filename}'");
         jobs
     } else {
+        println!("Beginning new data file '{filename}'");
         Jobs::new()
     };
     tags::init(&jobs);
     let command = Command::parse(args, jobs.running_start());
     match jobs.proceed(command.clone(), true) {
         Err(Error::Warnings(warnings)) => {
-            println!(
-                "There where {} warning(s) you have to omit:",
-                warnings.len()
-            );
+            println!("There {} warning(s) you have to omit:", warnings.len());
             for (n, warning) in warnings.iter().enumerate() {
                 println!("\nWARNING {}) {}", n + 1, warning);
                 if !ask("Do you still want to add this job (y/N)?")? {

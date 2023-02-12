@@ -21,6 +21,8 @@ pub enum Error {
 pub enum Warning {
     #[error("The job you want to add overlaps existing one(s):\n\nJob you want to add:\n\n{new}\nExisting overlapping jobs:\n{existing}")]
     Overlaps { new: Job, existing: JobList },
-    #[error("You entered the following tags which are unknown: {0}")]
+    #[error(
+        "You have used new tags ({0}) which are unknown so far. Continue if you want to create them."
+    )]
     UnknownTags(TagList),
 }
