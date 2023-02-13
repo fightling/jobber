@@ -113,8 +113,10 @@ fn run(args: Args) -> Result<(), Error> {
             //    println!("{}", done)
         }
     }
-    jobs.save(filename)?;
-    println!("Saved database into file '{filename}'");
+    if jobs.modified() {
+        jobs.save(filename)?;
+        println!("Saved database into file '{filename}'");
+    }
     Ok(())
 }
 

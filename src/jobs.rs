@@ -19,6 +19,9 @@ use std::{
 /// serializable instance of the *jobber* database
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Jobs {
+    // flag if database was modified in memory
+    #[serde(skip)]
+    modified: bool,
     /// list of jobs
     pub jobs: Vec<Job>,
     /// Configuration by tag
@@ -43,10 +46,14 @@ impl Jobs {
     /// Create an empty jobber database
     pub fn new() -> Self {
         Self {
+            modified: false,
             jobs: Vec::new(),
             base_configuration: Default::default(),
             tag_configuration: HashMap::new(),
         }
+    }
+    pub fn modified(&self) -> bool {
+        self.modified
     }
     /// Processes the given `command` and may return a change on this database.
     /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
@@ -155,7 +162,8 @@ impl Jobs {
                 if job.message.is_none() {
                     Err(Error::EnterMessage)
                 } else {
-                    self.push(job);
+                    self.jobs.push(job);
+                    self.modified = true;
                     Ok(())
                 }
             }
@@ -163,7 +171,8 @@ impl Jobs {
                 if check {
                     self.check(&job)?;
                 }
-                self.push(job);
+                self.jobs.push(job);
+                self.modified = true;
                 Ok(())
             }
             Change::ModNeedsMessage(pos, job) => {
@@ -174,6 +183,7 @@ impl Jobs {
                     Err(Error::EnterMessage)
                 } else {
                     self.jobs[pos] = job;
+                    self.modified = true;
                     Ok(())
                 }
             }
@@ -200,7 +210,7 @@ impl Jobs {
         tags::init(&jobs);
         Ok(jobs)
     }
-    pub fn save(&self, filename: &str) -> Result<(), Error> {
+    pub fn save(&mut self, filename: &str) -> Result<(), Error> {
         let file = File::options()
             .write(true)
             .create(true)
@@ -212,6 +222,7 @@ impl Jobs {
         // pretty print when running tests
         serde_json::to_writer_pretty(writer, self).map_err(|err| Error::Json(err))?;
 
+        self.modified = false;
         Ok(())
     }
     pub fn set_configuration(
@@ -251,6 +262,7 @@ impl Jobs {
             self.base_configuration.pay = pay;
             self.base_configuration.max_hours = max_hours;
         }
+        self.modified = true;
     }
     fn get_configuration(&self, tags: &TagSet) -> &Configuration {
         for tag in &tags.0 {
@@ -260,7 +272,7 @@ impl Jobs {
         }
         &self.base_configuration
     }
-    fn check(&mut self, job: &Job) -> Result<(), Error> {
+    fn check(&self, job: &Job) -> Result<(), Error> {
         let mut warnings = Vec::new();
 
         // check for overlapping
@@ -288,9 +300,6 @@ impl Jobs {
             return Err(Error::Warnings(warnings));
         }
         Ok(())
-    }
-    fn push(&mut self, job: Job) {
-        self.jobs.push(job);
     }
     fn writeln(
         &self,
