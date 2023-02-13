@@ -17,6 +17,8 @@ pub enum Error {
     Cancel,
     #[error("Can not chose tags which have different configurations: {0}")]
     TagCollision(TagSet),
+    #[error("User needs to enter message")]
+    EnterMessage,
 }
 
 #[derive(Error, Debug)]

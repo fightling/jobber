@@ -51,7 +51,11 @@ fn enter(question: &str) -> Result<String, Error> {
 
         let line = buffer.trim_end();
         if line.is_empty() {
-            return Ok(result);
+            return if result.trim().is_empty() {
+                Err(Error::EnterMessage)
+            } else {
+                Ok(result)
+            };
         }
         result += line;
     }
@@ -67,16 +71,9 @@ fn run(args: Args) -> Result<(), Error> {
         Jobs::new()
     };
 
-    // check if -m was given without parameter
-    let enter_message = if let Some(message) = &args.message {
-        message.is_none()
-    } else {
-        false
-    };
-
     let command = Command::parse(args, jobs.running_start());
 
-    match jobs.proceed(command.clone(), true) {
+    match jobs.proceed(&command, true) {
         Err(Error::Warnings(warnings)) => {
             println!("There {} warning(s) you have to omit:", warnings.len());
             for (n, warning) in warnings.iter().enumerate() {
@@ -85,21 +82,21 @@ fn run(args: Args) -> Result<(), Error> {
                     return Err(Error::Cancel);
                 }
             }
-            jobs.proceed(command, false)?;
-        }
-        Err(err) => return Err(err),
-        Ok(Some(job)) => {
-            if enter_message {
+            if let Ok(Some(job)) = jobs.proceed(&command, false) {
                 job.message = Some(enter(
                     "Enter message (end with empty line or Ctrl+C to cancel):",
                 )?);
+                jobs.proceed(&command, false)?;
             }
         }
-        Ok(None) => {
-            if enter_message {
-                panic!("giving message with no purpose")
-            }
+        Err(err) => return Err(err),
+        Ok(Some(job)) => {
+            job.message = Some(enter(
+                "Enter message (end with empty line or Ctrl+C to cancel):",
+            )?);
+            jobs.proceed(&command, false)?;
         }
+        Ok(None) => (),
     }
     jobs.save(filename)?;
     Ok(())

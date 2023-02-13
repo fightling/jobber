@@ -34,16 +34,21 @@ impl Jobs {
             tag_configuration: HashMap::new(),
         }
     }
-    pub fn proceed(&mut self, command: Command, force: bool) -> Result<Option<&mut Job>, Error> {
-        println!("{command:?}");
-        match command {
+    pub fn proceed(&mut self, command: &Command, force: bool) -> Result<Option<&mut Job>, Error> {
+        eprintln!("{command:?}");
+        match command.clone() {
             Command::Start {
                 start,
                 message,
                 tags,
             } => {
-                self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
-                Ok(self.jobs.last_mut())
+                if message == Some(None) {
+                    self.push(Job::new(start, None, None, tags)?, force)?;
+                    Ok(self.jobs.last_mut())
+                } else {
+                    self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
+                    Ok(None)
+                }
             }
             Command::Add {
                 start,
@@ -51,16 +56,26 @@ impl Jobs {
                 message,
                 tags,
             } => {
-                self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
-                Ok(self.jobs.last_mut())
+                if message == Some(None) {
+                    self.push(Job::new(start, Some(end), None, tags)?, force)?;
+                    Ok(self.jobs.last_mut())
+                } else {
+                    self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
+                    Ok(None)
+                }
             }
             Command::Back {
                 start,
                 message,
                 tags,
             } => {
-                self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
-                Ok(self.jobs.last_mut())
+                if message == Some(None) {
+                    self.push(Job::new(start, None, None, tags)?, force)?;
+                    Ok(self.jobs.last_mut())
+                } else {
+                    self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
+                    Ok(None)
+                }
             }
             Command::BackAdd {
                 start,
@@ -68,13 +83,24 @@ impl Jobs {
                 message,
                 tags,
             } => {
-                self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
-                Ok(self.jobs.last_mut())
+                if message == Some(None) {
+                    self.push(Job::new(start, Some(end), None, tags)?, force)?;
+                    Ok(self.jobs.last_mut())
+                } else {
+                    self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
+                    Ok(None)
+                }
             }
             Command::End { end, message, tags } => {
-                self.end_last(end, message.flatten(), tags)
-                    .expect("no open job");
-                Ok(self.jobs.last_mut())
+                if message == Some(None) {
+                    self.end_last(end, message.flatten(), tags)
+                        .expect("no open job");
+                    Ok(self.jobs.last_mut())
+                } else {
+                    self.end_last(end, message.flatten(), tags)
+                        .expect("no open job");
+                    Ok(None)
+                }
             }
             Command::List { range, tags } => {
                 println!("{}", self);

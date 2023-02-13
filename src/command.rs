@@ -227,6 +227,39 @@ impl Command {
             panic!("unknown command")
         }
     }
+
+    pub fn set_message(&mut self, new_message: String) {
+        match *self {
+            Command::Start {
+                start: _,
+                ref mut message,
+                tags: _,
+            } => *message = Some(Some(new_message)),
+            Command::Add {
+                start: _,
+                end: _,
+                ref mut message,
+                tags: _,
+            } => *message = Some(Some(new_message)),
+            Command::Back {
+                start: _,
+                ref mut message,
+                tags: _,
+            } => *message = Some(Some(new_message)),
+            Command::BackAdd {
+                start: _,
+                end: _,
+                ref mut message,
+                tags: _,
+            } => *message = Some(Some(new_message)),
+            Command::End {
+                end: _,
+                ref mut message,
+                tags: _,
+            } => *message = Some(Some(new_message)),
+            _ => panic!("try to set message of command which has no message"),
+        }
+    }
 }
 
 impl std::fmt::Debug for Command {
