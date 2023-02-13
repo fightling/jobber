@@ -4,6 +4,8 @@ use crate::{
     date_time::DateTime,
     error::{Error, Warning},
     job::Job,
+    job_list::JobList,
+    range::Range,
     tag_set::TagSet,
     tags,
 };
@@ -14,8 +16,7 @@ use std::{
     io::{BufReader, BufWriter},
 };
 
-use crate::job_list::JobList;
-
+/// serializable instance of the *jobber* database
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Jobs {
     /// list of jobs
@@ -23,31 +24,52 @@ pub struct Jobs {
     /// Configuration by tag
     pub tag_configuration: HashMap<String, Configuration>,
     /// Configuration used when no tag related configuration fit
-    pub default_configuration: Configuration,
+    pub base_configuration: Configuration,
+}
+
+/// catches what to change the jobs within the database
+enum Change {
+    /// No change
+    None,
+    /// Push a new `Job` into database
+    Push(Job),
+    /// Push a new `Job` into database but return error if message is missing
+    PushNeedsMessage(Job),
+    /// Change an existing `Job` at index `usize` into database but return error if message is missing
+    ModNeedsMessage(usize, Job),
 }
 
 impl Jobs {
+    /// Create an empty jobber database
     pub fn new() -> Self {
         Self {
             jobs: Vec::new(),
-            default_configuration: Default::default(),
+            base_configuration: Default::default(),
             tag_configuration: HashMap::new(),
         }
     }
-    pub fn proceed(&mut self, command: &Command, force: bool) -> Result<Option<&mut Job>, Error> {
+    /// Processes the given `command` and may return a change on this database.
+    /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
+    /// Fix warnings to continue and call again or turn any check on warnings off by using parameter `check`
+    pub fn process(&mut self, command: &Command, check: bool) -> Result<(), Error> {
+        let change = self.interpret(command)?;
+        self.change(change, check)
+    }
+    fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
+        // debug
         eprintln!("{command:?}");
-        match command.clone() {
+
+        // process command and potentially get `Some(job)` change
+        Ok(match command.clone() {
             Command::Start {
                 start,
                 message,
                 tags,
             } => {
-                if message == Some(None) {
-                    self.push(Job::new(start, None, None, tags)?, force)?;
-                    Ok(self.jobs.last_mut())
+                if let Some(None) = message {
+                    Change::PushNeedsMessage(Job::new(start, None, None, tags)?)
                 } else {
-                    self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
-                    Ok(None)
+                    Change::Push(Job::new(start, None, message.flatten(), tags)?)
                 }
             }
             Command::Add {
@@ -55,26 +77,16 @@ impl Jobs {
                 end,
                 message,
                 tags,
-            } => {
-                if message == Some(None) {
-                    self.push(Job::new(start, Some(end), None, tags)?, force)?;
-                    Ok(self.jobs.last_mut())
-                } else {
-                    self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
-                    Ok(None)
-                }
-            }
+            } => Change::PushNeedsMessage(Job::new(start, Some(end), message.flatten(), tags)?),
             Command::Back {
                 start,
                 message,
                 tags,
             } => {
-                if message == Some(None) {
-                    self.push(Job::new(start, None, None, tags)?, force)?;
-                    Ok(self.jobs.last_mut())
+                if let Some(None) = message {
+                    Change::PushNeedsMessage(Job::new(start, None, None, tags)?)
                 } else {
-                    self.push(Job::new(start, None, message.flatten(), tags)?, force)?;
-                    Ok(None)
+                    Change::Push(Job::new(start, None, message.flatten(), tags)?)
                 }
             }
             Command::BackAdd {
@@ -82,38 +94,41 @@ impl Jobs {
                 end,
                 message,
                 tags,
-            } => {
-                if message == Some(None) {
-                    self.push(Job::new(start, Some(end), None, tags)?, force)?;
-                    Ok(self.jobs.last_mut())
-                } else {
-                    self.push(Job::new(start, Some(end), message.flatten(), tags)?, force)?;
-                    Ok(None)
-                }
-            }
+            } => Change::PushNeedsMessage(Job::new(start, Some(end), message.flatten(), tags)?),
             Command::End { end, message, tags } => {
-                if message == Some(None) {
-                    self.end_last(end, message.flatten(), tags)
-                        .expect("no open job");
-                    Ok(self.jobs.last_mut())
+                if let Some(job) = self.jobs.last_mut() {
+                    let mut new_job = job.clone();
+                    new_job.end = Some(end);
+                    new_job.message = message.flatten();
+                    if let Some(tags) = tags {
+                        new_job.tags.0 = tags;
+                    }
+                    Change::ModNeedsMessage(self.jobs.len() - 1, new_job)
                 } else {
-                    self.end_last(end, message.flatten(), tags)
-                        .expect("no open job");
-                    Ok(None)
+                    return Err(Error::NoOpenJob);
                 }
             }
             Command::List { range, tags } => {
                 println!("{}", self);
-                Ok(None)
+                if range != Range::All || !tags.is_none() {
+                    todo!("to list with ranges or tags not implemented")
+                }
+                Change::None
             }
-            Command::Report { range, tags } => todo!(),
+            Command::Report { range, tags } => {
+                if range != Range::None || !tags.is_none() {
+                    todo!()
+                }
+                todo!("reporting not implemented")
+            }
             Command::ShowConfiguration => {
-                println!("Default Configuration:\n\n{}", self.default_configuration);
-
+                // print base configurations
+                println!("Base Configuration:\n\n{}", self.base_configuration);
+                // print tag wise configurations
                 for (tag, configuration) in &self.tag_configuration {
                     println!("Configuration for tag '{}':\n\n{}", tag, configuration);
                 }
-                Ok(None)
+                Change::None
             }
             Command::SetConfiguration {
                 resolution,
@@ -122,9 +137,46 @@ impl Jobs {
                 max_hours,
             } => {
                 self.set_configuration(&tags, resolution, pay, max_hours);
-                Ok(None)
+                Change::None
             }
-            Command::MessageTags { message, tags } => todo!(),
+            Command::MessageTags {
+                message: _,
+                tags: _,
+            } => todo!(),
+        })
+    }
+    fn change(&mut self, change: Change, check: bool) -> Result<(), Error> {
+        match change {
+            Change::None => Ok(()),
+            Change::PushNeedsMessage(job) => {
+                if check {
+                    self.check(&job)?;
+                }
+                if job.message.is_none() {
+                    Err(Error::EnterMessage)
+                } else {
+                    self.push(job);
+                    Ok(())
+                }
+            }
+            Change::Push(job) => {
+                if check {
+                    self.check(&job)?;
+                }
+                self.push(job);
+                Ok(())
+            }
+            Change::ModNeedsMessage(pos, job) => {
+                if check {
+                    self.check(&job)?;
+                }
+                if job.message.is_none() {
+                    Err(Error::EnterMessage)
+                } else {
+                    self.jobs[pos] = job;
+                    Ok(())
+                }
+            }
         }
     }
     pub fn running_start(&self) -> Option<DateTime> {
@@ -137,28 +189,6 @@ impl Jobs {
         } else {
             None
         }
-    }
-    pub fn end_last(
-        &mut self,
-        end: DateTime,
-        message: Option<String>,
-        tags: Option<Vec<String>>,
-    ) -> Result<(), Error> {
-        if let Some(last) = self.jobs.last() {
-            if !last.is_running() {
-                return Err(Error::NoOpenJob);
-            }
-            if let Some(last) = self.jobs.last_mut() {
-                last.end = Some(end);
-                last.message = message;
-                if let Some(tags) = tags {
-                    for tag in tags {
-                        last.tags.insert(&tag);
-                    }
-                }
-            }
-        }
-        Ok(())
     }
     pub fn load(filename: &str) -> Result<Jobs, Error> {
         let file = File::options()
@@ -206,7 +236,7 @@ impl Jobs {
                             resolution: if let Some(resolution) = resolution {
                                 resolution
                             } else {
-                                self.default_configuration.resolution
+                                self.base_configuration.resolution
                             },
                             pay: pay,
                             max_hours,
@@ -216,10 +246,10 @@ impl Jobs {
             }
         } else {
             if let Some(resolution) = resolution {
-                self.default_configuration.resolution = resolution;
+                self.base_configuration.resolution = resolution;
             }
-            self.default_configuration.pay = pay;
-            self.default_configuration.max_hours = max_hours;
+            self.base_configuration.pay = pay;
+            self.base_configuration.max_hours = max_hours;
         }
     }
     fn get_configuration(&self, tags: &TagSet) -> &Configuration {
@@ -228,39 +258,39 @@ impl Jobs {
                 return configuration;
             }
         }
-        &self.default_configuration
+        &self.base_configuration
     }
-    fn push(&mut self, job: Job, check: bool) -> Result<(), Error> {
-        if check {
-            let mut warnings = Vec::new();
+    fn check(&mut self, job: &Job) -> Result<(), Error> {
+        let mut warnings = Vec::new();
 
-            // check for overlapping
-            let mut overlapping = JobList::new_from(&self);
-            for (n, j) in self.jobs.iter().enumerate() {
-                if job.overlaps(j) {
-                    overlapping.push(n, j.clone());
-                }
-            }
-            if !overlapping.is_empty() {
-                warnings.push(Warning::Overlaps {
-                    new: job.clone(),
-                    existing: overlapping,
-                });
-            }
-
-            // check for unknown tag
-            let unknown_tags: TagSet = job.tags.filter(|tag| !tags::is_known(tag));
-            if !unknown_tags.0.is_empty() {
-                warnings.push(Warning::UnknownTags(unknown_tags));
-            }
-
-            // react if any warnings
-            if !warnings.is_empty() {
-                return Err(Error::Warnings(warnings));
+        // check for overlapping
+        let mut overlapping = JobList::new_from(&self);
+        for (n, j) in self.jobs.iter().enumerate() {
+            if job.overlaps(j) {
+                overlapping.push(n, j.clone());
             }
         }
-        self.jobs.push(job);
+        if !overlapping.is_empty() {
+            warnings.push(Warning::Overlaps {
+                new: job.clone(),
+                existing: overlapping,
+            });
+        }
+
+        // check for unknown tag
+        let unknown_tags: TagSet = job.tags.filter(|tag| !tags::is_known(tag));
+        if !unknown_tags.0.is_empty() {
+            warnings.push(Warning::UnknownTags(unknown_tags));
+        }
+
+        // react if any warnings
+        if !warnings.is_empty() {
+            return Err(Error::Warnings(warnings));
+        }
         Ok(())
+    }
+    fn push(&mut self, job: Job) {
+        self.jobs.push(job);
     }
     fn writeln(
         &self,

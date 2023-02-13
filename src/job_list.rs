@@ -26,7 +26,7 @@ impl JobList {
         Self {
             jobs: Vec::new(),
             tag_configuration: jobs.tag_configuration.clone(),
-            default_configuration: jobs.default_configuration.clone(),
+            default_configuration: jobs.base_configuration.clone(),
         }
     }
     pub fn push(&mut self, pos: usize, job: Job) {

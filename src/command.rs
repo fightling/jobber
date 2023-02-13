@@ -1,8 +1,9 @@
 use crate::args::Args;
 use crate::date_time::{current, DateTime};
 use crate::duration::Duration;
-use crate::list::List;
+use crate::job::Job;
 use crate::partial_date_time::PartialDateTime;
+use crate::range::Range;
 
 #[derive(PartialEq, Clone)]
 pub enum Command {
@@ -45,12 +46,12 @@ pub enum Command {
     },
     /// List jobs
     List {
-        range: List,
+        range: Range,
         tags: Option<Vec<String>>,
     },
     /// Report jobs
     Report {
-        range: List,
+        range: Range,
         tags: Option<Vec<String>>,
     },
     ShowConfiguration,
@@ -97,13 +98,13 @@ impl Command {
         };
 
         let list = if let Some(list) = args.list {
-            Some(List::parse(list))
+            Some(Range::parse(list))
         } else {
             None
         };
 
         let report = if let Some(report) = args.report {
-            Some(List::parse(report))
+            Some(Range::parse(report))
         } else {
             None
         };
@@ -323,6 +324,62 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::SetConfiguration{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?}, max hours: {max_hours:?} }}"
             ),
+        }
+    }
+}
+
+pub enum Done {
+    Start(Job),
+    Add(Job),
+    Back(Job),
+    BackAdd(Job),
+    /// end existing job by giving time
+    End(Job),
+    /// add message or tags to a running job
+    MessageTags {
+        message: Option<String>,
+        tags: Option<Vec<String>>,
+    },
+    /// List jobs
+    List {
+        range: Range,
+        tags: Option<Vec<String>>,
+    },
+    /// Report jobs
+    Report {
+        range: Range,
+        tags: Option<Vec<String>>,
+    },
+    ShowConfiguration,
+    SetConfiguration {
+        resolution: Option<f64>,
+        pay: Option<f64>,
+        tags: Option<Vec<String>>,
+        max_hours: Option<u32>,
+    },
+}
+
+impl std::fmt::Display for Done {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Start(job) => write!(f, "Starting new job:{job}"),
+            Self::Add(job) => write!(f, "Adding new job:{job}"),
+            Self::Back(job) => write!(f, "Back to last job:{job}"),
+            Self::BackAdd(job) => write!(f, "Adding new job based on last job:{job}"),
+            Self::End(job) => write!(f, "Ending open job:{job}"),
+            Self::MessageTags {
+                message: _,
+                tags: _,
+            } => write!(f, "Changing job"),
+            Self::List { range: _, tags: _ } => write!(f, "Listing jobs"),
+            Self::Report { range: _, tags: _ } => write!(f, "Reporting jobs"),
+            Self::ShowConfiguration => write!(f, "show configuration"),
+            Self::SetConfiguration {
+                resolution: _,
+                pay: _,
+                tags: _,
+                max_hours: _,
+            } => write!(f, "set configuration"),
         }
     }
 }
