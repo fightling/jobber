@@ -7,6 +7,8 @@ pub enum Error {
     Io(std::io::Error),
     #[error("JSON error: {0}")]
     Json(serde_json::Error),
+    #[error("There still is an open job: {0}")]
+    OpenJob(Job),
     #[error("There is no open job")]
     NoOpenJob,
     #[error("End {0} of the job is before it's start {1}")]

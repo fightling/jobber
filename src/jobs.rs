@@ -156,6 +156,7 @@ impl Jobs {
         match change {
             Change::None => Ok(()),
             Change::PushNeedsMessage(job) => {
+                self.check_running()?;
                 if check {
                     self.check(&job)?;
                 }
@@ -168,6 +169,7 @@ impl Jobs {
                 }
             }
             Change::Push(job) => {
+                self.check_running()?;
                 if check {
                     self.check(&job)?;
                 }
@@ -188,6 +190,14 @@ impl Jobs {
                 }
             }
         }
+    }
+    fn check_running(&self) -> Result<(), Error> {
+        if let Some(job) = self.jobs.last() {
+            if job.is_running() {
+                return Err(Error::OpenJob(job.clone()));
+            }
+        }
+        Ok(())
     }
     pub fn running_start(&self) -> Option<DateTime> {
         if let Some(job) = self.jobs.last() {
