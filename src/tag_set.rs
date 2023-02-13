@@ -9,6 +9,9 @@ impl TagSet {
     pub fn new() -> Self {
         Self(Vec::new())
     }
+    pub fn from_one(tag: &String) -> Self {
+        Self(vec![tag.clone()])
+    }
     pub fn filter<P>(&self, pred: P) -> Self
     where
         P: Fn(&String) -> bool,
@@ -20,6 +23,9 @@ impl TagSet {
             }
         }
         result
+    }
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 }
 

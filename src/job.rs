@@ -4,15 +4,21 @@ use crate::tags;
 use crate::{configuration::Configuration, date_time::DateTime};
 use serde::{Deserialize, Serialize};
 
+/// One portion of work
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Job {
+    /// Starting time
     pub start: DateTime,
+    /// Ending time or still running
     pub end: Option<DateTime>,
+    /// Description message
     pub message: Option<String>,
+    /// List of tags
     pub tags: TagSet,
 }
 
 impl Job {
+    /// create new job
     pub fn new(
         start: DateTime,
         end: Option<DateTime>,
@@ -39,6 +45,7 @@ impl Job {
             },
         })
     }
+    /// returns true if latest job has no ending
     pub fn is_running(&self) -> bool {
         self.end.is_none()
     }

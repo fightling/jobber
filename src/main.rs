@@ -27,6 +27,54 @@ fn main() {
     }
 }
 
+/// process program arguments to read/write jobber's database and handle warnings
+fn run(args: Args) -> Result<(), Error> {
+    // load database from file or create new
+    let filename = &args.filename.clone();
+    let mut jobs = if let Ok(jobs) = Jobs::load(filename) {
+        println!(
+            "Loaded database ({} entries) from file '{filename}'",
+            jobs.jobs.len()
+        );
+        jobs
+    } else {
+        println!("Beginning new database file '{filename}'");
+        Jobs::new()
+    };
+
+    // parse and process command
+    let mut command = Command::parse(args, jobs.running_start());
+    match jobs.process(&command, true) {
+        Err(Error::Warnings(warnings)) => {
+            println!("There {} warning(s) you have to omit:", warnings.len());
+            for (n, warning) in warnings.iter().enumerate() {
+                println!("\nWARNING {}) {}", n + 1, warning);
+                if !ask("Do you still want to add this job?", false)? {
+                    return Err(Error::Cancel);
+                }
+            }
+            if let Err(Error::EnterMessage) = jobs.process(&command, false) {
+                edit_message(&mut jobs, &mut command)?;
+            }
+        }
+        Err(Error::EnterMessage) => edit_message(&mut jobs, &mut command)?,
+        Err(err) => return Err(err),
+        Ok(_done) => {
+            //    println!("{}", done)
+        }
+    }
+    if jobs.modified() {
+        jobs.save(filename)?;
+        println!("Saved database into file '{filename}'");
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+pub fn run_args(args: &[&str]) {
+    Command::parse(Args::parse_from(args), None);
+}
+
 /// Asks user on console a yes-no-question
 fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
     println!("{} ({})", question, if default_yes { "Y/n" } else { "y/N" });
@@ -75,52 +123,4 @@ fn edit_message(jobs: &mut Jobs, command: &mut Command) -> Result<(), Error> {
     )?;
     command.set_message(message);
     jobs.process(&command, false)
-}
-
-/// process program arguments to read/write jobber's database
-fn run(args: Args) -> Result<(), Error> {
-    // load database from file or create new
-    let filename = &args.filename.clone();
-    let mut jobs = if let Ok(jobs) = Jobs::load(filename) {
-        println!(
-            "Loaded database ({} entries) from file '{filename}'",
-            jobs.jobs.len()
-        );
-        jobs
-    } else {
-        println!("Beginning new database file '{filename}'");
-        Jobs::new()
-    };
-
-    // parse and process command
-    let mut command = Command::parse(args, jobs.running_start());
-    match jobs.process(&command, true) {
-        Err(Error::Warnings(warnings)) => {
-            println!("There {} warning(s) you have to omit:", warnings.len());
-            for (n, warning) in warnings.iter().enumerate() {
-                println!("\nWARNING {}) {}", n + 1, warning);
-                if !ask("Do you still want to add this job?", false)? {
-                    return Err(Error::Cancel);
-                }
-            }
-            if let Err(Error::EnterMessage) = jobs.process(&command, false) {
-                edit_message(&mut jobs, &mut command)?;
-            }
-        }
-        Err(Error::EnterMessage) => edit_message(&mut jobs, &mut command)?,
-        Err(err) => return Err(err),
-        Ok(_done) => {
-            //    println!("{}", done)
-        }
-    }
-    if jobs.modified() {
-        jobs.save(filename)?;
-        println!("Saved database into file '{filename}'");
-    }
-    Ok(())
-}
-
-#[cfg(test)]
-pub fn run_args(args: &[&str]) {
-    Command::parse(Args::parse_from(args), None);
 }

@@ -17,7 +17,7 @@ pub enum Error {
     Warnings(Vec<Warning>),
     #[error("You canceled.")]
     Cancel,
-    #[error("Can not chose tags which have different configurations: {0}")]
+    #[error("Can not use tags {0} within same job because they have different configurations.")]
     TagCollision(TagSet),
     #[error("User needs to enter message")]
     EnterMessage,

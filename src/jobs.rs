@@ -133,7 +133,11 @@ impl Jobs {
                 println!("Base Configuration:\n\n{}", self.base_configuration);
                 // print tag wise configurations
                 for (tag, configuration) in &self.tag_configuration {
-                    println!("Configuration for tag '{}':\n\n{}", tag, configuration);
+                    println!(
+                        "Configuration for tag {}:\n\n{}",
+                        TagSet::from_one(tag),
+                        configuration
+                    );
                 }
                 Change::None
             }
@@ -143,7 +147,7 @@ impl Jobs {
                 tags,
                 max_hours,
             } => {
-                self.set_configuration(&tags, resolution, pay, max_hours);
+                self.set_configuration(&tags, resolution, pay, max_hours)?;
                 Change::None
             }
             Command::MessageTags {
@@ -241,7 +245,7 @@ impl Jobs {
         resolution: Option<f64>,
         pay: Option<f64>,
         max_hours: Option<u32>,
-    ) {
+    ) -> Result<(), Error> {
         if let Some(tags) = tags {
             for tag in tags {
                 if let Some(configuration) = self.tag_configuration.get_mut(tag) {
@@ -265,6 +269,7 @@ impl Jobs {
                     );
                 }
             }
+            self.get_configuration(&TagSet { 0: tags.clone() })?;
         } else {
             if let Some(resolution) = resolution {
                 self.base_configuration.resolution = resolution;
@@ -273,14 +278,23 @@ impl Jobs {
             self.base_configuration.max_hours = max_hours;
         }
         self.modified = true;
+
+        Ok(())
     }
-    fn get_configuration(&self, tags: &TagSet) -> &Configuration {
+    fn get_configuration(&self, tags: &TagSet) -> Result<&Configuration, Error> {
+        let mut found = TagSet::new();
+        let mut configuration = None;
         for tag in &tags.0 {
-            if let Some(configuration) = self.tag_configuration.get(tag) {
-                return configuration;
+            if let Some(c) = self.tag_configuration.get(tag) {
+                found.insert(tag);
+                configuration = Some(c);
             }
         }
-        &self.base_configuration
+        match found.len() {
+            0 => Ok(&self.base_configuration),
+            1 => Ok(configuration.unwrap()),
+            _ => Err(Error::TagCollision(found)),
+        }
     }
     fn check(&self, job: &Job) -> Result<(), Error> {
         let mut warnings = Vec::new();
@@ -305,6 +319,9 @@ impl Jobs {
             warnings.push(Warning::UnknownTags(unknown_tags));
         }
 
+        // check for colliding tags
+        self.get_configuration(&job.tags)?;
+
         // react if any warnings
         if !warnings.is_empty() {
             return Err(Error::Warnings(warnings));
@@ -321,7 +338,7 @@ impl Jobs {
                 continue;
             }
             writeln!(f, "\n    Pos: {}", n + 1)?;
-            job.writeln(f, Some(self.get_configuration(&job.tags)))?;
+            job.writeln(f, Some(self.get_configuration(&job.tags).unwrap()))?;
         }
         Ok(())
     }
