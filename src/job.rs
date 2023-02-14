@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 pub struct Job {
     /// Starting time
     pub start: DateTime,
-    /// Ending time or still running
+    /// Ending time or None if not finished yet)
     pub end: Option<DateTime>,
     /// Description message
     pub message: Option<String>,
@@ -46,7 +46,7 @@ impl Job {
         })
     }
     /// returns true if latest job has no ending
-    pub fn is_running(&self) -> bool {
+    pub fn is_open(&self) -> bool {
         self.end.is_none()
     }
     /// get hours without rounding to resolution

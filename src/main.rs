@@ -43,7 +43,7 @@ fn run(args: Args) -> Result<(), Error> {
     };
 
     // parse and process command
-    let mut command = Command::parse(args, jobs.running_start());
+    let mut command = Command::parse(args, jobs.open_start());
     match jobs.process(&command, true) {
         Err(Error::Warnings(warnings)) => {
             println!("There {} warning(s) you have to omit:", warnings.len());

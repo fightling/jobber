@@ -33,13 +33,11 @@ pub struct Jobs {
 /// catches what to change the jobs within the database
 enum Change {
     /// No change
-    None,
+    Nothing,
     /// Push a new `Job` into database
     Push(Job),
-    /// Push a new `Job` into database but return error if message is missing
-    PushNeedsMessage(Job),
     /// Change an existing `Job` at index `usize` into database but return error if message is missing
-    ModNeedsMessage(usize, Job),
+    Modify(usize, Job),
 }
 
 impl Jobs {
@@ -72,36 +70,24 @@ impl Jobs {
                 start,
                 message,
                 tags,
-            } => {
-                if let Some(None) = message {
-                    Change::PushNeedsMessage(Job::new(start, None, None, tags)?)
-                } else {
-                    Change::Push(Job::new(start, None, message.flatten(), tags)?)
-                }
-            }
+            } => Change::Push(Job::new(start, None, message.flatten(), tags)?),
             Command::Add {
                 start,
                 end,
                 message,
                 tags,
-            } => Change::PushNeedsMessage(Job::new(start, Some(end), message.flatten(), tags)?),
+            } => Change::Push(Job::new(start, Some(end), message.flatten(), tags)?),
             Command::Back {
                 start,
                 message,
                 tags,
-            } => {
-                if let Some(None) = message {
-                    Change::PushNeedsMessage(Job::new(start, None, None, tags)?)
-                } else {
-                    Change::Push(Job::new(start, None, message.flatten(), tags)?)
-                }
-            }
+            } => Change::Push(Job::new(start, None, message.flatten(), tags)?),
             Command::BackAdd {
                 start,
                 end,
                 message,
                 tags,
-            } => Change::PushNeedsMessage(Job::new(start, Some(end), message.flatten(), tags)?),
+            } => Change::Push(Job::new(start, Some(end), message.flatten(), tags)?),
             Command::End { end, message, tags } => {
                 if let Some(job) = self.jobs.last_mut() {
                     let mut new_job = job.clone();
@@ -110,7 +96,7 @@ impl Jobs {
                     if let Some(tags) = tags {
                         new_job.tags.0 = tags;
                     }
-                    Change::ModNeedsMessage(self.jobs.len() - 1, new_job)
+                    Change::Modify(self.jobs.len() - 1, new_job)
                 } else {
                     return Err(Error::NoOpenJob);
                 }
@@ -120,7 +106,7 @@ impl Jobs {
                 if range != Range::All || !tags.is_none() {
                     todo!("to list with ranges or tags not implemented")
                 }
-                Change::None
+                Change::Nothing
             }
             Command::Report { range, tags } => {
                 if range != Range::None || !tags.is_none() {
@@ -139,7 +125,7 @@ impl Jobs {
                         configuration
                     );
                 }
-                Change::None
+                Change::Nothing
             }
             Command::SetConfiguration {
                 resolution,
@@ -148,7 +134,7 @@ impl Jobs {
                 max_hours,
             } => {
                 self.set_configuration(&tags, resolution, pay, max_hours)?;
-                Change::None
+                Change::Nothing
             }
             Command::MessageTags {
                 message: _,
@@ -158,9 +144,9 @@ impl Jobs {
     }
     fn change(&mut self, change: Change, check: bool) -> Result<(), Error> {
         match change {
-            Change::None => Ok(()),
-            Change::PushNeedsMessage(job) => {
-                self.check_running()?;
+            Change::Nothing => Ok(()),
+            Change::Push(job) => {
+                self.check_finished()?;
                 if check {
                     self.check(&job)?;
                 }
@@ -172,16 +158,7 @@ impl Jobs {
                     Ok(())
                 }
             }
-            Change::Push(job) => {
-                self.check_running()?;
-                if check {
-                    self.check(&job)?;
-                }
-                self.jobs.push(job);
-                self.modified = true;
-                Ok(())
-            }
-            Change::ModNeedsMessage(pos, job) => {
+            Change::Modify(pos, job) => {
                 if check {
                     self.check(&job)?;
                 }
@@ -195,24 +172,21 @@ impl Jobs {
             }
         }
     }
-    fn check_running(&self) -> Result<(), Error> {
+    fn check_finished(&self) -> Result<(), Error> {
         if let Some(job) = self.jobs.last() {
-            if job.is_running() {
+            if job.is_open() {
                 return Err(Error::OpenJob(job.clone()));
             }
         }
         Ok(())
     }
-    pub fn running_start(&self) -> Option<DateTime> {
+    pub fn open_start(&self) -> Option<DateTime> {
         if let Some(job) = self.jobs.last() {
-            if job.is_running() {
-                job.end
-            } else {
-                None
+            if job.is_open() {
+                return job.end;
             }
-        } else {
-            None
         }
+        None
     }
     pub fn load(filename: &str) -> Result<Jobs, Error> {
         let file = File::options()

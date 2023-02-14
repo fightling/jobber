@@ -5,15 +5,16 @@ use crate::job::Job;
 use crate::partial_date_time::PartialDateTime;
 use crate::range::Range;
 
+/// Commands which can be applied to jobber's database
 #[derive(PartialEq, Clone)]
 pub enum Command {
-    /// start a new job by specifying start time if no job is running
+    /// start a new job by specifying start time if there is no open job
     Start {
         start: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
-    /// add a new job by specifying start and end time if no job is running
+    /// add a new job by specifying start and end time if there is no open job
     Add {
         start: DateTime,
         end: DateTime,
@@ -39,7 +40,7 @@ pub enum Command {
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
-    /// add message or tags to a running job
+    /// add message or tags to an open job
     MessageTags {
         message: Option<String>,
         tags: Option<Vec<String>>,
@@ -54,7 +55,9 @@ pub enum Command {
         range: Range,
         tags: Option<Vec<String>>,
     },
+    /// Display whole configuration
     ShowConfiguration,
+    /// change configuration
     SetConfiguration {
         resolution: Option<f64>,
         pay: Option<f64>,
@@ -64,59 +67,58 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn parse(args: Args, running_start: Option<DateTime>) -> Self {
+    /// parse arguments into a command
+    /// # Arguments
+    /// * `args` - arguments to parse
+    /// * `open_start` - if data base has an open job this shall give its starting time
+    pub fn parse(args: Args, open_start: Option<DateTime>) -> Self {
+        // parse everything from arguments...
+
         let start = if let Some(start) = args.start {
             Some(PartialDateTime::parse(start))
         } else {
             None
         };
-
         let back = if let Some(back) = args.back {
             Some(PartialDateTime::parse(back))
         } else {
             None
         };
-
         let end = if let Some(end) = args.end {
             Some(PartialDateTime::parse(end))
         } else {
             None
         };
-
         let duration = if let Some(duration) = args.duration {
             Some(Duration::parse(duration))
         } else {
             None
         };
-
         let message = args.message;
-
         let tags = if let Some(tags) = args.tags {
             Some(tags.split(",").map(|t| t.to_string()).collect())
         } else {
             None
         };
-
         let list = if let Some(list) = args.list {
             Some(Range::parse(list))
         } else {
             None
         };
-
         let report = if let Some(report) = args.report {
             Some(Range::parse(report))
         } else {
             None
         };
-
+        // configuration items
         let resolution = args.resolution;
         let pay = args.pay;
         let max_hours = args.max_hours;
-        // true if any of the above is available
+        // true if any of the configuration items is available
         let set_configuration = resolution.is_some() || pay.is_some() || max_hours.is_some();
-
         let configuration = args.configuration;
 
+        // create command depending on what arguments were given...
         if let Some(start) = start {
             let mut start = start.into(current());
             if let Some(end) = end {
@@ -200,8 +202,8 @@ impl Command {
                 }
             }
         } else if let Some(end) = end {
-            let end = end.into(if let Some(running_start) = running_start {
-                running_start
+            let end = end.into(if let Some(open_start) = open_start {
+                open_start
             } else {
                 current()
             });
@@ -229,6 +231,7 @@ impl Command {
         }
     }
 
+    /// enrich this command by adding a message (or overwrite existing one)
     pub fn set_message(&mut self, new_message: String) {
         match *self {
             Command::Start {
@@ -331,11 +334,9 @@ impl std::fmt::Debug for Command {
 pub enum Done {
     Start(Job),
     Add(Job),
-    Back(Job),
-    BackAdd(Job),
     /// end existing job by giving time
     End(Job),
-    /// add message or tags to a running job
+    /// add message or tags to an open job
     MessageTags {
         message: Option<String>,
         tags: Option<Vec<String>>,
@@ -364,8 +365,6 @@ impl std::fmt::Display for Done {
         match self {
             Self::Start(job) => write!(f, "Starting new job:{job}"),
             Self::Add(job) => write!(f, "Adding new job:{job}"),
-            Self::Back(job) => write!(f, "Back to last job:{job}"),
-            Self::BackAdd(job) => write!(f, "Adding new job based on last job:{job}"),
             Self::End(job) => write!(f, "Ending open job:{job}"),
             Self::MessageTags {
                 message: _,
