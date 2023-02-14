@@ -1,4 +1,5 @@
 use crate::{
+    change::Change,
     command::Command,
     configuration::Configuration,
     date_time::DateTime,
@@ -30,16 +31,6 @@ pub struct Jobs {
     pub base_configuration: Configuration,
 }
 
-/// catches what to change the jobs within the database
-enum Change {
-    /// No change
-    Nothing,
-    /// Push a new `Job` into database
-    Push(Job),
-    /// Change an existing `Job` at index `usize` into database but return error if message is missing
-    Modify(usize, Job),
-}
-
 impl Jobs {
     /// Create an empty jobber database
     pub fn new() -> Self {
@@ -56,9 +47,10 @@ impl Jobs {
     /// Processes the given `command` and may return a change on this database.
     /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
     /// Fix warnings to continue and call again or turn any check on warnings off by using parameter `check`
-    pub fn process(&mut self, command: &Command, check: bool) -> Result<(), Error> {
+    pub fn process(&mut self, command: &Command, check: bool) -> Result<Change, Error> {
         let change = self.interpret(command)?;
-        self.change(change, check)
+        self.change(change.clone(), check)?;
+        Ok(change)
     }
     fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
         // debug
@@ -89,6 +81,7 @@ impl Jobs {
                 tags,
             } => Change::Push(Job::new(start, Some(end), message.flatten(), tags)?),
             Command::End { end, message, tags } => {
+                self.check_open()?;
                 if let Some(job) = self.jobs.last_mut() {
                     let mut new_job = job.clone();
                     new_job.end = Some(end);
@@ -146,7 +139,9 @@ impl Jobs {
         match change {
             Change::Nothing => Ok(()),
             Change::Push(job) => {
-                self.check_finished()?;
+                if job.is_open() {
+                    self.check_finished()?;
+                }
                 if check {
                     self.check(&job)?;
                 }
@@ -179,6 +174,14 @@ impl Jobs {
             }
         }
         Ok(())
+    }
+    fn check_open(&self) -> Result<(), Error> {
+        if let Some(job) = self.jobs.last() {
+            if job.is_open() {
+                return Ok(());
+            }
+        }
+        Err(Error::NoOpenJob)
     }
     pub fn open_start(&self) -> Option<DateTime> {
         if let Some(job) = self.jobs.last() {

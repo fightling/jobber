@@ -1,3 +1,4 @@
+use crate::date_time::current;
 use crate::error::Error;
 use crate::tag_set::TagSet;
 use crate::tags;
@@ -74,7 +75,7 @@ impl Job {
             }
         } else {
             if let Some(other_end) = other.end {
-                self.start < other_end
+                self.start < other_end && current() > other.start
             } else {
                 panic!("checking intersection of two open jobs!")
             }
@@ -101,6 +102,13 @@ impl Job {
                 end,
                 color::Fg(color::Reset),
             )?;
+        } else {
+            writeln!(
+                f,
+                "    End: {}- open -{}",
+                color::Fg(color::Magenta),
+                color::Fg(color::Reset),
+            )?;
         }
         if let Some(configuration) = configuration {
             let hours = self.hours(Some(configuration.resolution));
@@ -109,7 +117,7 @@ impl Job {
                     if hours > max_hours as f64 {
                         write!(
                             f,
-                            "  Hours: {}{}{}{}{}\n",
+                            "  Hours: {}{}{:.2}{}{}\n",
                             style::Bold,
                             color::Fg(color::LightRed),
                             hours,

@@ -17,6 +17,7 @@ impl std::fmt::Display for JobList {
         for (pos, job) in &self.jobs {
             writeln!(f, "    Pos: {}", pos + 1)?;
             job.writeln(f, Some(self.get_configuration(&job.tags)))?;
+            writeln!(f, "")?;
         }
         Ok(())
     }

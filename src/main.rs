@@ -1,4 +1,5 @@
 mod args;
+mod change;
 mod command;
 mod configuration;
 mod date_time;
@@ -13,11 +14,12 @@ mod tag_set;
 mod tags;
 mod tests;
 
-use crate::jobs::Jobs;
 use args::Args;
+use change::Change;
 use clap::Parser;
 use command::Command;
 use error::Error;
+use jobs::Jobs;
 
 /// main which just catches errors
 fn main() {
@@ -57,10 +59,12 @@ fn run(args: Args) -> Result<(), Error> {
                 edit_message(&mut jobs, &mut command)?;
             }
         }
-        Err(Error::EnterMessage) => edit_message(&mut jobs, &mut command)?,
+        Err(Error::EnterMessage) => {
+            println!("{}", edit_message(&mut jobs, &mut command)?);
+        }
         Err(err) => return Err(err),
-        Ok(_done) => {
-            //    println!("{}", done)
+        Ok(change) => {
+            println!("{}", change)
         }
     }
     if jobs.modified() {
@@ -116,7 +120,7 @@ fn enter(question: &str) -> Result<String, Error> {
 }
 
 /// Ask user for a multi line message and enrich a command with it
-fn edit_message(jobs: &mut Jobs, command: &mut Command) -> Result<(), Error> {
+fn edit_message(jobs: &mut Jobs, command: &mut Command) -> Result<Change, Error> {
     let message = enter(
         "You need to enter a message about what you did to finish the job.\n\
         Finish input with empty line (or Ctrl+C to cancel):",
