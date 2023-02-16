@@ -40,13 +40,46 @@ impl JobList {
     pub fn is_empty(&self) -> bool {
         self.jobs.is_empty()
     }
+    pub fn len(&self) -> usize {
+        self.jobs.len()
+    }
     /// provides configurations for display trait implementation
-    fn get_configuration(&self, tags: &TagSet) -> &Configuration {
+    pub fn get_configuration(&self, tags: &TagSet) -> &Configuration {
         for tag in &tags.0 {
             if let Some(configuration) = self.tag_configuration.get(tag) {
                 return configuration;
             }
         }
         &self.default_configuration
+    }
+}
+
+pub struct JobListIterator<'a> {
+    jobs: &'a JobList,
+    index: usize,
+}
+
+impl<'a> Iterator for JobListIterator<'a> {
+    type Item = Job;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < self.jobs.len() {
+            self.index += 1;
+            Some(self.jobs.jobs[self.index].1.clone())
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a JobList {
+    type Item = Job;
+    type IntoIter = JobListIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter {
+            jobs: self,
+            index: 0,
+        }
     }
 }

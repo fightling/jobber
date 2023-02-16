@@ -7,6 +7,7 @@ use crate::{
     job::Job,
     job_list::JobList,
     range::Range,
+    reports::report_csv,
     tag_set::TagSet,
     tags,
 };
@@ -51,6 +52,13 @@ impl Jobs {
         let change = self.interpret(command)?;
         self.change(change.clone(), check)?;
         Ok(change)
+    }
+    pub fn all(&self) -> JobList {
+        let mut result = JobList::new_from(self);
+        for (n, j) in self.jobs.iter().enumerate() {
+            result.push(n, j.clone());
+        }
+        result
     }
     fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
         // debug
@@ -102,10 +110,12 @@ impl Jobs {
                 Change::Nothing
             }
             Command::Report { range, tags } => {
-                if range != Range::None || !tags.is_none() {
+                /*if range != Range::None || !tags.is_none() {
                     todo!()
-                }
-                todo!("reporting not implemented")
+                }*/
+                report_csv(self.all(), "");
+                //todo!("reporting not implemented")
+                Change::Nothing
             }
             Command::ShowConfiguration => {
                 // print base configurations

@@ -10,6 +10,7 @@ mod job_list;
 mod jobs;
 mod partial_date_time;
 mod range;
+mod reports;
 mod tag_set;
 mod tags;
 mod tests;
