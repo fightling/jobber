@@ -39,13 +39,13 @@ pub fn report_csv(
         .collect::<Vec<String>>()
         .join(",");
     writeln!(f, "{}", title).map_err(|e| Error::Io(e))?;
-    for (no, job) in jobs.into_iter().enumerate() {
+    for (pos, job) in jobs.into_iter() {
         for (c, column) in columns.iter().enumerate() {
             if c > 0 {
                 write!(f, ",").map_err(|e| Error::Io(e))?;
             }
             match *column {
-                "no" => write!(f, "{no}").map_err(|e| Error::Io(e))?,
+                "pos" => write!(f, "{}", pos + 1).map_err(|e| Error::Io(e))?,
                 "start" => write!(f, r#""{}""#, job.start).map_err(|e| Error::Io(e))?,
                 "message" => write!(
                     f,

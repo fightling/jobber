@@ -60,6 +60,37 @@ impl Jobs {
         }
         result
     }
+    fn filter(&self, range: &Range, tags: &TagSet) -> JobList {
+        let mut jobs = JobList::new_from(&self);
+        for (n, job) in self.jobs.iter().enumerate() {
+            let mut tag_ok = true;
+            for tag in &tags.0 {
+                if !job.tags.0.contains(&tag) {
+                    tag_ok = false;
+                    break;
+                };
+            }
+
+            let range_ok = match range {
+                Range::None => false,
+                Range::All => true,
+                Range::Count(_) => true,
+                Range::PositionRange(f, t) => n + 1 >= *f && n + 1 <= *t,
+                Range::FromPosition(p) => n + 1 >= *p,
+                Range::Day(_) => todo!(),
+                Range::TimeRange(_, _) => todo!(),
+                Range::Since(_) => todo!(),
+            };
+
+            if tag_ok && range_ok {
+                jobs.push(n, job.clone());
+            }
+        }
+        if let Range::Count(c) = range {
+            jobs.limit(*c);
+        }
+        jobs
+    }
     fn interpret(&mut self, command: &Command, check: bool) -> Result<Change, Error> {
         // debug
         eprintln!("{command:?}");
@@ -115,27 +146,12 @@ impl Jobs {
                 output,
                 parameters,
             } => {
-                let mut jobs = JobList::new_from(&self);
-                for (n, job) in self.jobs.iter().enumerate() {
-                    let mut tag_ok = true;
-                    if let Some(tags) = &tags {
-                        for tag in tags {
-                            if !job.tags.0.contains(&tag) {
-                                tag_ok = false;
-                                break;
-                            };
-                        }
-                    }
-                    let range_ok = true;
-                    if range != Range::All {
-                        todo!()
-                    };
-                    if tag_ok && range_ok {
-                        jobs.push(n, job.clone());
-                    }
-                }
-
-                report_csv(&output, jobs, &parameters, !check)?;
+                report_csv(
+                    &output,
+                    self.filter(&range, &&TagSet::from_option_vec(&tags)),
+                    &parameters,
+                    !check,
+                )?;
                 //todo!("reporting not implemented")
                 Change::Nothing
             }

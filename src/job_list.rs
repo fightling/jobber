@@ -43,6 +43,11 @@ impl JobList {
     pub fn len(&self) -> usize {
         self.jobs.len()
     }
+    pub fn limit(&mut self, count: usize) {
+        while self.jobs.len() > count {
+            self.jobs.remove(0);
+        }
+    }
     /// provides configurations for display trait implementation
     pub fn get_configuration(&self, tags: &TagSet) -> &Configuration {
         for tag in &tags.0 {
@@ -60,11 +65,11 @@ pub struct JobListIterator<'a> {
 }
 
 impl<'a> Iterator for JobListIterator<'a> {
-    type Item = Job;
+    type Item = (usize, Job);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.jobs.len() {
-            let result = Some(self.jobs.jobs[self.index].1.clone());
+            let result = Some(self.jobs.jobs[self.index].clone());
             self.index += 1;
             result
         } else {
@@ -74,7 +79,7 @@ impl<'a> Iterator for JobListIterator<'a> {
 }
 
 impl<'a> IntoIterator for &'a JobList {
-    type Item = Job;
+    type Item = (usize, Job);
     type IntoIter = JobListIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {

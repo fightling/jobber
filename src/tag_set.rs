@@ -12,6 +12,13 @@ impl TagSet {
     pub fn from_one(tag: &String) -> Self {
         Self(vec![tag.clone()])
     }
+    pub fn from_option_vec(tags: &Option<Vec<String>>) -> Self {
+        if let Some(tags) = tags {
+            Self(tags.clone())
+        } else {
+            Self(Vec::new())
+        }
+    }
     pub fn filter<P>(&self, pred: P) -> Self
     where
         P: Fn(&String) -> bool,
