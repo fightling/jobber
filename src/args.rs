@@ -119,6 +119,10 @@ pub struct Args {
     #[arg(short, long, requires("report"))]
     pub csv: Option<Option<String>>,
 
+    /// Print report for all jobs or selective by position(s) or time(s)
+    #[arg(short, long, requires("report"), default_value("/dev/stdout"))]
+    pub output: String,
+
     /// Show configuration parameters
     #[arg(short ='C', long, conflicts_with_all(["start","end","back","message","list","report"]))]
     pub configuration: bool,

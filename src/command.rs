@@ -53,6 +53,7 @@ pub enum Command {
     Report {
         range: Range,
         tags: Option<Vec<String>>,
+        output: String,
         parameters: Option<String>,
     },
     /// Display whole configuration
@@ -111,6 +112,7 @@ impl Command {
             None
         };
         let csv = if let Some(csv) = args.csv { csv } else { None };
+        let output = args.output;
 
         // configuration items
         let resolution = args.resolution;
@@ -221,6 +223,7 @@ impl Command {
             Self::Report {
                 range,
                 tags,
+                output,
                 parameters: csv,
             }
         } else if configuration {
@@ -321,9 +324,9 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::List{{ list: {range:?}, {tags:?} }}"
             ),
-            Self::Report { range, tags, parameters } => write!(
+            Self::Report { range, tags, output, parameters } => write!(
                 f,
-                "Command::Report{{ list: {range:?}, {tags:?}, {parameters:?} }}"
+                "Command::Report{{ list: {range:?}, {tags:?}, {output:?}, {parameters:?} }}"
             ),
             Self::ShowConfiguration => write!(
                 f,
