@@ -77,9 +77,30 @@ impl Jobs {
                 Range::Count(_) => true,
                 Range::PositionRange(f, t) => n + 1 >= *f && n + 1 <= *t,
                 Range::FromPosition(p) => n + 1 >= *p,
-                Range::Day(_) => todo!(),
-                Range::TimeRange(_, _) => todo!(),
-                Range::Since(_) => todo!(),
+                Range::Day(d) => {
+                    job.start.into_local().date() <= *d
+                        && if let Some(end) = job.end {
+                            end.into_local().date() >= *d
+                        } else {
+                            true
+                        }
+                }
+                Range::TimeRange(f, t) => {
+                    job.start <= *t
+                        && if let Some(end) = job.end {
+                            end >= *f
+                        } else {
+                            true
+                        }
+                }
+                Range::Since(s) => {
+                    job.start >= *s
+                        || if let Some(end) = job.end {
+                            end >= *s
+                        } else {
+                            true
+                        }
+                }
             };
 
             if tag_ok && range_ok {

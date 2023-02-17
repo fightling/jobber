@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, TimeZone, Utc};
 use regex::Regex;
 
-use crate::{date_time::DateTime, job::Job, partial_date_time::PartialDateTime};
+use crate::{date_time::DateTime, partial_date_time::PartialDateTime};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Range {
