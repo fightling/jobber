@@ -3,6 +3,7 @@ use chrono::{Local, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct DateTime {
     pub date_time: chrono::DateTime<Utc>,
 }
