@@ -115,10 +115,27 @@ impl Jobs {
                 output,
                 parameters,
             } => {
-                /*if range != Range::None || !tags.is_none() {
-                    todo!()
-                }*/
-                report_csv(&output, self.all(), &parameters, !check)?;
+                let mut jobs = JobList::new_from(&self);
+                for (n, job) in self.jobs.iter().enumerate() {
+                    let mut tag_ok = true;
+                    if let Some(tags) = &tags {
+                        for tag in tags {
+                            if !job.tags.0.contains(&tag) {
+                                tag_ok = false;
+                                break;
+                            };
+                        }
+                    }
+                    let range_ok = true;
+                    if range != Range::All {
+                        todo!()
+                    };
+                    if tag_ok && range_ok {
+                        jobs.push(n, job.clone());
+                    }
+                }
+
+                report_csv(&output, jobs, &parameters, !check)?;
                 //todo!("reporting not implemented")
                 Change::Nothing
             }

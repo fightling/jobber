@@ -11,8 +11,10 @@ pub fn report_csv(
     parameters: &Option<String>,
     force: bool,
 ) -> Result<(), Error> {
-    if !force && std::path::Path::new(filename).exists() {
-        return Err(Error::OutputFileExists(filename.into()));
+    if !filename.starts_with("/dev/") {
+        if !force && std::path::Path::new(filename).exists() {
+            return Err(Error::OutputFileExists(filename.into()));
+        }
     }
     let file = File::options()
         .write(true)

@@ -212,11 +212,6 @@ impl Command {
                 current()
             });
             Self::End { end, message, tags }
-        } else if !set_configuration && (message.is_some() || tags.is_some()) {
-            Self::MessageTags {
-                message: message.flatten(),
-                tags,
-            }
         } else if let Some(range) = list {
             Self::List { range, tags }
         } else if let Some(range) = report {
@@ -225,6 +220,11 @@ impl Command {
                 tags,
                 output,
                 parameters: csv,
+            }
+        } else if !set_configuration && (message.is_some() || tags.is_some()) {
+            Self::MessageTags {
+                message: message.flatten(),
+                tags,
             }
         } else if configuration {
             Self::ShowConfiguration
