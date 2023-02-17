@@ -86,6 +86,11 @@ fn run(args: Args) -> Result<(), Error> {
 #[cfg(test)]
 pub fn run_args(args: &[&str]) -> Result<Change, Error> {
     let mut jobs = Jobs::new();
+    run_args_with(&mut jobs, args)
+}
+
+#[cfg(test)]
+pub fn run_args_with(jobs: &mut Jobs, args: &[&str]) -> Result<Change, Error> {
     let command = Command::parse(Args::parse_from(args), None);
     jobs.process(&command, true)
 }

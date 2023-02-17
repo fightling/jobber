@@ -9,7 +9,7 @@ pub struct DateTime {
 
 impl std::fmt::Display for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.into_local().format("%x %X"))
+        write!(f, "{}", self.into_local().format("%x %H:%M"))
     }
 }
 
@@ -72,6 +72,13 @@ pub fn set_current(local: &str) {
                 .naive_utc(),
         )
         .unwrap();
+    unsafe {
+        CURRENT_DT = Some(dt);
+    }
+}
+
+#[cfg(test)]
+pub fn set_current_utc(dt: chrono::DateTime<Utc>) {
     unsafe {
         CURRENT_DT = Some(dt);
     }
