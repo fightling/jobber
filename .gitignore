@@ -2,3 +2,5 @@
 /Cargo.lock
 /jobber.json
 /jobber.rb
+.~*
+/out.csv

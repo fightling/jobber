@@ -76,8 +76,10 @@ fn run(args: Args) -> Result<(), Error> {
 }
 
 #[cfg(test)]
-pub fn run_args(args: &[&str]) {
-    Command::parse(Args::parse_from(args), None);
+pub fn run_args(args: &[&str]) -> Result<Change, Error> {
+    let mut jobs = Jobs::new();
+    let command = Command::parse(Args::parse_from(args), None);
+    jobs.process(&command, true)
 }
 
 /// Asks user on console a yes-no-question

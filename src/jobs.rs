@@ -109,11 +109,15 @@ impl Jobs {
                 }
                 Change::Nothing
             }
-            Command::Report { range, tags } => {
+            Command::Report {
+                range,
+                tags,
+                parameters,
+            } => {
                 /*if range != Range::None || !tags.is_none() {
                     todo!()
                 }*/
-                report_csv(self.all(), "");
+                report_csv(self.all(), &parameters)?;
                 //todo!("reporting not implemented")
                 Change::Nothing
             }

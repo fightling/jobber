@@ -53,6 +53,7 @@ pub enum Command {
     Report {
         range: Range,
         tags: Option<Vec<String>>,
+        parameters: Option<String>,
     },
     /// Display whole configuration
     ShowConfiguration,
@@ -109,6 +110,8 @@ impl Command {
         } else {
             None
         };
+        let csv = if let Some(csv) = args.csv { csv } else { None };
+
         // configuration items
         let resolution = args.resolution;
         let pay = args.pay;
@@ -215,7 +218,11 @@ impl Command {
         } else if let Some(range) = list {
             Self::List { range, tags }
         } else if let Some(range) = report {
-            Self::Report { range, tags }
+            Self::Report {
+                range,
+                tags,
+                parameters: csv,
+            }
         } else if configuration {
             Self::ShowConfiguration
         } else if resolution.is_some() || pay.is_some() || max_hours.is_some() {
@@ -314,9 +321,9 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::List{{ list: {range:?}, {tags:?} }}"
             ),
-            Self::Report { range, tags } => write!(
+            Self::Report { range, tags, parameters } => write!(
                 f,
-                "Command::Report{{ list: {range:?}, {tags:?} }}"
+                "Command::Report{{ list: {range:?}, {tags:?}, {parameters:?} }}"
             ),
             Self::ShowConfiguration => write!(
                 f,

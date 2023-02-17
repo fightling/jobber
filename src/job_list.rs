@@ -64,8 +64,9 @@ impl<'a> Iterator for JobListIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.jobs.len() {
+            let result = Some(self.jobs.jobs[self.index].1.clone());
             self.index += 1;
-            Some(self.jobs.jobs[self.index].1.clone())
+            result
         } else {
             None
         }

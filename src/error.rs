@@ -21,6 +21,8 @@ pub enum Error {
     TagCollision(TagSet),
     #[error("User needs to enter message")]
     EnterMessage,
+    #[error("Unknown column name '{0}'")]
+    UnknownColumn(String),
 }
 
 #[derive(Error, Debug)]

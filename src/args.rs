@@ -114,6 +114,11 @@ pub struct Args {
     #[arg(short, long, conflicts_with_all(["start","end","back","message","tags"]))]
     pub report: Option<Option<String>>,
 
+    /// report as CSV
+    /// customize columns by comma separated list of column names like e.g.: "start,end,hours,message"
+    #[arg(short, long, requires("report"))]
+    pub csv: Option<Option<String>>,
+
     /// Show configuration parameters
     #[arg(short ='C', long, conflicts_with_all(["start","end","back","message","list","report"]))]
     pub configuration: bool,
