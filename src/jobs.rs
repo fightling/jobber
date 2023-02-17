@@ -134,10 +134,7 @@ impl Jobs {
                 }
             }
             Command::List { range, tags } => {
-                println!("{}", self);
-                if range != Range::All || !tags.is_none() {
-                    todo!("to list with ranges or tags not implemented")
-                }
+                println!("{}", self.filter(&range, &&TagSet::from_option_vec(&tags)));
                 Change::Nothing
             }
             Command::Report {
