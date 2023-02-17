@@ -119,10 +119,10 @@ impl Jobs {
             }
             Command::ShowConfiguration => {
                 // print base configurations
-                println!("Base Configuration:\n\n{}", self.base_configuration);
+                eprintln!("Base Configuration:\n\n{}", self.base_configuration);
                 // print tag wise configurations
                 for (tag, configuration) in &self.tag_configuration {
-                    println!(
+                    eprintln!(
                         "Configuration for tag {}:\n\n{}",
                         TagSet::from_one(tag),
                         configuration

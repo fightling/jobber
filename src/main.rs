@@ -26,7 +26,7 @@ use jobs::Jobs;
 fn main() {
     let args = Args::parse();
     if let Err(err) = run(args) {
-        println!("ERROR: {err}");
+        eprintln!("ERROR: {err}");
     }
 }
 
@@ -35,13 +35,13 @@ fn run(args: Args) -> Result<(), Error> {
     // load database from file or create new
     let filename = &args.filename.clone();
     let mut jobs = if let Ok(jobs) = Jobs::load(filename) {
-        println!(
+        eprintln!(
             "Loaded database ({} entries) from file '{filename}'",
             jobs.jobs.len()
         );
         jobs
     } else {
-        println!("Beginning new database file '{filename}'");
+        eprintln!("Beginning new database file '{filename}'");
         Jobs::new()
     };
 
@@ -49,9 +49,9 @@ fn run(args: Args) -> Result<(), Error> {
     let mut command = Command::parse(args, jobs.open_start());
     match jobs.process(&command, true) {
         Err(Error::Warnings(warnings)) => {
-            println!("There {} warning(s) you have to omit:", warnings.len());
+            eprintln!("There {} warning(s) you have to omit:", warnings.len());
             for (n, warning) in warnings.iter().enumerate() {
-                println!("\nWARNING {}) {}", n + 1, warning);
+                eprintln!("\nWARNING {}) {}", n + 1, warning);
                 if !ask("Do you still want to add this job?", false)? {
                     return Err(Error::Cancel);
                 }
@@ -61,16 +61,16 @@ fn run(args: Args) -> Result<(), Error> {
             }
         }
         Err(Error::EnterMessage) => {
-            println!("{}", edit_message(&mut jobs, &mut command)?);
+            eprintln!("{}", edit_message(&mut jobs, &mut command)?);
         }
         Err(err) => return Err(err),
         Ok(change) => {
-            println!("{}", change)
+            eprintln!("{}", change)
         }
     }
     if jobs.modified() {
         jobs.save(filename)?;
-        println!("Saved database into file '{filename}'");
+        eprintln!("Saved database into file '{filename}'");
     }
     Ok(())
 }
@@ -82,7 +82,7 @@ pub fn run_args(args: &[&str]) {
 
 /// Asks user on console a yes-no-question
 fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
-    println!("{} ({})", question, if default_yes { "Y/n" } else { "y/N" });
+    eprintln!("{} ({})", question, if default_yes { "Y/n" } else { "y/N" });
 
     let mut buffer = String::new();
     std::io::stdin()
@@ -98,7 +98,7 @@ fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
 
 // Ask user for a multi line input
 fn enter(question: &str) -> Result<String, Error> {
-    println!("{}", question);
+    eprintln!("{}", question);
 
     let mut result = String::new();
     loop {
