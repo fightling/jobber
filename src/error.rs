@@ -23,6 +23,8 @@ pub enum Error {
     EnterMessage,
     #[error("Unknown column name '{0}'")]
     UnknownColumn(String),
+    #[error("Output file '{0}' already exists.")]
+    OutputFileExists(String),
 }
 
 #[derive(Error, Debug)]

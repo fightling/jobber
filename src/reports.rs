@@ -5,9 +5,18 @@ use std::{
 
 use crate::{error::Error, job_list::JobList};
 
-pub fn report_csv(filename: &str, jobs: JobList, parameters: &Option<String>) -> Result<(), Error> {
+pub fn report_csv(
+    filename: &str,
+    jobs: JobList,
+    parameters: &Option<String>,
+    force: bool,
+) -> Result<(), Error> {
+    if !force && std::path::Path::new(filename).exists() {
+        return Err(Error::OutputFileExists(filename.into()));
+    }
     let file = File::options()
         .write(true)
+        .truncate(true)
         .open(filename)
         .map_err(|err| Error::Io(err))?;
     let mut f = BufWriter::new(file);

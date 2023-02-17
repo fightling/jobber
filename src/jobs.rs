@@ -49,7 +49,7 @@ impl Jobs {
     /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
     /// Fix warnings to continue and call again or turn any check on warnings off by using parameter `check`
     pub fn process(&mut self, command: &Command, check: bool) -> Result<Change, Error> {
-        let change = self.interpret(command)?;
+        let change = self.interpret(command, check)?;
         self.change(change.clone(), check)?;
         Ok(change)
     }
@@ -60,7 +60,7 @@ impl Jobs {
         }
         result
     }
-    fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
+    fn interpret(&mut self, command: &Command, check: bool) -> Result<Change, Error> {
         // debug
         eprintln!("{command:?}");
 
@@ -118,7 +118,7 @@ impl Jobs {
                 /*if range != Range::None || !tags.is_none() {
                     todo!()
                 }*/
-                report_csv(&output, self.all(), &parameters)?;
+                report_csv(&output, self.all(), &parameters, !check)?;
                 //todo!("reporting not implemented")
                 Change::Nothing
             }

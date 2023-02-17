@@ -63,6 +63,14 @@ fn run(args: Args) -> Result<(), Error> {
         Err(Error::EnterMessage) => {
             eprintln!("{}", edit_message(&mut jobs, &mut command)?);
         }
+        Err(Error::OutputFileExists(filename)) => {
+            eprintln!("{}", Error::OutputFileExists(filename));
+            if ask("Do you want to overwrite the existing file?", false)? {
+                jobs.process(&command, false)?;
+            } else {
+                eprintln!("No report generated.")
+            }
+        }
         Err(err) => return Err(err),
         Ok(change) => {
             eprintln!("{}", change)
