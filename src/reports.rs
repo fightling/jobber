@@ -69,11 +69,11 @@ pub fn report_csv(
 }
 
 #[cfg(test)]
-use crate::{date_time::set_current, jobs::Jobs, run_args_with};
+use crate::{context::Context, jobs::Jobs, run_args_with};
 
 #[test]
 fn test_csv_date() {
-    set_current("2023-2-1 12:00");
+    let context = Context::new_test("2023-2-1 12:00");
     let mut jobs = Jobs::new();
     run_args_with(
         &mut jobs,
@@ -85,13 +85,19 @@ fn test_csv_date() {
             "-m",
             "two hours job at twelve",
         ],
+        &context,
     )
     .unwrap();
     let filename = "test_csv_date.csv";
     if std::path::Path::new(filename).exists() {
         std::fs::remove_file(filename).unwrap();
     }
-    run_args_with(&mut jobs, &["jobber", "-r", "--csv", "-o", filename]).unwrap();
+    run_args_with(
+        &mut jobs,
+        &["jobber", "-r", "--csv", "-o", filename],
+        &context,
+    )
+    .unwrap();
 
     assert_eq!(
         std::fs::read_to_string(filename).unwrap(),

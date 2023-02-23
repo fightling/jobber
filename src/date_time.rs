@@ -46,45 +46,6 @@ impl DateTime {
     }
 }
 
-#[cfg(not(test))]
-pub fn current() -> DateTime {
-    DateTime::now()
-}
-
-#[cfg(test)]
-static mut CURRENT_DT: Option<chrono::DateTime<Utc>> = None;
-
-#[cfg(test)]
-pub fn current() -> DateTime {
-    unsafe {
-        DateTime {
-            date_time: CURRENT_DT.unwrap(),
-        }
-    }
-}
-
-#[cfg(test)]
-pub fn set_current(local: &str) {
-    let dt = Utc
-        .from_local_datetime(
-            &Local
-                .datetime_from_str(local, "%Y-%m-%d %H:%M")
-                .unwrap()
-                .naive_utc(),
-        )
-        .unwrap();
-    unsafe {
-        CURRENT_DT = Some(dt);
-    }
-}
-
-#[cfg(test)]
-pub fn set_current_utc(dt: chrono::DateTime<Utc>) {
-    unsafe {
-        CURRENT_DT = Some(dt);
-    }
-}
-
 impl std::ops::SubAssign<Duration> for DateTime {
     fn sub_assign(&mut self, other: Duration) {
         match other {

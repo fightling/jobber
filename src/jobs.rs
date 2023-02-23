@@ -2,6 +2,7 @@ use crate::{
     change::Change,
     command::Command,
     configuration::Configuration,
+    context::Context,
     date_time::DateTime,
     error::{Error, Warning},
     job::Job,
@@ -48,9 +49,14 @@ impl Jobs {
     /// Processes the given `command` and may return a change on this database.
     /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
     /// Fix warnings to continue and call again or turn any check on warnings off by using parameter `check`
-    pub fn process(&mut self, command: &Command, check: bool) -> Result<Change, Error> {
+    pub fn process(
+        &mut self,
+        command: &Command,
+        check: bool,
+        context: &Context,
+    ) -> Result<Change, Error> {
         let change = self.interpret(command, check)?;
-        self.change(change.clone(), check)?;
+        self.change(change.clone(), check, context)?;
         Ok(change)
     }
     pub fn all(&self) -> JobList {
@@ -201,7 +207,7 @@ impl Jobs {
             } => todo!(),
         })
     }
-    fn change(&mut self, change: Change, check: bool) -> Result<(), Error> {
+    fn change(&mut self, change: Change, check: bool, context: &Context) -> Result<(), Error> {
         match change {
             Change::Nothing => Ok(()),
             Change::Push(job) => {
@@ -209,7 +215,7 @@ impl Jobs {
                     self.check_finished()?;
                 }
                 if check {
-                    self.check(&job)?;
+                    self.check(&job, context)?;
                 }
                 if job.message.is_none() {
                     Err(Error::EnterMessage)
@@ -221,7 +227,7 @@ impl Jobs {
             }
             Change::Modify(pos, job) => {
                 if check {
-                    self.check(&job)?;
+                    self.check(&job, context)?;
                 }
                 if job.message.is_none() {
                     Err(Error::EnterMessage)
@@ -339,13 +345,13 @@ impl Jobs {
             _ => Err(Error::TagCollision(found)),
         }
     }
-    fn check(&self, job: &Job) -> Result<(), Error> {
+    fn check(&self, job: &Job, context: &Context) -> Result<(), Error> {
         let mut warnings = Vec::new();
 
         // check for overlapping
         let mut overlapping = JobList::new_from(&self);
         for (n, j) in self.jobs.iter().enumerate() {
-            if job.overlaps(j) {
+            if job.overlaps(j, context) {
                 overlapping.push(n, j.clone());
             }
         }

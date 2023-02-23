@@ -1,4 +1,4 @@
-use crate::date_time::current;
+use crate::context::Context;
 use crate::error::Error;
 use crate::tag_set::TagSet;
 use crate::tags;
@@ -66,7 +66,7 @@ impl Job {
             (self.minutes() as f64 / 60.0 / 0.01).round() * 0.01
         }
     }
-    pub fn overlaps(&self, other: &Job) -> bool {
+    pub fn overlaps(&self, other: &Job, context: &Context) -> bool {
         if let Some(self_end) = self.end {
             if let Some(other_end) = other.end {
                 self.start < other_end && self_end > other.start
@@ -75,7 +75,7 @@ impl Job {
             }
         } else {
             if let Some(other_end) = other.end {
-                self.start < other_end && current() > other.start
+                self.start < other_end && context.current() > other.start
             } else {
                 panic!("checking intersection of two open jobs!")
             }
@@ -188,6 +188,7 @@ fn test_overlap(
     right_start: &str,
     right_end: Option<&str>,
 ) -> bool {
+    let context = Context::new();
     Job::new(
         DateTime::from_local(left_start),
         if let Some(left_end) = left_end {
@@ -211,6 +212,7 @@ fn test_overlap(
             None,
         )
         .unwrap(),
+        &context,
     )
 }
 

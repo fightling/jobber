@@ -1,5 +1,6 @@
 use crate::args::Args;
-use crate::date_time::{current, DateTime};
+use crate::context::Context;
+use crate::date_time::DateTime;
 use crate::duration::Duration;
 use crate::partial_date_time::PartialDateTime;
 use crate::range::Range;
@@ -72,7 +73,7 @@ impl Command {
     /// # Arguments
     /// * `args` - arguments to parse
     /// * `open_start` - if data base has an open job this shall give its starting time
-    pub fn parse(args: Args, open_start: Option<DateTime>) -> Self {
+    pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Self {
         // parse everything from arguments...
 
         let start = if let Some(start) = args.start {
@@ -124,10 +125,10 @@ impl Command {
 
         // create command depending on what arguments were given...
         if let Some(start) = start {
-            let mut start = start.into(current());
+            let mut start = start.into(context.current());
             if let Some(end) = end {
                 if end == PartialDateTime::None {
-                    let end = end.into(current());
+                    let end = end.into(context.current());
                     if end < start {
                         start -= Duration::days(1);
                     }
@@ -165,10 +166,10 @@ impl Command {
                 }
             }
         } else if let Some(start) = back {
-            let mut start = start.into(current());
+            let mut start = start.into(context.current());
             if let Some(end) = end {
                 if end == PartialDateTime::None {
-                    let end = end.into(current());
+                    let end = end.into(context.current());
                     if end < start {
                         start -= Duration::days(1);
                     }
@@ -209,7 +210,7 @@ impl Command {
             let end = end.into(if let Some(open_start) = open_start {
                 open_start
             } else {
-                current()
+                context.current()
             });
             Self::End { end, message, tags }
         } else if let Some(range) = list {
@@ -343,10 +344,10 @@ impl std::fmt::Debug for Command {
 #[test]
 fn test_start() {
     use clap::Parser;
-    crate::date_time::set_current("2023-01-01 12:00");
+    let context = Context::new_test("2023-01-01 12:00");
 
     assert_eq!(
-        Command::parse(Args::parse_from(["jobber", "-s"]), None),
+        Command::parse(Args::parse_from(["jobber", "-s"]), None, &context),
         Command::Start {
             start: DateTime::from_local("2023-01-01 12:00"),
             message: None,
@@ -355,7 +356,11 @@ fn test_start() {
     );
 
     assert_eq!(
-        Command::parse(Args::parse_from(["jobber", "-s", "1.1.,12:00"]), None),
+        Command::parse(
+            Args::parse_from(["jobber", "-s", "1.1.,12:00"]),
+            None,
+            &context
+        ),
         Command::Start {
             start: DateTime::from_local("2023-01-01 12:00"),
             message: None,
@@ -367,11 +372,12 @@ fn test_start() {
 #[test]
 fn test_add() {
     use clap::Parser;
-    crate::date_time::set_current("2023-01-01 12:00");
+    let context = Context::new_test("2023-01-01 12:00");
     assert_eq!(
         Command::parse(
             Args::parse_from(["jobber", "-s", "12:00", "-e", "13:00"]),
-            None
+            None,
+            &context
         ),
         Command::Add {
             start: DateTime::from_local("2023-01-01 12:00"),
