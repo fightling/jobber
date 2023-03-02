@@ -20,6 +20,12 @@ pub enum PartialDateTime {
         hour: u32,
         minute: u32,
     },
+    MDHM {
+        month: u32,
+        day: u32,
+        hour: u32,
+        minute: u32,
+    },
     YMD {
         year: i32,
         month: u32,
@@ -53,11 +59,25 @@ impl PartialDateTime {
                     hour,
                     minute,
                 };
+            } else if let Self::MD { month, day } = right {
+                return Self::MDHM {
+                    month,
+                    day,
+                    hour,
+                    minute,
+                };
             }
         } else if let Self::HM { hour, minute } = right {
             if let Self::YMD { year, month, day } = left {
                 return Self::YMDHM {
                     year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                };
+            } else if let Self::MD { month, day } = left {
+                return Self::MDHM {
                     month,
                     day,
                     hour,
@@ -183,6 +203,14 @@ impl PartialDateTime {
                     } => Local
                         .with_ymd_and_hms(year, month, day, hour, minute, 0)
                         .unwrap(),
+                    Self::MDHM {
+                        month,
+                        day,
+                        hour,
+                        minute,
+                    } => Local
+                        .with_ymd_and_hms(base.year(), month, day, hour, minute, 0)
+                        .unwrap(),
                     Self::YMD { year, month, day } => {
                         Local.with_ymd_and_hms(year, month, day, 0, 0, 0).unwrap()
                     }
@@ -204,6 +232,11 @@ impl PartialDateTime {
             ),
         }
     }
+}
+
+#[test]
+fn test_parse_date_time() {
+    PartialDateTime::parse_date_time("1.1.,12:00".into());
 }
 
 #[test]
