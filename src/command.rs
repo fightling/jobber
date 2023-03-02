@@ -349,7 +349,7 @@ fn test_start() {
     assert_eq!(
         Command::parse(Args::parse_from(["jobber", "-s"]), None, &context),
         Command::Start {
-            start: DateTime::from_local("2023-01-01 12:00"),
+            start: DateTime::from_local_str("2023-01-01 12:00"),
             message: None,
             tags: None
         }
@@ -362,7 +362,7 @@ fn test_start() {
             &context
         ),
         Command::Start {
-            start: DateTime::from_local("2023-01-01 12:00"),
+            start: DateTime::from_local_str("2023-01-01 12:00"),
             message: None,
             tags: None
         }
@@ -380,8 +380,8 @@ fn test_add() {
             &context
         ),
         Command::Add {
-            start: DateTime::from_local("2023-01-01 12:00"),
-            end: DateTime::from_local("2023-01-01 13:00"),
+            start: DateTime::from_local_str("2023-01-01 12:00"),
+            end: DateTime::from_local_str("2023-01-01 13:00"),
             message: None,
             tags: None
         }

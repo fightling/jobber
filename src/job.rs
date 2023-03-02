@@ -1,8 +1,11 @@
+use std::str::FromStr;
+
 use crate::context::Context;
 use crate::error::Error;
 use crate::tag_set::TagSet;
 use crate::tags;
 use crate::{configuration::Configuration, date_time::DateTime};
+use chrono::{Days, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 
 /// One portion of work
@@ -80,6 +83,48 @@ impl Job {
                 panic!("checking intersection of two open jobs!")
             }
         }
+    }
+    fn start_local(&self) -> NaiveDateTime {
+        self.start.into_local()
+    }
+    fn end_local(&self, context: &Context) -> NaiveDateTime {
+        if let Some(end) = self.end {
+            end.into_local()
+        } else {
+            context.current().into_local()
+        }
+    }
+    /// splits job day-wise
+    pub fn split(&self, context: &Context) -> Vec<Job> {
+        let mut result = Vec::new();
+        let mut start = self.start_local();
+        let end = self.end_local(context);
+
+        loop {
+            let e = start
+                .date()
+                .checked_add_days(Days::new(1))
+                .unwrap()
+                .and_time(NaiveTime::from_num_seconds_from_midnight_opt(0, 0).unwrap());
+            if e > end {
+                result.push(Job {
+                    start: DateTime::from_local(&start),
+                    end: Some(DateTime::from_local(&end)),
+                    message: self.message.clone(),
+                    tags: self.tags.clone(),
+                });
+                break;
+            }
+
+            result.push(Job {
+                start: DateTime::from_local(&start),
+                end: Some(DateTime::from_local(&e)),
+                message: self.message.clone(),
+                tags: self.tags.clone(),
+            });
+            start = e;
+        }
+        result
     }
     pub fn writeln(
         &self,
@@ -181,6 +226,44 @@ impl std::fmt::Display for Job {
     }
 }
 
+#[test]
+fn test_split() {
+    let context = Context::new();
+    let job = Job::new(
+        DateTime::from_local_str("2023-1-1 20:00"),
+        Some(DateTime::from_local_str("2023-1-3 2:00")),
+        None,
+        None,
+    )
+    .unwrap();
+    let jobs = job.split(&context);
+    let f = "%Y-%m-%d %H:%M";
+    assert_eq!(
+        jobs[0].start.into_local(),
+        NaiveDateTime::parse_from_str("2023-1-1 20:00", f).unwrap()
+    );
+    assert_eq!(
+        jobs[0].end.unwrap().into_local(),
+        NaiveDateTime::parse_from_str("2023-1-2 00:00", f).unwrap()
+    );
+    assert_eq!(
+        jobs[1].start.into_local(),
+        NaiveDateTime::parse_from_str("2023-1-2 00:00", f).unwrap()
+    );
+    assert_eq!(
+        jobs[1].end.unwrap().into_local(),
+        NaiveDateTime::parse_from_str("2023-1-3 00:00", f).unwrap()
+    );
+    assert_eq!(
+        jobs[2].start.into_local(),
+        NaiveDateTime::parse_from_str("2023-1-3 00:00", f).unwrap()
+    );
+    assert_eq!(
+        jobs[2].end.unwrap().into_local(),
+        NaiveDateTime::parse_from_str("2023-1-3 02:00", f).unwrap()
+    );
+}
+
 #[cfg(test)]
 fn test_overlap(
     left_start: &str,
@@ -190,9 +273,9 @@ fn test_overlap(
 ) -> bool {
     let context = Context::new();
     Job::new(
-        DateTime::from_local(left_start),
+        DateTime::from_local_str(left_start),
         if let Some(left_end) = left_end {
-            Some(DateTime::from_local(left_end))
+            Some(DateTime::from_local_str(left_end))
         } else {
             None
         },
@@ -202,9 +285,9 @@ fn test_overlap(
     .unwrap()
     .overlaps(
         &Job::new(
-            DateTime::from_local(right_start),
+            DateTime::from_local_str(right_start),
             if let Some(right_end) = right_end {
-                Some(DateTime::from_local(right_end))
+                Some(DateTime::from_local_str(right_end))
             } else {
                 None
             },

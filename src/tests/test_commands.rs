@@ -17,8 +17,8 @@ fn test_add() {
     assert_eq!(
         test_command(&["jobber", "-s", "12:00", "-e", "13:00"], &context),
         Command::Add {
-            start: DateTime::from_local("2023-2-1 12:00"),
-            end: DateTime::from_local("2023-2-1 13:00"),
+            start: DateTime::from_local_str("2023-2-1 12:00"),
+            end: DateTime::from_local_str("2023-2-1 13:00"),
             message: None,
             tags: None
         }
@@ -28,8 +28,8 @@ fn test_add() {
     assert_eq!(
         test_command(&["jobber", "-s", "23:00", "-e", "1:00"], &context),
         Command::Add {
-            start: DateTime::from_local("2023-2-1 23:00"),
-            end: DateTime::from_local("2023-2-2 1:00"),
+            start: DateTime::from_local_str("2023-2-1 23:00"),
+            end: DateTime::from_local_str("2023-2-2 1:00"),
             message: None,
             tags: None
         }
@@ -39,8 +39,8 @@ fn test_add() {
     assert_eq!(
         test_command(&["jobber", "-s", "23:00", "-e"], &context),
         Command::Add {
-            start: DateTime::from_local("2023-1-31 23:00"),
-            end: DateTime::from_local("2023-2-1 12:00"),
+            start: DateTime::from_local_str("2023-1-31 23:00"),
+            end: DateTime::from_local_str("2023-2-1 12:00"),
             message: None,
             tags: None
         }

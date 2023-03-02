@@ -31,8 +31,13 @@ impl DateTime {
             .from_utc_datetime(&self.date_time.naive_local())
             .naive_local()
     }
+    pub fn from_local(local: &NaiveDateTime) -> DateTime {
+        let local = Local.from_local_datetime(local).unwrap();
+        let utc: chrono::DateTime<Utc> = chrono::DateTime::from(local);
+        Self { date_time: utc }
+    }
     #[cfg(test)]
-    pub fn from_local(local: &str) -> DateTime {
+    pub fn from_local_str(local: &str) -> DateTime {
         Self {
             date_time: Utc
                 .from_local_datetime(
