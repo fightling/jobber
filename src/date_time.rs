@@ -10,7 +10,7 @@ pub struct DateTime {
 
 impl std::fmt::Display for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.into_local().format("%x %H:%M"))
+        write!(f, "{}", self.into_local().format("%a %b %d %Y, %H:%M"))
     }
 }
 
