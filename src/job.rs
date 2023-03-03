@@ -1,10 +1,7 @@
-use std::str::FromStr;
-
-use crate::context::Context;
-use crate::error::Error;
-use crate::tag_set::TagSet;
-use crate::tags;
-use crate::{configuration::Configuration, date_time::DateTime};
+use crate::{
+    configuration::Configuration, context::Context, date_time::DateTime, error::Error,
+    tag_set::TagSet, tags,
+};
 use chrono::{Days, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 

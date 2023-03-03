@@ -50,12 +50,16 @@ impl JobList {
     }
     /// provides configurations for display trait implementation
     pub fn get_configuration(&self, tags: &TagSet) -> &Configuration {
+        self.get_configuration_with_tag(tags).1
+    }
+    /// provides configurations for display trait implementation
+    pub fn get_configuration_with_tag(&self, tags: &TagSet) -> (String, &Configuration) {
         for tag in &tags.0 {
             if let Some(configuration) = self.tag_configuration.get(tag) {
-                return configuration;
+                return (tag.clone(), configuration);
             }
         }
-        &self.default_configuration
+        (String::new(), &self.default_configuration)
     }
 }
 

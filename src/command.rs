@@ -1,9 +1,7 @@
-use crate::args::Args;
-use crate::context::Context;
-use crate::date_time::DateTime;
-use crate::duration::Duration;
-use crate::partial_date_time::PartialDateTime;
-use crate::range::Range;
+use crate::{
+    args::Args, context::Context, date_time::DateTime, duration::Duration,
+    partial_date_time::PartialDateTime, range::Range,
+};
 
 /// Commands which can be applied to jobber's database
 #[derive(PartialEq, Clone)]
@@ -55,7 +53,15 @@ pub enum Command {
         range: Range,
         tags: Option<Vec<String>>,
         output: String,
-        parameters: Option<String>,
+        context: Context,
+    },
+    /// Report jobs as CSV
+    ReportCSV {
+        range: Range,
+        tags: Option<Vec<String>>,
+        output: String,
+        context: Context,
+        columns: String,
     },
     /// Display whole configuration
     ShowConfiguration,
@@ -216,11 +222,21 @@ impl Command {
         } else if let Some(range) = list {
             Self::List { range, tags }
         } else if let Some(range) = report {
-            Self::Report {
-                range,
-                tags,
-                output,
-                parameters: csv,
+            if let Some(columns) = csv {
+                Self::ReportCSV {
+                    range,
+                    tags,
+                    output,
+                    context: context.clone(),
+                    columns,
+                }
+            } else {
+                Self::Report {
+                    range,
+                    tags,
+                    output,
+                    context: context.clone(),
+                }
             }
         } else if !set_configuration && (message.is_some() || tags.is_some()) {
             Self::MessageTags {
@@ -325,9 +341,13 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::List{{ list: {range:?}, {tags:?} }}"
             ),
-            Self::Report { range, tags, output, parameters } => write!(
+            Self::Report { range, tags, output, context } => write!(
                 f,
-                "Command::Report{{ list: {range:?}, {tags:?}, {output:?}, {parameters:?} }}"
+                "Command::Report{{ list: {range:?}, {tags:?}, {output:?}, {context:?} }}"
+            ),
+            Self::ReportCSV { range, tags, output, context, columns } => write!(
+                f,
+                "Command::ReportCSV{{ list: {range:?}, {tags:?}, {output:?}, {context:?}, {columns:?} }}"
             ),
             Self::ShowConfiguration => write!(
                 f,

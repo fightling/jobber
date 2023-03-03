@@ -8,7 +8,7 @@ use crate::{
     job::Job,
     job_list::JobList,
     range::Range,
-    reports::report_csv,
+    reports::*,
     tag_set::TagSet,
     tags,
 };
@@ -168,12 +168,29 @@ impl Jobs {
                 range,
                 tags,
                 output,
-                parameters,
+                context,
+            } => {
+                report(
+                    &output,
+                    self.filter(&range, &&TagSet::from_option_vec(&tags)),
+                    &context,
+                    !check,
+                )?;
+                //todo!("reporting not implemented")
+                Change::Nothing
+            }
+            Command::ReportCSV {
+                range,
+                tags,
+                output,
+                context,
+                columns,
             } => {
                 report_csv(
                     &output,
                     self.filter(&range, &&TagSet::from_option_vec(&tags)),
-                    &parameters,
+                    &context,
+                    &columns,
                     !check,
                 )?;
                 //todo!("reporting not implemented")
