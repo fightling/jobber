@@ -1,87 +1,177 @@
-## Jobber
+# Jobber
 
 Command line tool for tracking work time.
 
-### Installation
+## Purpose
 
-### Usage
+I started *jobber* as a *Ruby* script in 2013 because in my opinion usual work time tracking tools often come with awful or overloaded UIs.
+To be more convenient for people who can use a command shell, *jobber* aims to provide it's functionality by the command line.
+After 10 years I still find it very useful but although the *Ruby* script is very handy, it is still full of bugs and just did the minimum job even if it promised much more complex functionality but wasn't able to fulfill it's promises.
 
-#### Start time tracking
+In 2021 I started to learn *Rust* and so I decided to rewrite jobber in that language to get a proper working version that provides all functionality in a sustainable way.
+After several approaches it turned out that *Rust* was a good decision because *Rust* is much more picky about edge cases and has a nice testing environment to prevent any hidden erroneous code which might lead to wrong accounting.
 
-Start tracking now:
+After several month of coding I now can present a first testable version which is not perfect (I still have some more ideas I want to implement) but yet seems more useful and secure than the original *Ruby* version.
 
-    $ jobber -s
-    Starting new job:
-        Pos: 1
-      Start: Sun Oct 13 2013, 07:59
+## Usage
 
-Start tracking at specific time in past:
-    
-    $ jobber -s 12:00
-    Starting new job:
-        Pos: 1
-      Start: Tue Oct 13 2013, 12:00
+The idea of *jobber* is that you don't need a UI where you use your mouse or a smartphone touch screen to enter what you did into a form which seemed awful to me most of the time.
 
-*The absolute time is interpreted as like it is within +/-12 hours. 
- So if it's currently 8:00h, so 21:00 will be understand as yesterday. 
- 17:00 would be more than 12 hours in future.*
+So in general the following information must be provided to track your work time:
 
-Ending a started job:
+- time when you start to work
+- time when you finished your work
+- a message about what you did
+- some information to categorize your work (a client, a topic)
 
-You can stop a running job now by simply using the option *-e* without giving any time information. 
+That's it.
 
-Start tracking at absolute date and time:
-    
-    $ jobber -s 10/30/2013,12:00
+So the basic idea is to provide this in an easy to use command line like this:
 
-Equivalents are:
+```txt
+jobber -s start_time -e end_time -m message -t tags
+```
 
-    $ jobber -s 30.10.2013,12:00
-    $ jobber -s 12:00,10/30/2013
-    $ jobber -s 12:00,30.10.2013
+Of couse it makes sense to start a job and later finish it.
+So you can start a job with `-s` and finish it later with calling jobber again with `-e`.
+Also leaving a message often is easier when you know what you have done so you might provide a message when you finish the job - same with the tags.
 
-Start tracking at relative time:
-    
-    $ jobber -s 5h-
+Providing start and end time would be hard if you have to write done complete date and time every time so you can shorten it to what's necessary like `12:00` for today at noon or just no time to mean right now.
 
-Giving a number followed by a "h" or "m" and a "+" or "-" the resulting time will be calculated by a distance in hours or minutes from now.
+Let's get into an example.
+We use the start option `-s` to start a new job:
 
-#### End time tracking
+```txt
+▶ jobber -s
+Beginning new database file 'jobber.json'
+Started new job:
 
-End tracking now:
-    
-    $ jobber -e
+  Start: Sat Mar 04 2023, 16:25
+    End: - open -
 
-End tracking at specific time in past:
-    
-    $ jobber -e 14:00
 
-End tracking at absolute date and time:
-    
-    $ jobber -e 10/30/2013,14:00
+Saved database into file 'jobber.json'
+```
 
-End tracking at relative time:
-    
-    $ jobber -e 1m+
+As you can see *jobber* tells you that it began with a new database in a file called `jobber.json` and has started a new job which end is still open.
+It also assures you that changes were written into that file.
 
-#### List jobs
+If you use a shell which provides color start time will be green and end time will be purple for better reading but in this README which is markdown sadly this can not be visualized.
 
-List all known jobs:
-    
-    $ jobber -l
+We can check what we have done by using the list option `-l`:
 
-Monthly report:
-    
-    $ jobber -r
-    jobber - job time tracker
-                             4/2013                         
-         sun     mon     tue     wed     thu     fri     sat
-               11.75       -   12.75       -       -       -
-           -       -     4.5     6.5       -     7.5       -
-           -       -       -       -       -       -       -
-           -       -       -       -       -       -       -
-           -       -       -
-                   Monthly total: 43.0 hours                
+```txt
+▶ jobber -l 
+Loaded database (1 entries) from file 'jobber.json'
+    Pos: 1
+  Start: Sat Mar 04 2023, 16:25
+    End: - open -
+  Hours: 0.25
 
-    Total over all: 43.0 hours
 
+Total: 1 job(s), 0.25 hours
+
+Database unchanged.
+```
+
+*jobber* prints out a list of all stored jobs and as you can see there is this one open job we've just started and because some time already elapsed the job hours is given there with a quarter of an hour.
+By default there is a time resolution of 15 minutes in which work times are calculated.
+This resolution can be changed but for now we let it to the default.
+
+So let's end the job because let's assume we did something useful and want to finish by using the end option `-e`:
+
+```txt
+▶ jobber -e
+Loaded database (1 entries) from file 'jobber.json'
+You need to enter a message about what you did to finish the job.
+Finish input with empty line (or Ctrl+C to cancel):
+Did some nice work 
+
+Modified job:
+
+    Pos: 1
+  Start: Sat Mar 04 2023, 16:25
+    End: Sat Mar 04 2023, 16:34
+  Hours: 0.15
+Message: Did some nice work
+
+Saved database into file 'jobber.json'
+
+```
+
+As you can see *jobber* detects that you haven't given a description about what you have done and so asks you for a message to enter.
+I replied with `Did some nice work`.
+The message could be multiline but for now we use a single line.
+
+After I entered the message *jobber* reports that it modified the open job and writes it down as it is now stored in the database file.
+
+So we successfully finished our first job.
+
+Now let's add another job we did this morning and forgot to enter then.
+And this time we give all the data in the command line by using `-s` and `-e` with a time and the message option `-m` to give the message without being asked for:
+
+```txt
+▶ jobber -s 8:15 -e 10:45 -m "What I did this morning"    
+Loaded database (1 entries) from file 'jobber.json'
+Added new job:
+
+  Start: Sat Mar 04 2023, 08:15
+    End: Sat Mar 04 2023, 10:45
+  Hours: 2.5
+Message: What I did this morning
+
+Saved database into file 'jobber.json'
+```
+
+As you can see this also worked like a charm.
+
+Let's take a look what we already did today:
+
+```txt
+▶ jobber -l                                           
+Loaded database (2 entries) from file 'jobber.json'
+    Pos: 1
+  Start: Sat Mar 04 2023, 16:25
+    End: Sat Mar 04 2023, 16:34
+  Hours: 0.25
+Message: Did some nice work
+
+    Pos: 2
+  Start: Sat Mar 04 2023, 08:15
+    End: Sat Mar 04 2023, 10:45
+  Hours: 2.5
+Message: What I did this morning
+
+Total: 2 job(s), 2.75 hours
+
+Database unchanged.
+
+```
+
+You can see that jobber lists the two jobs we did.
+
+Let's display this in a more fancy view with the report option `-r`:
+
+```txt
+▶ jobber -r
+Loaded database (2 entries) from file 'jobber.json'
+                               3/2023                               
+day     sun     mon     tue     wed     thu     fri     sat    week
+                                  -       -       -    2.75    2.75
+  5       -       -       -       -       -       -       -       0
+ 12       -       -       -       -       -       -       -       0
+ 19       -       -       -       -       -       -       -       0
+ 26       -       -       -       -       -                       0
+                                                 Mar 2023: 2.75 hrs.
+
+Total: 2 job(s), 2.75 hours
+Database unchanged.
+```
+
+Wow! What you get now is a monthly report of the jobs.
+Let me explain how this works:
+In the first line of report you see the month and year `3/2023`.
+After that a table follows in which the first column shows the day of month for each line (except the first which would always be `1`).
+The next seven columns show the work time for each day.
+Because I write this README at Saturday under `sat` you see that I worked `2.75` hours today.
+In the last column the weekly work time is summed up and at the end of the table it says that we work the same amount in all of March and - as useless as it seems in our case - at the end it sums up all work time for all displayed jobs.
