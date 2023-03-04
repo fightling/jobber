@@ -260,7 +260,11 @@ pub fn report_csv(
                 "message" => write!(
                     f,
                     r#""{}""#,
-                    job.message.as_ref().unwrap_or(&"".to_string())
+                    str::replace(
+                        job.message.as_ref().unwrap_or(&"".to_string()),
+                        "\"",
+                        "\"\""
+                    )
                 )
                 .map_err(err)?,
                 "hours" => write!(
