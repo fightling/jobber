@@ -108,7 +108,7 @@ pub struct Args {
     pub tags: Option<String>,
 
     /// List all jobs or selective by position(s) or time(s)
-    #[arg(short, long, conflicts_with_all(["start","end","back","message","tags","report"]))]
+    #[arg(short, long, conflicts_with_all(["start","end","back","message","report"]))]
     pub list: Option<Option<String>>,
 
     /// Print report for all jobs or selective by position(s) or time(s)
