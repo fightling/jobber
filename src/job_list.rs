@@ -1,3 +1,5 @@
+use termion::{color::*, style};
+
 use crate::{configuration::Configuration, job::Job, jobs::Jobs, tag_set::TagSet};
 use std::collections::HashMap;
 
@@ -19,6 +21,16 @@ impl std::fmt::Display for JobList {
             job.writeln(f, Some(self.get_configuration(&job.tags)))?;
             writeln!(f, "")?;
         }
+        writeln!(
+            f,
+            "Total: {} job(s), {}{}{}{}{}",
+            self.jobs.len(),
+            style::Bold,
+            Fg(White),
+            self.hours_overall(),
+            style::Reset,
+            Fg(Reset)
+        )?;
         Ok(())
     }
 }
@@ -60,6 +72,13 @@ impl JobList {
             }
         }
         (String::new(), &self.default_configuration)
+    }
+    pub fn hours_overall(&self) -> f64 {
+        let mut hours = 0.0;
+        for (_, job) in &self.jobs {
+            hours += job.hours(Some(self.get_configuration(&job.tags).resolution))
+        }
+        hours
     }
 }
 
