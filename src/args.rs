@@ -141,7 +141,7 @@ pub struct Args {
     #[arg(short ='H', long="max-hours-day", conflicts_with_all(["start","end","back","message","list","report"]))]
     pub max_hours: Option<u32>,
 
-    /// Set maximum hours per day above you will get a warning (can be combined with --tags)
+    /// Import jobs from legacy jobber (ruby version)
     #[arg(long="legacy-import", conflicts_with_all(["start","end","back","tags","message","list","report"]))]
     pub legacy_import: Option<String>,
 }
