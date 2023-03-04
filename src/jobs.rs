@@ -136,7 +136,13 @@ impl Jobs {
                 start,
                 message,
                 tags,
-            } => Change::Push(Job::new(start, None, message.flatten(), tags)?),
+            } => {
+                if message.is_some() && message.clone().flatten().is_none() {
+                    return Err(Error::EnterMessage);
+                } else {
+                    Change::Push(Job::new(start, None, message.flatten(), tags)?)
+                }
+            }
             Command::Add {
                 start,
                 end,
@@ -245,7 +251,7 @@ impl Jobs {
                 if check {
                     self.check(&job, context)?;
                 }
-                if job.message.is_none() {
+                if job.message.is_none() && !job.is_open() {
                     Err(Error::EnterMessage)
                 } else {
                     self.jobs.push(job);
