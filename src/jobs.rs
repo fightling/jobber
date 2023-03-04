@@ -225,45 +225,7 @@ impl Jobs {
                 tags: _,
             } => todo!(),
             Command::LegacyImport { filename } => {
-                let file = File::options()
-                    .read(true)
-                    .open(filename)
-                    .map_err(|err| Error::Io(err))?;
-                let reader = BufReader::new(file);
-                let tags = self.tags();
-                let mut count = 0;
-                let mut new_tags = TagSet::new();
-                for line in reader.lines() {
-                    let re = Regex::new(r#""(.*)";"(.*)";"(.*)";"(.*)"$"#).unwrap();
-                    for cap in re.captures_iter(&line.unwrap()) {
-                        let start = DateTime::from_rfc3339(&cap[1].to_string())?;
-                        let end = cap[2].to_string();
-                        let end = if end.is_empty() {
-                            None
-                        } else {
-                            Some(DateTime::from_rfc3339(&end)?)
-                        };
-                        let message = cap[3].to_string();
-                        let message = if message.is_empty() {
-                            None
-                        } else {
-                            Some(message)
-                        };
-                        let tags = cap[4].to_string();
-                        let tags = if tags.is_empty() {
-                            None
-                        } else {
-                            let tags: Vec<String> =
-                                tags.split(",").map(|t| t.to_string()).collect();
-                            new_tags.insert_many(tags.clone());
-                            Some(tags)
-                        };
-                        self.jobs.push(Job::new(start, end, message, tags).unwrap());
-                        self.modified = true;
-                        count += 1;
-                    }
-                }
-                let new_tags = new_tags.filter(|t| tags.contains(t));
+                let (count, new_tags) = self.legacy_import(&filename)?;
                 Change::Import(count, new_tags)
             }
             Command::ListTags { range, tags } => {
@@ -457,6 +419,46 @@ impl Jobs {
             job.writeln(f, Some(self.get_configuration(&job.tags).unwrap()))?;
         }
         Ok(())
+    }
+    fn legacy_import(&mut self, filename: &str) -> Result<(usize, TagSet), Error> {
+        let file = File::options()
+            .read(true)
+            .open(filename)
+            .map_err(|err| Error::Io(err))?;
+        let reader = BufReader::new(file);
+        let tags = self.tags();
+        let mut count = 0;
+        let mut new_tags = TagSet::new();
+        for line in reader.lines() {
+            let re = Regex::new(r#""(.*)";"(.*)";"(.*)";"(.*)"$"#).unwrap();
+            for cap in re.captures_iter(&line.unwrap()) {
+                let start = DateTime::from_rfc3339(&cap[1].to_string())?;
+                let end = cap[2].to_string();
+                let end = if end.is_empty() {
+                    None
+                } else {
+                    Some(DateTime::from_rfc3339(&end)?)
+                };
+                let message = cap[3].to_string();
+                let message = if message.is_empty() {
+                    None
+                } else {
+                    Some(message)
+                };
+                let tags = cap[4].to_string();
+                let tags = if tags.is_empty() {
+                    None
+                } else {
+                    let tags: Vec<String> = tags.split(",").map(|t| t.to_string()).collect();
+                    new_tags.insert_many(tags.clone());
+                    Some(tags)
+                };
+                self.jobs.push(Job::new(start, end, message, tags).unwrap());
+                self.modified = true;
+                count += 1;
+            }
+        }
+        Ok((count, new_tags.filter(|t| tags.contains(t))))
     }
 }
 
