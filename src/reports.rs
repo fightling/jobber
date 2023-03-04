@@ -197,8 +197,12 @@ pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> 
             const MONTHS: [&str; 12] = [
                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
             ];
-            let monthly_hours =
-                format!("{} {}: {} hrs.", MONTHS[*month as usize], year, month_hours);
+            let monthly_hours = format!(
+                "{} {}: {} hrs.",
+                MONTHS[*month as usize - 1],
+                year,
+                month_hours
+            );
             writeln!(f, "{:>68}", monthly_hours).map_err(err)?;
             month_hours = 0.0;
             writeln!(f, "").map_err(err)?;
