@@ -240,7 +240,7 @@ pub fn report_csv(
             }
             match *column {
                 "pos" => write!(f, "{}", pos + 1).map_err(err)?,
-                "start" => write!(f, r#""{}""#, job.start).map_err(err)?,
+                "start" => write!(f, r#""{}""#, job.start.format("%m/%d/%Y %H:%M")).map_err(err)?,
                 "end" => write!(
                     f,
                     r#""{}""#,
@@ -298,7 +298,14 @@ fn test_csv_date() {
     }
     run_args_with(
         &mut jobs,
-        &["jobber", "-r", "--csv", "-o", filename],
+        &[
+            "jobber",
+            "-r",
+            "--csv",
+            "tags,start,hours,message",
+            "-o",
+            filename,
+        ],
         &context,
     )
     .unwrap();
@@ -306,7 +313,7 @@ fn test_csv_date() {
     assert_eq!(
         std::fs::read_to_string(filename).unwrap(),
         r#""tags","start","hours","message"
-"","02/01/23 12:00",2,"two hours job at twelve"
+"","02/01/2023 12:00",2,"two hours job at twelve"
 "#
         .to_string()
     );

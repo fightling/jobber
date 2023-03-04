@@ -128,7 +128,7 @@ impl Jobs {
     }
     fn interpret(&mut self, command: &Command, check: bool) -> Result<Change, Error> {
         // debug
-        eprintln!("{command:?}");
+        // eprintln!("{command:?}");
 
         // process command and potentially get `Some(job)` change
         Ok(match command.clone() {

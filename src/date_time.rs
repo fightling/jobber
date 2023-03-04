@@ -56,6 +56,9 @@ impl DateTime {
                 .into(),
         })
     }
+    pub fn format(&self, format: &str) -> String {
+        self.into_local().format(format).to_string()
+    }
 }
 
 impl std::ops::SubAssign<Duration> for DateTime {
