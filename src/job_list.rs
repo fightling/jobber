@@ -23,7 +23,7 @@ impl std::fmt::Display for JobList {
         }
         writeln!(
             f,
-            "Total: {} job(s), {}{}{}{}{}",
+            "Total: {} job(s), {}{}{}{}{} hours",
             self.jobs.len(),
             style::Bold,
             Fg(White),
