@@ -12,11 +12,12 @@ use crate::{
     tag_set::TagSet,
     tags,
 };
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufReader, BufWriter},
+    io::{BufRead, BufReader, BufWriter},
 };
 
 /// serializable instance of the *jobber* database
@@ -65,6 +66,13 @@ impl Jobs {
             result.push(n, j.clone());
         }
         result
+    }
+    pub fn tags(&self) -> TagSet {
+        let mut tags = TagSet::new();
+        for job in &self.jobs {
+            tags.insert_many(job.tags.0.clone());
+        }
+        tags
     }
     fn filter(&self, range: &Range, tags: &TagSet) -> JobList {
         let mut jobs = JobList::new_from(&self);
@@ -222,6 +230,48 @@ impl Jobs {
                 message: _,
                 tags: _,
             } => todo!(),
+            Command::LegacyImport { filename } => {
+                let file = File::options()
+                    .read(true)
+                    .open(filename)
+                    .map_err(|err| Error::Io(err))?;
+                let reader = BufReader::new(file);
+                let tags = self.tags();
+                let mut count = 0;
+                let mut new_tags = TagSet::new();
+                for line in reader.lines() {
+                    let re = Regex::new(r#""(.*)";"(.*)";"(.*)";"(.*)"$"#).unwrap();
+                    for cap in re.captures_iter(&line.unwrap()) {
+                        let start = DateTime::from_rfc3339(&cap[1].to_string())?;
+                        let end = cap[2].to_string();
+                        let end = if end.is_empty() {
+                            None
+                        } else {
+                            Some(DateTime::from_rfc3339(&end)?)
+                        };
+                        let message = cap[3].to_string();
+                        let message = if message.is_empty() {
+                            None
+                        } else {
+                            Some(message)
+                        };
+                        let tags = cap[4].to_string();
+                        let tags = if tags.is_empty() {
+                            None
+                        } else {
+                            let tags: Vec<String> =
+                                tags.split(",").map(|t| t.to_string()).collect();
+                            new_tags.insert_many(tags.clone());
+                            Some(tags)
+                        };
+                        self.jobs.push(Job::new(start, end, message, tags).unwrap());
+                        self.modified = true;
+                        count += 1;
+                    }
+                }
+                let new_tags = new_tags.filter(|t| tags.contains(t));
+                Change::Import(count, new_tags)
+            }
         })
     }
     fn change(&mut self, change: Change, check: bool, context: &Context) -> Result<(), Error> {
@@ -254,6 +304,7 @@ impl Jobs {
                     Ok(())
                 }
             }
+            Change::Import(_, _) => Ok(()),
         }
     }
     fn check_finished(&self) -> Result<(), Error> {
@@ -380,7 +431,7 @@ impl Jobs {
         }
 
         // check for unknown tag
-        let unknown_tags: TagSet = job.tags.filter(|tag| !tags::is_known(tag));
+        let unknown_tags: TagSet = job.tags.filter(|tag| tags::is_known(tag));
         if !unknown_tags.0.is_empty() {
             warnings.push(Warning::UnknownTags(unknown_tags));
         }

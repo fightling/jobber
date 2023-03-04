@@ -72,6 +72,9 @@ pub enum Command {
         tags: Option<Vec<String>>,
         max_hours: Option<u32>,
     },
+    LegacyImport {
+        filename: String,
+    },
 }
 
 impl Command {
@@ -128,6 +131,9 @@ impl Command {
         // true if any of the configuration items is available
         let set_configuration = resolution.is_some() || pay.is_some() || max_hours.is_some();
         let configuration = args.configuration;
+
+        // import old jobber CSV
+        let legacy_import = args.legacy_import;
 
         // create command depending on what arguments were given...
         if let Some(start) = start {
@@ -252,6 +258,8 @@ impl Command {
                 tags,
                 max_hours,
             }
+        } else if let Some(filename) = legacy_import {
+            Self::LegacyImport { filename }
         } else {
             panic!("unknown command")
         }
@@ -356,6 +364,10 @@ impl std::fmt::Debug for Command {
             Self::SetConfiguration { resolution, pay, tags, max_hours } => write!(
                 f,
                 "Command::SetConfiguration{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?}, max hours: {max_hours:?} }}"
+            ),
+            Self::LegacyImport { filename } => write!(
+                f,
+                "Command::LegacyImport{{ filename: {filename} }}"
             ),
         }
     }

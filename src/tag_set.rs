@@ -25,11 +25,17 @@ impl TagSet {
     {
         let mut result = TagSet::new();
         for tag in &self.0 {
-            if pred(tag) {
+            if !pred(tag) {
                 result.0.push(tag.clone());
             }
         }
         result
+    }
+    pub fn contains(&self, tag: &String) -> bool {
+        self.0.contains(tag)
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
     pub fn len(&self) -> usize {
         self.0.len()
@@ -43,6 +49,11 @@ impl TagSet {
         } else {
             self.0.push(tag.to_string());
             true
+        }
+    }
+    pub fn insert_many(&mut self, tags: Vec<String>) {
+        for tag in tags {
+            self.insert(&tag);
         }
     }
 }

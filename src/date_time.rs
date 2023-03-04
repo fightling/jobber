@@ -1,4 +1,4 @@
-use crate::duration::Duration;
+use crate::{duration::Duration, error::Error};
 use chrono::{Local, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +21,7 @@ impl std::fmt::Debug for DateTime {
 }
 
 impl DateTime {
-    pub fn now() -> DateTime {
+    pub fn now() -> Self {
         DateTime {
             date_time: Utc::now(),
         }
@@ -31,13 +31,13 @@ impl DateTime {
             .from_utc_datetime(&self.date_time.naive_local())
             .naive_local()
     }
-    pub fn from_local(local: &NaiveDateTime) -> DateTime {
+    pub fn from_local(local: &NaiveDateTime) -> Self {
         let local = Local.from_local_datetime(local).unwrap();
         let utc: chrono::DateTime<Utc> = chrono::DateTime::from(local);
         Self { date_time: utc }
     }
     #[cfg(test)]
-    pub fn from_local_str(local: &str) -> DateTime {
+    pub fn from_local_str(local: &str) -> Self {
         Self {
             date_time: Utc
                 .from_local_datetime(
@@ -48,6 +48,13 @@ impl DateTime {
                 )
                 .unwrap(),
         }
+    }
+    pub fn from_rfc3339(rfc3339: &str) -> Result<Self, Error> {
+        Ok(Self {
+            date_time: chrono::DateTime::parse_from_rfc3339(rfc3339)
+                .map_err(|e| Error::DateTimeParse(e))?
+                .into(),
+        })
     }
 }
 

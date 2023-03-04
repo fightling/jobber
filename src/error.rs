@@ -25,6 +25,8 @@ pub enum Error {
     UnknownColumn(String),
     #[error("Output file '{0}' already exists.")]
     OutputFileExists(String),
+    #[error("Date/Time parse error: {0}")]
+    DateTimeParse(chrono::ParseError),
 }
 
 #[derive(Error, Debug)]

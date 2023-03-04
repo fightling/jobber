@@ -28,11 +28,6 @@ fn open_report(filename: &str, force: bool) -> Result<BufWriter<File>, Error> {
 pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> Result<(), Error> {
     let mut f = open_report(filename, force)?;
 
-    enum Work {
-        Ok(f64),
-        Exceeded(f64),
-    }
-
     // resort job hours into nested maps of year -> month -> day -> hours
     let mut years: HashMap<i32, HashMap<u32, HashMap<u32, HashMap<String, f64>>>> = HashMap::new();
     for (_, job) in &jobs {
