@@ -104,7 +104,7 @@ pub struct Args {
     #[arg(short, long)]
     pub message: Option<Option<String>>,
 
-    /// Add list of tags separated by comma
+    /// Add list of tags separated by comma or for reporting filter by tags
     #[arg(short, long)]
     pub tags: Option<String>,
 
