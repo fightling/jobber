@@ -52,14 +52,12 @@ pub enum Command {
     Report {
         range: Range,
         tags: Option<Vec<String>>,
-        output: String,
         context: Context,
     },
     /// Report jobs as CSV
     ReportCSV {
         range: Range,
         tags: Option<Vec<String>>,
-        output: String,
         context: Context,
         columns: Option<String>,
     },
@@ -78,7 +76,6 @@ pub enum Command {
     ListTags {
         range: Range,
         tags: Option<Vec<String>>,
-        output: String,
     },
 }
 
@@ -127,7 +124,6 @@ impl Command {
             None
         };
         let csv = args.csv;
-        let output = args.output;
 
         // configuration items
         let resolution = args.resolution;
@@ -243,7 +239,6 @@ impl Command {
                 Self::ReportCSV {
                     range,
                     tags,
-                    output,
                     context: context.clone(),
                     columns,
                 }
@@ -251,7 +246,6 @@ impl Command {
                 Self::Report {
                     range,
                     tags,
-                    output,
                     context: context.clone(),
                 }
             }
@@ -267,11 +261,7 @@ impl Command {
         } else if let Some(filename) = legacy_import {
             Self::LegacyImport { filename }
         } else if let Some(range) = list_tags {
-            Self::ListTags {
-                range,
-                tags,
-                output,
-            }
+            Self::ListTags { range, tags }
         } else if !set_configuration && (message.is_some() || tags.is_some()) {
             Self::MessageTags {
                 message: message.flatten(),
@@ -366,13 +356,13 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::List{{ list: {range:?}, {tags:?} }}"
             ),
-            Self::Report { range, tags, output, context } => write!(
+            Self::Report { range, tags, context } => write!(
                 f,
-                "Command::Report{{ list: {range:?}, {tags:?}, {output:?}, {context:?} }}"
+                "Command::Report{{ list: {range:?}, {tags:?}, {context:?} }}"
             ),
-            Self::ReportCSV { range, tags, output, context, columns } => write!(
+            Self::ReportCSV { range, tags, context, columns } => write!(
                 f,
-                "Command::ReportCSV{{ list: {range:?}, {tags:?}, {output:?}, {context:?}, {columns:?} }}"
+                "Command::ReportCSV{{ list: {range:?}, {tags:?}, {context:?}, {columns:?} }}"
             ),
             Self::ShowConfiguration => write!(
                 f,
@@ -386,9 +376,9 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::LegacyImport{{ filename: {filename} }}"
             ),
-            Self::ListTags{tags, range, output }  => write!(
+            Self::ListTags{tags, range }  => write!(
                 f,
-                "Command::ListTags{{ tags: {range:?}, {tags:?}, {output:?} }}"
+                "Command::ListTags{{ tags: {range:?}, {tags:?} }}"
             ),
         }
     }

@@ -1,33 +1,12 @@
 use days_in_month::days_in_month;
 use itertools::Itertools;
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufWriter, Write},
-};
+use std::collections::HashMap;
 use termion::{color::*, style};
 
 use crate::{context::Context, error::Error, job_list::JobList, tag_set::TagSet};
 use chrono::{Datelike, NaiveDate, Weekday};
 
-pub fn open_report(filename: &str, force: bool) -> Result<BufWriter<File>, Error> {
-    if !filename.starts_with("/dev/") {
-        if !force && std::path::Path::new(filename).exists() {
-            return Err(Error::OutputFileExists(filename.into()));
-        }
-    }
-    let file = File::options()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(filename)
-        .map_err(|err| Error::Io(err))?;
-    Ok(BufWriter::new(file))
-}
-
-pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> Result<(), Error> {
-    let mut f = open_report(filename, force)?;
-
+pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
     // resort job hours into nested maps of year -> month -> day -> hours
     let mut years: HashMap<i32, HashMap<u32, HashMap<u32, HashMap<String, f64>>>> = HashMap::new();
     for (_, job) in &jobs {
@@ -72,8 +51,6 @@ pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> 
         }
     }
 
-    let err = |e| Error::Io(e);
-
     // enumerate all years in map in sorted order
     for (year, months) in years.iter().sorted_by_key(|x| x.0) {
         let mut month_hours = 0.0;
@@ -81,21 +58,21 @@ pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> 
         for (month, days) in months.iter().sorted_by_key(|x| x.0) {
             // print year/month title centered
             let month_year = format!("{}/{}", month, year);
-            writeln!(f, "{:^68}", month_year).map_err(err)?;
+            println!("{:^68}", month_year);
 
             // insert day of month column
-            write!(f, "{:>3}", "day").map_err(err)?;
+            print!("{:>3}", "day");
 
             // print weekdays as table header
             const WEEKDAYS: [&str; 7] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
             for weekday in WEEKDAYS {
-                write!(f, "{:>8}", weekday).map_err(err)?;
+                print!("{:>8}", weekday);
             }
             // add weekly sum to table header
-            writeln!(f, "{:>8}", "week").map_err(err)?;
+            println!("{:>8}", "week");
 
             // indent day of month column
-            write!(f, "{:>3}", "").map_err(err)?;
+            print!("{:>3}", "");
 
             // indent to first weekday in this month
             let first_weekday = NaiveDate::from_ymd_opt(*year, *month, 1)
@@ -104,7 +81,7 @@ pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> 
                 .num_days_from_sunday()
                 + 1;
             for _ in 1..first_weekday {
-                write!(f, "{:>8}", " ").map_err(err)?;
+                print!("{:>8}", " ");
             }
 
             // print all days in this month week per week
@@ -118,14 +95,14 @@ pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> 
                     == Weekday::Sun
                 {
                     // print weekly sum and restart a new week row
-                    writeln!(f, "{:>8}", week_hours).map_err(err)?;
+                    println!("{:>8}", week_hours);
 
                     // re-initialize weekly hours sum
                     week_hours = 0.0;
                     week_day_number = 0;
 
                     // indent day of month column
-                    write!(f, "{:>3}", day).map_err(err)?;
+                    print!("{:>3}", day);
                 }
 
                 // print hours of that day if any or '-'
@@ -145,54 +122,48 @@ pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> 
                     }
                     // print hours at this day and mark yellow if exceeded
                     if day_hours > 24.0 {
-                        write!(
-                            f,
+                        print!(
                             "{}{}{:>8}{}{}",
                             style::Bold,
                             Fg(LightRed),
                             day_hours,
                             Fg(Reset),
                             style::Reset
-                        )
-                        .map_err(err)?;
+                        );
                     } else if exceeded {
-                        write!(
-                            f,
+                        print!(
                             "{}{}{:>8}{}{}",
                             style::Bold,
                             Fg(Yellow),
                             day_hours,
                             Fg(Reset),
                             style::Reset
-                        )
-                        .map_err(err)?;
+                        );
                     } else {
-                        write!(
-                            f,
+                        print!(
                             "{}{}{:>8}{}{}",
                             style::Bold,
                             Fg(LightWhite),
                             day_hours,
                             Fg(Reset),
                             style::Reset
-                        )
-                        .map_err(err)?;
+                        );
                     }
 
                     // sum up weekly and monthly hours
                     week_hours += day_hours;
                     month_hours += day_hours;
                 } else {
-                    write!(f, "{:>8}", "-").map_err(err)?;
+                    print!("{:>8}", "-");
                 }
                 week_day_number += 1;
             }
             for _ in 0..(7 - week_day_number) {
-                write!(f, "{:>8}", "").map_err(err)?;
+                print!("{:>8}", "");
             }
 
             // print weekly sum and restart a new week row
-            writeln!(f, "{:>8}", week_hours).map_err(err)?;
+            println!("{:>8}", week_hours);
 
             const MONTHS: [&str; 12] = [
                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -203,28 +174,16 @@ pub fn report(filename: &str, jobs: JobList, context: &Context, force: bool) -> 
                 year,
                 month_hours
             );
-            writeln!(f, "{:>68}", monthly_hours).map_err(err)?;
+            println!("{:>68}", monthly_hours);
             month_hours = 0.0;
-            writeln!(f, "").map_err(err)?;
+            println!("");
         }
     }
 
     Ok(())
 }
 
-pub fn report_csv(
-    filename: &str,
-    jobs: JobList,
-    context: &Context,
-    columns: &Option<String>,
-    force: bool,
-) -> Result<(), Error> {
-    let mut f = open_report(filename, force)?;
-
-    eprintln!("reporting CSV into {filename}");
-
-    let err = |e| Error::Io(e);
-
+pub fn report_csv(jobs: JobList, context: &Context, columns: &Option<String>) -> Result<(), Error> {
     let columns = if let Some(columns) = columns {
         columns.clone()
     } else {
@@ -238,46 +197,40 @@ pub fn report_csv(
         .map(|c| format!(r#""{}""#, c))
         .collect::<Vec<String>>()
         .join(",");
-    writeln!(f, "{}", title).map_err(err)?;
+    println!("{}", title);
     for (pos, job) in jobs.into_iter() {
         for (c, column) in columns.iter().enumerate() {
             if c > 0 {
-                write!(f, ",").map_err(err)?;
+                print!(",");
             }
             match *column {
-                "pos" => write!(f, "{}", pos + 1).map_err(err)?,
-                "start" => write!(f, r#""{}""#, job.start.format("%m/%d/%Y %H:%M")).map_err(err)?,
-                "end" => write!(
-                    f,
+                "pos" => print!("{}", pos + 1),
+                "start" => print!(r#""{}""#, job.start.format("%m/%d/%Y %H:%M")),
+                "end" => print!(
                     r#""{}""#,
                     if let Some(end) = job.end {
                         end
                     } else {
                         context.current()
                     }
-                )
-                .map_err(err)?,
-                "message" => write!(
-                    f,
+                ),
+                "message" => print!(
                     r#""{}""#,
                     str::replace(
                         job.message.as_ref().unwrap_or(&"".to_string()),
                         "\"",
                         "\"\""
                     )
-                )
-                .map_err(err)?,
-                "hours" => write!(
-                    f,
+                ),
+                "hours" => print!(
                     "{}",
                     job.hours(Some(jobs.get_configuration(&job.tags).resolution))
-                )
-                .map_err(err)?,
-                "tags" => write!(f, r#""{}""#, job.tags.0.join(",")).map_err(err)?,
+                ),
+                "tags" => print!(r#""{}""#, job.tags.0.join(",")),
                 _ => return Err(Error::UnknownColumn(column.to_string())),
             }
         }
-        writeln!(f, "").map_err(err)?;
+        println!("");
     }
     Ok(())
 }

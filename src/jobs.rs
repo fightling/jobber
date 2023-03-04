@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufRead, BufReader, BufWriter, Write},
+    io::{BufRead, BufReader, BufWriter},
 };
 
 /// serializable instance of the *jobber* database
@@ -56,7 +56,7 @@ impl Jobs {
         check: bool,
         context: &Context,
     ) -> Result<Change, Error> {
-        let change = self.interpret(command, check)?;
+        let change = self.interpret(command)?;
         self.change(change.clone(), check, context)?;
         Ok(change)
     }
@@ -126,7 +126,7 @@ impl Jobs {
         }
         jobs
     }
-    fn interpret(&mut self, command: &Command, check: bool) -> Result<Change, Error> {
+    fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
         // debug
         // eprintln!("{command:?}");
 
@@ -175,14 +175,11 @@ impl Jobs {
             Command::Report {
                 range,
                 tags,
-                output,
                 context,
             } => {
                 report(
-                    &output,
                     self.filter(&range, &&TagSet::from_option_vec(&tags)),
                     &context,
-                    !check,
                 )?;
                 //todo!("reporting not implemented")
                 Change::Nothing
@@ -190,16 +187,13 @@ impl Jobs {
             Command::ReportCSV {
                 range,
                 tags,
-                output,
                 context,
                 columns,
             } => {
                 report_csv(
-                    &output,
                     self.filter(&range, &&TagSet::from_option_vec(&tags)),
                     &context,
                     &columns,
-                    !check,
                 )?;
                 //todo!("reporting not implemented")
                 Change::Nothing
@@ -272,14 +266,9 @@ impl Jobs {
                 let new_tags = new_tags.filter(|t| tags.contains(t));
                 Change::Import(count, new_tags)
             }
-            Command::ListTags {
-                range,
-                tags,
-                output,
-            } => {
+            Command::ListTags { range, tags } => {
                 let tags = self.filter(&range, &&TagSet::from_option_vec(&tags)).tags();
-                let mut f = open_report(&output, !check)?;
-                writeln!(f, "Known tags: {}", tags).map_err(|e| Error::Io(e))?;
+                println!("Known tags: {}", tags);
                 Change::Nothing
             }
         })
