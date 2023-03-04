@@ -180,6 +180,16 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
         }
     }
 
+    println!(
+        "Total: {} job(s), {}{}{}{}{} hours",
+        jobs.len(),
+        style::Bold,
+        Fg(White),
+        jobs.hours_overall(),
+        style::Reset,
+        Fg(Reset)
+    );
+
     Ok(())
 }
 
