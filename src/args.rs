@@ -116,7 +116,8 @@ pub struct Args {
     pub report: Option<Option<String>>,
 
     /// report as CSV
-    /// customize columns by comma separated list of column names like e.g.: "start,end,hours,message"
+    /// customize columns by comma separated list of column names (tags,start,end,hours or message)
+    /// default: tags,start,hours,message
     #[arg(short, long, requires("report"))]
     pub csv: Option<Option<String>>,
 

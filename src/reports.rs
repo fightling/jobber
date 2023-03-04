@@ -216,7 +216,7 @@ pub fn report_csv(
     filename: &str,
     jobs: JobList,
     context: &Context,
-    columns: &String,
+    columns: &Option<String>,
     force: bool,
 ) -> Result<(), Error> {
     let mut f = open_report(filename, force)?;
@@ -224,6 +224,12 @@ pub fn report_csv(
     eprintln!("reporting CSV into {filename}");
 
     let err = |e| Error::Io(e);
+
+    let columns = if let Some(columns) = columns {
+        columns.clone()
+    } else {
+        "tags,start,hours,message".into()
+    };
 
     let columns: Vec<&str> = columns.split(',').collect();
     let title = columns

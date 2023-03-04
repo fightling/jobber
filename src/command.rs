@@ -61,7 +61,7 @@ pub enum Command {
         tags: Option<Vec<String>>,
         output: String,
         context: Context,
-        columns: String,
+        columns: Option<String>,
     },
     /// Display whole configuration
     ShowConfiguration,
@@ -121,7 +121,7 @@ impl Command {
         } else {
             None
         };
-        let csv = if let Some(csv) = args.csv { csv } else { None };
+        let csv = args.csv;
         let output = args.output;
 
         // configuration items
