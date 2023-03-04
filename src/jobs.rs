@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufRead, BufReader, BufWriter},
+    io::{BufRead, BufReader, BufWriter, Write},
 };
 
 /// serializable instance of the *jobber* database
@@ -271,6 +271,16 @@ impl Jobs {
                 }
                 let new_tags = new_tags.filter(|t| tags.contains(t));
                 Change::Import(count, new_tags)
+            }
+            Command::ListTags {
+                range,
+                tags,
+                output,
+            } => {
+                let tags = self.filter(&range, &&TagSet::from_option_vec(&tags)).tags();
+                let mut f = open_report(&output, !check)?;
+                writeln!(f, "Known tags: {}", tags).map_err(|e| Error::Io(e))?;
+                Change::Nothing
             }
         })
     }

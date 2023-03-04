@@ -10,7 +10,7 @@ use termion::{color::*, style};
 use crate::{context::Context, error::Error, job_list::JobList, tag_set::TagSet};
 use chrono::{Datelike, NaiveDate, Weekday};
 
-fn open_report(filename: &str, force: bool) -> Result<BufWriter<File>, Error> {
+pub fn open_report(filename: &str, force: bool) -> Result<BufWriter<File>, Error> {
     if !filename.starts_with("/dev/") {
         if !force && std::path::Path::new(filename).exists() {
             return Err(Error::OutputFileExists(filename.into()));

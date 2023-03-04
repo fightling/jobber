@@ -60,6 +60,13 @@ impl JobList {
             self.jobs.remove(0);
         }
     }
+    pub fn tags(&self) -> TagSet {
+        let mut tags = TagSet::new();
+        for (_, job) in &self.jobs {
+            tags.insert_many(job.tags.0.clone());
+        }
+        tags
+    }
     /// provides configurations for display trait implementation
     pub fn get_configuration(&self, tags: &TagSet) -> &Configuration {
         self.get_configuration_with_tag(tags).1

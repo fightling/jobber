@@ -32,7 +32,7 @@ Arguments:
         Job description text or will ask for if blank
     TAGS
         List of comma separated tags (omit spaces)
-    LIST, REPORT
+    LIST, REPORT, LIST_TAG
         Time or positional range
             f-t
             f-
@@ -83,7 +83,8 @@ pub struct Args {
         required_unless_present("resolution"),
         required_unless_present("pay"),
         required_unless_present("max_hours"),
-        required_unless_present("legacy_import")
+        required_unless_present("legacy_import"),
+        required_unless_present("list_tags")
     )]
     pub start: Option<Option<String>>,
 
@@ -126,22 +127,26 @@ pub struct Args {
     pub output: String,
 
     /// Show configuration parameters
-    #[arg(short ='C', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='C', long, conflicts_with_all(["start","end","back","message","list","report"]))]
     pub configuration: bool,
 
     /// Set the resolution for counting of hours (can be combined with --tags)
-    #[arg(short ='R', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='R', long, conflicts_with_all(["start","end","back","message","list","report"]))]
     pub resolution: Option<f64>,
 
     /// Set the payment for one hour (can be combined with --tags)
-    #[arg(short ='P', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='P', long, conflicts_with_all(["start","end","back","message","list","report"]))]
     pub pay: Option<f64>,
 
     /// Set maximum hours per day above you will get a warning (can be combined with --tags)
-    #[arg(short ='H', long="max-hours-day", conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='H', long="max-hours-day", conflicts_with_all(["start","end","back","message","list","report"]))]
     pub max_hours: Option<u32>,
 
     /// Import jobs from legacy jobber (ruby version)
     #[arg(long="legacy-import", conflicts_with_all(["start","end","back","tags","message","list","report"]))]
     pub legacy_import: Option<String>,
+
+    /// List all known tags (may use -t to filter by super tag)
+    #[arg(short='T', long="list-tags", conflicts_with_all(["start","end","back","message","list","report"]))]
+    pub list_tags: Option<Option<String>>,
 }

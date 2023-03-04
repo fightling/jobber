@@ -75,6 +75,11 @@ pub enum Command {
     LegacyImport {
         filename: String,
     },
+    ListTags {
+        range: Range,
+        tags: Option<Vec<String>>,
+        output: String,
+    },
 }
 
 impl Command {
@@ -134,6 +139,12 @@ impl Command {
 
         // import old jobber CSV
         let legacy_import = args.legacy_import;
+
+        let list_tags = if let Some(list_tags) = args.list_tags {
+            Some(Range::parse(list_tags))
+        } else {
+            None
+        };
 
         // create command depending on what arguments were given...
         if let Some(start) = start {
@@ -244,11 +255,6 @@ impl Command {
                     context: context.clone(),
                 }
             }
-        } else if !set_configuration && (message.is_some() || tags.is_some()) {
-            Self::MessageTags {
-                message: message.flatten(),
-                tags,
-            }
         } else if configuration {
             Self::ShowConfiguration
         } else if resolution.is_some() || pay.is_some() || max_hours.is_some() {
@@ -260,6 +266,17 @@ impl Command {
             }
         } else if let Some(filename) = legacy_import {
             Self::LegacyImport { filename }
+        } else if let Some(range) = list_tags {
+            Self::ListTags {
+                range,
+                tags,
+                output,
+            }
+        } else if !set_configuration && (message.is_some() || tags.is_some()) {
+            Self::MessageTags {
+                message: message.flatten(),
+                tags,
+            }
         } else {
             panic!("unknown command")
         }
@@ -368,6 +385,10 @@ impl std::fmt::Debug for Command {
             Self::LegacyImport { filename } => write!(
                 f,
                 "Command::LegacyImport{{ filename: {filename} }}"
+            ),
+            Self::ListTags{tags, range, output }  => write!(
+                f,
+                "Command::ListTags{{ tags: {range:?}, {tags:?}, {output:?} }}"
             ),
         }
     }
