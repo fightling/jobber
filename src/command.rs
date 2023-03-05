@@ -114,17 +114,17 @@ impl Command {
             None
         };
         let list = if let Some(list) = args.list {
-            Some(Range::parse(list))
+            Some(Range::parse(list, context))
         } else {
             None
         };
         let report = if let Some(report) = args.report {
-            Some(Range::parse(report))
+            Some(Range::parse(report, context))
         } else {
             None
         };
         let export = if let Some(export) = args.export {
-            Some(Range::parse(export))
+            Some(Range::parse(export, context))
         } else {
             None
         };
@@ -142,7 +142,7 @@ impl Command {
         let legacy_import = args.legacy_import;
 
         let list_tags = if let Some(list_tags) = args.list_tags {
-            Some(Range::parse(list_tags))
+            Some(Range::parse(list_tags, context))
         } else {
             None
         };

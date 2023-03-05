@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, TimeZone, Utc};
 use regex::Regex;
 
-use crate::{date_time::DateTime, partial_date_time::PartialDateTime};
+use crate::{context::Context, date_time::DateTime, partial_date_time::PartialDateTime};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Range {
@@ -16,11 +16,12 @@ pub enum Range {
 }
 
 impl Range {
-    pub fn parse(list: Option<String>) -> Self {
+    pub fn parse(list: Option<String>, context: &Context) -> Self {
         if let Some(list) = list {
-            Self::parse_position(&list).or(Self::parse_position_range(&list)
-                .or(Self::parse_time_range(&list).or(Self::parse_day(&list)
-                    .or(Self::parse_from_position(&list).or(Self::parse_since(&list))))))
+            Self::parse_position(&list).or(Self::parse_position_range(&list).or(
+                Self::parse_time_range(&list, context).or(Self::parse_day(&list, context)
+                    .or(Self::parse_from_position(&list).or(Self::parse_since(&list, context)))),
+            ))
         } else {
             Self::All
         }
@@ -60,15 +61,15 @@ impl Range {
         Self::None
     }
 
-    fn parse_day(list: &str) -> Range {
+    fn parse_day(list: &str, context: &Context) -> Range {
         let pt = PartialDateTime::parse(Some(list.to_string()));
         match pt {
             PartialDateTime::None => Self::None,
-            _ => Range::Day(pt.into(DateTime::now()).date_time.date_naive()),
+            _ => Range::Day(pt.into(context.current()).date_time.date_naive()),
         }
     }
 
-    fn parse_time_range(list: &str) -> Range {
+    fn parse_time_range(list: &str, context: &Context) -> Range {
         let list: Vec<&str> = list.split("..").collect();
         if list.len() == 2 {
             let from = PartialDateTime::parse(Some(list[0].to_string()));
@@ -76,28 +77,31 @@ impl Range {
             match (from, to) {
                 (PartialDateTime::None, PartialDateTime::None) => Self::None,
                 (from, PartialDateTime::None) => {
-                    Self::TimeRange(from.into(DateTime::now()), DateTime::now())
+                    Self::TimeRange(from.into(context.current()), context.current())
                 }
                 (PartialDateTime::None, to) => Self::TimeRange(
                     DateTime {
                         date_time: Utc.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap(),
                     },
-                    to.into(DateTime::now()),
+                    to.into(context.current()),
                 ),
-                (from, to) => Self::TimeRange(from.into(DateTime::now()), to.into(DateTime::now())),
+                (from, to) => {
+                    let from = from.into(context.current());
+                    Self::TimeRange(from, to.into(from))
+                }
             }
         } else {
             Self::None
         }
     }
 
-    fn parse_since(list: &str) -> Range {
+    fn parse_since(list: &str, context: &Context) -> Range {
         let re = Regex::new(r"^(.+)\.\.$").unwrap();
         for cap in re.captures_iter(list) {
             let pt = PartialDateTime::parse(Some(cap[1].to_string()));
             return match pt {
                 PartialDateTime::None => Self::None,
-                _ => Range::Since(pt.into(DateTime::now())),
+                _ => Range::Since(pt.into(context.current())),
             };
         }
         Self::None
