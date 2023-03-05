@@ -14,6 +14,8 @@ Command line tool for tracking work time.
       - [Add a New Job](#add-a-new-job)
       - [Back to Work](#back-to-work)
       - [Duration](#duration)
+      - [Tagging](#tagging)
+        - [Categorize Jobs](#categorize-jobs)
     - [Visualizing Entered Work Times](#visualizing-entered-work-times)
       - [List View](#list-view)
       - [Report View](#report-view)
@@ -182,6 +184,70 @@ Then a new job will be created like with `-s` but message and tags of the last j
 
 Instead of giving an end date and/or time with `-e` you can also user `-d` to give a duration of the job (see section
 *Durations*).
+
+#### Tagging
+
+If you want to categorize your jobs (e.g. to differ meetings from programming jobs) or if you have multiple clients you work for you can use tags to set this up.
+
+##### Categorize Jobs
+
+Just add option `-t` to give a list of tags when you create a job:
+
+```txt
+▶ jobber -s -t meeting -m "meeting about new design"  -d 2:00
+Loaded database (2 entries) from file 'jobber.json'
+There 1 warning(s) you have to omit:
+
+WARNING 1) You have used some tags ( meeting ) which are unknown so far. Continue if you want to create them.
+Do you still want to add this job? (y/N)
+y
+Added new job:
+
+  Start: Sun Mar 05 2023, 21:24
+    End: Sun Mar 05 2023, 23:24
+  Hours: 2
+   Tags:  meeting  
+Message: meeting about new design
+
+Saved database into file 'jobber.json'
+```
+
+Here *jobber* asks you if you want to add the unknown tag `meeting` and I answered yes by entering `y`.
+
+If you use `-l` to display jobs you can see the tag:
+
+```txt
+▶ jobber -l                                                  
+Loaded database (3 entries) from file 'jobber.json'
+    Pos: 1
+  Start: Sat Mar 04 2023, 16:25
+    End: Sat Mar 04 2023, 16:34
+  Hours: 0.25
+Message: Did some nice work
+
+    Pos: 2
+  Start: Sat Mar 04 2023, 08:15
+    End: Sat Mar 04 2023, 10:45
+  Hours: 2.5
+Message: What I did this morning
+
+    Pos: 3
+  Start: Sun Mar 05 2023, 21:24
+    End: Sun Mar 05 2023, 23:24
+  Hours: 2
+   Tags:  meeting  
+Message: meeting about new design
+
+Total: 3 job(s), 4.75 hours
+
+Database unchanged.
+```
+
+Tags are colored differently after they were added so that you can easily differentiate between them (you can not see this here in this markdown file).
+
+You can add multiple tags by listing then separated by comma (e.g. `meeting,design`).
+
+You also can use tags to differ between clients and give every client a different configuration (see section *Configuration*).
 
 ### Visualizing Entered Work Times
 
@@ -423,6 +489,8 @@ Do you still want to add this job? (y/N)
 ```
 
 In this case the tag `consulting` is unknown.
+
+To list which tags are already known you can use the option `-T` (see section *Tagging*).
 
 ## Errors
 
