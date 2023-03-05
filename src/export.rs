@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use crate::{context::Context, error::Error, job_list::JobList, output, outputln};
 
 pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<(), Error> {
@@ -9,7 +11,7 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
         .collect::<Vec<String>>()
         .join(",");
     outputln!("{}", title);
-    for (pos, job) in jobs.into_iter() {
+    for (pos, job) in jobs.into_iter().sorted_by(|l, r| l.1.cmp(&r.1)) {
         for (c, column) in columns.iter().enumerate() {
             if c > 0 {
                 output!(",");

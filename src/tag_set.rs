@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::tags;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TagSet(pub Vec<String>);
 
 impl TagSet {

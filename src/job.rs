@@ -6,7 +6,7 @@ use chrono::{Days, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 
 /// One portion of work
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Job {
     /// Starting time
     pub start: DateTime,
@@ -220,6 +220,18 @@ impl Job {
 impl std::fmt::Display for Job {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.writeln(f, None)
+    }
+}
+
+impl PartialOrd for Job {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.start.partial_cmp(&other.start)
+    }
+}
+
+impl Ord for Job {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.start.cmp(&other.start)
     }
 }
 
