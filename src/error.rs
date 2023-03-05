@@ -3,6 +3,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("No database found")]
+    NoDatabase,
     #[error("I/O error: {0}")]
     Io(std::io::Error),
     #[error("JSON error: {0}")]

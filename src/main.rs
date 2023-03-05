@@ -40,15 +40,21 @@ fn main() {
 fn run(args: Args, context: &Context) -> Result<(), Error> {
     // load database from file or create new
     let filename = &args.filename.clone();
-    let mut jobs = if let Ok(jobs) = Jobs::load(filename) {
-        eprintln!(
-            "Loaded database ({} entries) from file '{filename}'",
-            jobs.jobs.len()
-        );
-        jobs
-    } else {
-        eprintln!("Beginning new database file '{filename}'");
-        Jobs::new()
+    let mut jobs = match Jobs::load(filename) {
+        Ok(jobs) => {
+            eprintln!(
+                "Loaded database ({} entries) from file '{filename}'",
+                jobs.jobs.len()
+            );
+            jobs
+        }
+        Err(Error::Io(_)) => {
+            eprintln!("Beginning new database file '{filename}'");
+            Jobs::new()
+        }
+        Err(err) => {
+            return Err(err);
+        }
     };
 
     // parse and process command
