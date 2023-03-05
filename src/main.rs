@@ -62,8 +62,14 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
                     return Err(Error::Cancel);
                 }
             }
-            if let Err(Error::EnterMessage) = jobs.process(&command, false, context) {
-                edit_message(&mut jobs, &mut command, context)?;
+            match jobs.process(&command, false, context) {
+                Err(Error::EnterMessage) => {
+                    edit_message(&mut jobs, &mut command, context)?;
+                }
+                Err(err) => return Err(err),
+                Ok(change) => {
+                    eprintln!("{}", change);
+                }
             }
         }
         Err(Error::EnterMessage) => {
