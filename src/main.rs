@@ -1,0 +1,168 @@
+mod args;
+mod change;
+mod command;
+mod configuration;
+mod context;
+mod date_time;
+mod duration;
+mod error;
+mod export;
+mod job;
+mod job_list;
+mod jobs;
+#[macro_use]
+mod output;
+mod partial_date_time;
+mod range;
+mod reports;
+mod tag_set;
+mod tags;
+mod tests;
+
+use args::Args;
+use change::Change;
+use clap::Parser;
+use command::Command;
+use context::Context;
+use error::Error;
+use jobs::Jobs;
+
+/// main which just catches errors
+fn main() {
+    let args = Args::parse();
+    let context = Context::new();
+    if let Err(err) = run(args, &context) {
+        eprintln!("ERROR: {err}");
+    }
+}
+
+/// process program arguments to read/write jobber's database and handle warnings
+fn run(args: Args, context: &Context) -> Result<(), Error> {
+    // load database from file or create new
+    let filename = &args.filename.clone();
+    let mut jobs = match Jobs::load(filename) {
+        Ok(jobs) => {
+            eprintln!(
+                "Loaded database ({} entries) from file '{filename}'",
+                jobs.jobs.len()
+            );
+            jobs
+        }
+        Err(Error::Io(_)) => {
+            eprintln!("Beginning new database file '{filename}'");
+            Jobs::new()
+        }
+        Err(err) => {
+            return Err(err);
+        }
+    };
+
+    // parse and process command
+    let mut command = Command::parse(args, jobs.open_start(), context);
+    match jobs.process(&command, true, context) {
+        Err(Error::Warnings(warnings)) => {
+            eprintln!("There {} warning(s) you have to omit:", warnings.len());
+            for (n, warning) in warnings.iter().enumerate() {
+                eprintln!("\nWARNING {}) {}", n + 1, warning);
+                if !ask("Do you still want to add this job?", false)? {
+                    return Err(Error::Cancel);
+                }
+            }
+            match jobs.process(&command, false, context) {
+                Err(Error::EnterMessage) => {
+                    edit_message(&mut jobs, &mut command, context)?;
+                }
+                Err(err) => return Err(err),
+                Ok(change) => {
+                    eprintln!("{}", change);
+                }
+            }
+        }
+        Err(Error::EnterMessage) => {
+            eprintln!("{}", edit_message(&mut jobs, &mut command, context)?);
+        }
+        Err(Error::OutputFileExists(filename)) => {
+            eprintln!("{}", Error::OutputFileExists(filename));
+            if ask("Do you want to overwrite the existing file?", false)? {
+                jobs.process(&command, false, context)?;
+            } else {
+                eprintln!("No report generated.")
+            }
+        }
+        Err(err) => return Err(err),
+        Ok(change) => {
+            eprintln!("{}", change)
+        }
+    }
+    if jobs.modified() {
+        jobs.save(filename)?;
+        eprintln!("Saved database into file '{filename}'");
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+pub fn run_args(args: &[&str], context: &Context) -> Result<Change, Error> {
+    let mut jobs = Jobs::new();
+    run_args_with(&mut jobs, args, context)
+}
+
+#[cfg(test)]
+pub fn run_args_with(jobs: &mut Jobs, args: &[&str], context: &Context) -> Result<Change, Error> {
+    let command = Command::parse(Args::parse_from(args), None, context);
+    jobs.process(&command, true, context)
+}
+
+/// Asks user on console a yes-no-question
+fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
+    eprintln!("{} ({})", question, if default_yes { "Y/n" } else { "y/N" });
+
+    let mut buffer = String::new();
+    std::io::stdin()
+        .read_line(&mut buffer)
+        .map_err(|err| Error::Io(err))?;
+
+    Ok(match buffer.trim_end().to_lowercase().as_str() {
+        "y" | "yes" => true,
+        "n" | "no" => false,
+        _ => default_yes,
+    })
+}
+
+// Ask user for a multi line input
+fn enter(question: &str) -> Result<String, Error> {
+    eprintln!("{}", question);
+
+    let mut result = String::new();
+    loop {
+        let mut buffer = String::new();
+        std::io::stdin()
+            .read_line(&mut buffer)
+            .map_err(|err| Error::Io(err))?;
+
+        let line = buffer.trim_end();
+        result += line;
+
+        if line.is_empty() {
+            return if result.trim().is_empty() {
+                Err(Error::EnterMessage)
+            } else {
+                Ok(result)
+            };
+        }
+    }
+}
+
+/// Ask user for a multi line message and enrich a command with it
+fn edit_message(
+    jobs: &mut Jobs,
+    command: &mut Command,
+    context: &Context,
+) -> Result<Change, Error> {
+    let message = enter(
+        "You need to enter a message about what you did to finish the job.\n\
+        Finish input with empty line (or Ctrl+C to cancel):",
+    )?;
+    command.set_message(message);
+    jobs.process(&command, false, context)
+}
