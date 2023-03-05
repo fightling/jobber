@@ -12,6 +12,7 @@ Command line tool for tracking work time.
       - [Start a New Job](#start-a-new-job)
       - [End an Open Job](#end-an-open-job)
       - [Add a New Job](#add-a-new-job)
+      - [Back to Work](#back-to-work)
     - [Visualizing Entered Work Times](#visualizing-entered-work-times)
       - [List View](#list-view)
       - [Report View](#report-view)
@@ -164,6 +165,11 @@ Saved database into file 'jobber.json'
 ```
 
 As you can see this also worked like a charm.
+
+#### Back to Work
+
+You can replace the `-s` by `-b` to continue a job.
+Then a new job will be created like with `-s` but message and tags of the last job will be taken automatically for the new one.
 
 ### Visualizing Entered Work Times
 
