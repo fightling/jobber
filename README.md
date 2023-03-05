@@ -9,6 +9,9 @@ Command line tool for tracking work time.
   - [Purpose](#purpose)
   - [Usage](#usage)
     - [Enter Work Time](#enter-work-time)
+      - [Start a New Job](#start-a-new-job)
+      - [End an Open Job](#end-an-open-job)
+      - [Add a New Job](#add-a-new-job)
     - [Visualizing Entered Work Times](#visualizing-entered-work-times)
       - [List View](#list-view)
       - [Report View](#report-view)
@@ -22,7 +25,7 @@ Command line tool for tracking work time.
     - [There still is an open job](#there-still-is-an-open-job)
     - [There is no open job](#there-is-no-open-job)
     - [End of the job is before it's start](#end-of-the-job-is-before-its-start)
-    - [User cancelation](#user-cancelation)
+    - [User cancel](#user-cancel)
     - [Can not use tags within same job because they have different configurations](#can-not-use-tags-within-same-job-because-they-have-different-configurations)
     - [User needs to enter message](#user-needs-to-enter-message)
     - [Unknown column name](#unknown-column-name)
@@ -67,6 +70,9 @@ Also leaving a message often is easier when you know what you have done so you m
 Providing start and end time would be hard if you have to write done complete date and time every time so you can shorten it to what's necessary like `12:00` for today at noon or just no time to mean right now.
 
 Let's get into an example.
+
+#### Start a New Job
+
 We use the start option `-s` to start a new job:
 
 ```txt
@@ -86,7 +92,7 @@ It also assures you that changes were written into that file.
 
 If you use a shell which provides color start time will be green and end time will be purple for better reading but in this README which is markdown sadly this can not be visualized.
 
-We can check what we have done by using the list option `-l`:
+We can check what we have done by using the list option `-l` (see also section *List View*):
 
 ```txt
 ▶ jobber -l 
@@ -105,6 +111,8 @@ Database unchanged.
 *jobber* prints out a list of all stored jobs and as you can see there is this one open job we've just started and because some time already elapsed the job hours is given there with a quarter of an hour.
 By default there is a time resolution of 15 minutes in which work times are calculated.
 This resolution can be changed but for now we let it to the default.
+
+#### End an Open Job
 
 So let's end the job because let's assume we did something useful and want to finish by using the end option `-e`:
 
@@ -134,6 +142,8 @@ The message could be multiline but for now we use a single line.
 After I entered the message *jobber* reports that it modified the open job and writes it down as it is now stored in the database file.
 
 So we successfully finished our first job.
+
+#### Add a New Job
 
 Now let's add another job we did this morning and forgot to enter then.
 And this time we give all the data in the command line by using `-s` and `-e` with a time and the message option `-m` to give the message without being asked for:
@@ -285,7 +295,7 @@ You tried to end an open job but there is none.
 
 End and start time seems swapped in order.
 
-### User cancelation
+### User cancel
 
 You refused something after questioned.
 
