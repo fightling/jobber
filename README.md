@@ -26,6 +26,9 @@ Command line tool for tracking work time.
   - [Import and Export](#import-and-export)
     - [Legacy CSV Import](#legacy-csv-import)
     - [CSV Export](#csv-export)
+  - [Warnings](#warnings)
+    - [The job you want to add overlaps existing one(s)](#the-job-you-want-to-add-overlaps-existing-ones)
+    - [You have used some tags which are unknown](#you-have-used-some-tags-which-are-unknown)
   - [Errors](#errors)
     - [I/O error](#io-error)
     - [JSON error](#json-error)
@@ -361,6 +364,65 @@ Database unchanged.
 ```
 
 As you can see now only one of both jobs has been exported.
+
+## Warnings
+
+*jobber* does several plausibility checks of your commands.
+Whenever something seems unintended you will get a warning and will be asked if you still want to continue.
+
+### The job you want to add overlaps existing one(s)
+
+You are about to add a job that intersects another one in time.
+
+```txt
+▶ jobber -s 3/4,9:00 -e 10:00
+Loaded database (2 entries) from file 'jobber.json'
+There 1 warning(s) you have to omit:
+
+WARNING 1) The job you want to add overlaps existing one(s):
+
+Job you want to add:
+
+  Start: Sat Mar 04 2023, 09:00
+    End: Sat Mar 04 2023, 10:00
+  Hours: 1
+
+
+Existing overlapping jobs:
+
+    Pos: 2
+  Start: Sat Mar 04 2023, 08:15
+    End: Sat Mar 04 2023, 10:45
+  Hours: 2.5
+Message: What I did this morning
+
+Total: 1 job(s), 2.5 hours
+
+Do you still want to add this job? (y/N)
+```
+
+*jobber* lists you the job you are about to add and the ones that intersect.
+
+**Hint:**
+
+- if you start a job (without giving an end) and start time is before any existing job it will be assumed that ending might be now and so you might get a warning for this.
+
+Check your input and if this was intentional answer `y` to continue.
+
+### You have used some tags which are unknown
+
+With option `-t` you have given some tag names which are currently unknown and *jobber then asks you if this was a mistake or you want to add a new tag:
+
+```txt
+▶ jobber -s -t consulting 
+Loaded database (2 entries) from file 'jobber.json'
+There 1 warning(s) you have to omit:
+
+WARNING 1) You have used some tags ( consulting ) which are unknown so far. Continue if you want to create them.
+Do you still want to add this job? (y/N)
+```
+
+In this case the tag `consulting` is unknown.
 
 ## Errors
 
