@@ -15,6 +15,7 @@ Command line tool for tracking work time.
     - [Visualizing Entered Work Times](#visualizing-entered-work-times)
       - [List View](#list-view)
       - [Report View](#report-view)
+      - [Filter Your View](#filter-your-view)
   - [Date, Time, Duration and Range Formats](#date-time-duration-and-range-formats)
     - [Date and/or Time](#date-andor-time)
     - [Durations](#durations)
@@ -219,6 +220,10 @@ After that a table follows in which the first column shows the day of month for 
 The next seven columns show the work time for each day.
 Because I write this README at Saturday under `sat` you see that I worked `2.75` hours today.
 In the last column the weekly work time is summed up and at the end of the table it says that we work the same amount in all of March and - as useless as it seems in our case - at the end it sums up all work time for all displayed jobs.
+
+#### Filter Your View
+
+You might use `-t` to set up some tags which will filter out every job not using these tags in all reports.
 
 ## Date, Time, Duration and Range Formats
 
