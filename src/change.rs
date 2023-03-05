@@ -1,4 +1,4 @@
-use crate::{job::Job, tag_set::TagSet};
+use crate::{configuration::Configuration, job::Job, tag_set::TagSet};
 
 /// catches what to change the jobs within the database
 #[derive(Clone, Debug)]
@@ -11,6 +11,8 @@ pub enum Change {
     Modify(usize, Job),
     /// Imported `usize` entries
     Import(usize, TagSet),
+    /// Change configuration
+    Configuration(Option<Vec<String>>, Configuration),
 }
 
 impl std::fmt::Display for Change {
@@ -38,6 +40,22 @@ impl std::fmt::Display for Change {
                     write!(f, "Imported {count} jobs.")
                 } else {
                     write!(f, "Imported {count} jobs added new tags {new_tags}.")
+                }
+            }
+            Self::Configuration(tags, config) => {
+                if let Some(tags) = tags {
+                    write!(
+                        f,
+                        "Changed the following configuration values for tag(s) {}:\n\n{}",
+                        TagSet { 0: tags.clone() },
+                        config
+                    )
+                } else {
+                    write!(
+                        f,
+                        "Changed the following default configuration values:\n\n{}",
+                        config
+                    )
                 }
             }
         }

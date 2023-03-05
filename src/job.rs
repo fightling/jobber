@@ -153,7 +153,7 @@ impl Job {
             )?;
         }
         if let Some(configuration) = configuration {
-            let hours = self.hours(Some(configuration.resolution));
+            let hours = self.hours(configuration.resolution);
             if hours > 0.0 {
                 if let Some(max_hours) = configuration.max_hours {
                     if hours > max_hours as f64 {

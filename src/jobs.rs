@@ -31,7 +31,7 @@ pub struct Jobs {
     /// list of jobs
     pub jobs: Vec<Job>,
     /// Configuration by tag
-    pub tag_configuration: HashMap<String, Configuration>,
+    pub tag_configurations: HashMap<String, Configuration>,
     /// Configuration used when no tag related configuration fit
     pub base_configuration: Configuration,
 }
@@ -43,7 +43,7 @@ impl Jobs {
             modified: false,
             jobs: Vec::new(),
             base_configuration: Default::default(),
-            tag_configuration: HashMap::new(),
+            tag_configurations: HashMap::new(),
         }
     }
     pub fn modified(&self) -> bool {
@@ -210,7 +210,7 @@ impl Jobs {
                 // print base configurations
                 eprintln!("Base Configuration:\n\n{}", self.base_configuration);
                 // print tag wise configurations
-                for (tag, configuration) in &self.tag_configuration {
+                for (tag, configuration) in &self.tag_configurations {
                     eprintln!(
                         "Configuration for tag {}:\n\n{}",
                         TagSet::from_one(tag),
@@ -225,8 +225,8 @@ impl Jobs {
                 tags,
                 max_hours,
             } => {
-                self.set_configuration(&tags, resolution, pay, max_hours)?;
-                Change::Nothing
+                let config = self.set_configuration(&tags, resolution, pay, max_hours);
+                Change::Configuration(tags, config)
             }
             Command::MessageTags {
                 message: _,
@@ -238,7 +238,11 @@ impl Jobs {
             }
             Command::ListTags { range, tags } => {
                 let tags = self.filter(&range, &&TagSet::from_option_vec(&tags)).tags();
-                outputln!("Known tags: {}", tags);
+                if tags.is_empty() {
+                    outputln!("Currently no tags are used.");
+                } else {
+                    outputln!("Known tags: {}", tags);
+                }
                 Change::Nothing
             }
         })
@@ -274,6 +278,7 @@ impl Jobs {
                 }
             }
             Change::Import(_, _) => Ok(()),
+            Change::Configuration(_, _) => Ok(()),
         }
     }
     fn check_finished(&self) -> Result<(), Error> {
@@ -331,47 +336,32 @@ impl Jobs {
         resolution: Option<f64>,
         pay: Option<f64>,
         max_hours: Option<u32>,
-    ) -> Result<(), Error> {
+    ) -> Configuration {
+        let configuration = Configuration {
+            resolution,
+            pay,
+            max_hours,
+        };
         if let Some(tags) = tags {
             for tag in tags {
-                if let Some(configuration) = self.tag_configuration.get_mut(tag) {
-                    if let Some(resolution) = resolution {
-                        configuration.resolution = resolution;
-                    }
-                    configuration.pay = pay;
-                    configuration.max_hours = max_hours;
+                if let Some(tag_configuration) = self.tag_configurations.get_mut(tag) {
+                    tag_configuration.update(configuration.clone());
                 } else {
-                    self.tag_configuration.insert(
-                        tag.clone(),
-                        Configuration {
-                            resolution: if let Some(resolution) = resolution {
-                                resolution
-                            } else {
-                                self.base_configuration.resolution
-                            },
-                            pay: pay,
-                            max_hours,
-                        },
-                    );
+                    self.tag_configurations
+                        .insert(tag.clone(), configuration.clone());
                 }
             }
-            self.get_configuration(&TagSet { 0: tags.clone() })?;
         } else {
-            if let Some(resolution) = resolution {
-                self.base_configuration.resolution = resolution;
-            }
-            self.base_configuration.pay = pay;
-            self.base_configuration.max_hours = max_hours;
+            self.base_configuration.update(configuration.clone());
         }
         self.modified = true;
-
-        Ok(())
+        configuration
     }
     fn get_configuration(&self, tags: &TagSet) -> Result<&Configuration, Error> {
         let mut found = TagSet::new();
         let mut configuration = None;
         for tag in &tags.0 {
-            if let Some(c) = self.tag_configuration.get(tag) {
+            if let Some(c) = self.tag_configurations.get(tag) {
                 found.insert(tag);
                 configuration = Some(c);
             }

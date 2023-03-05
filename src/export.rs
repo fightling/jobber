@@ -37,7 +37,7 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
                 ),
                 "hours" => output!(
                     "{}",
-                    job.hours(Some(jobs.get_configuration(&job.tags).resolution))
+                    job.hours(jobs.get_configuration(&job.tags).resolution)
                 ),
                 "tags" => output!(r#""{}""#, job.tags.0.join(",")),
                 _ => return Err(Error::UnknownColumn(column.to_string())),

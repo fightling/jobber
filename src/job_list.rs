@@ -40,7 +40,7 @@ impl JobList {
     pub fn new_from(jobs: &Jobs) -> Self {
         Self {
             jobs: Vec::new(),
-            tag_configuration: jobs.tag_configuration.clone(),
+            tag_configuration: jobs.tag_configurations.clone(),
             default_configuration: jobs.base_configuration.clone(),
         }
     }
@@ -83,7 +83,7 @@ impl JobList {
     pub fn hours_overall(&self) -> f64 {
         let mut hours = 0.0;
         for (_, job) in &self.jobs {
-            hours += job.hours(Some(self.get_configuration(&job.tags).resolution))
+            hours += job.hours(self.get_configuration(&job.tags).resolution)
         }
         hours
     }

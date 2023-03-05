@@ -38,7 +38,7 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
             let (tag, config) = jobs.get_configuration_with_tag(&job.tags);
 
             // get hours for that tag
-            let job_hours = job.hours(Some(config.resolution));
+            let job_hours = job.hours(config.resolution);
             if !tag_hours.contains_key(&tag) {
                 tag_hours.insert(tag.clone(), 0.0);
             }
