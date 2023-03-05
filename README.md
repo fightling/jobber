@@ -42,6 +42,13 @@ Command line tool for tracking work time.
     - [User needs to enter message](#user-needs-to-enter-message)
     - [Unknown column name](#unknown-column-name)
     - [Date/Time parse error](#datetime-parse-error)
+  - [Configuration](#configuration)
+    - [Setup Base Configuration](#setup-base-configuration)
+      - [Work Time Resolution](#work-time-resolution)
+      - [Hourly Payment Rate](#hourly-payment-rate)
+      - [Maximum Hours Per Day](#maximum-hours-per-day)
+    - [Setup Configuration for Specific Tags](#setup-configuration-for-specific-tags)
+    - [Show Configuration](#show-configuration)
 
 ## Purpose
 
@@ -533,3 +540,86 @@ You stated a column name that is unknown when exporting into *CSV* (only `pos`, 
 ### Date/Time parse error
 
 Parsing of a date and or time went wrong.
+
+## Configuration
+
+There are some settings in *jobber* you may want to change:
+
+- work time resolution
+- your payment
+- maximum hours per day
+
+In *jobber* there is a base configuration but you also can attach configurations to tags to have different configurations for different clients.
+
+### Setup Base Configuration
+
+#### Work Time Resolution
+
+With `-R` you can set the work time resolution.
+The default is `0.25` which means a quarter of an hour.
+So if you add for example a job with a duration of 16 minutes this will be rounded up to 30 minutes.
+
+For example you might change the base resolution to half an hour with:
+
+```txt
+▶ jobber -R 0.5       
+Beginning new database file 'jobber.json'
+Changed the following default configuration values:
+
+Resolution: 0.5 hours
+
+Saved database into file 'jobber.json'
+```
+
+#### Hourly Payment Rate
+
+To change your hourly payment rate use `-P` (e.g. `jobber -P 50` to set your hourly rate to 50$).
+There is not default so if you do not set this rates will not be displayed.
+If you do *jobber* lists costs in the list view.
+
+```txt
+▶ jobber -P 100
+Loaded database (0 entries) from file 'jobber.json'
+Changed the following default configuration values:
+
+Payment per hour: 100
+
+Saved database into file 'jobber.json'
+```
+
+#### Maximum Hours Per Day
+
+If you set this value with `-H` days which work time exceeds this value will be marked yellow in report view.
+In List view jobs that exceed this value will be marked yellow.
+
+So if you want to change the maximum hours for a day to 8 use:
+
+```txt
+▶ jobber -H 8  
+Loaded database (0 entries) from file 'jobber.json'
+Changed the following default configuration values:
+
+Maximum work time: 8 hours
+
+Saved database into file 'jobber.json'
+```
+
+### Setup Configuration for Specific Tags
+
+If you have several clients and each one has for example different payment rates you can add the tag option `-t` when you set the configuration.
+
+### Show Configuration
+
+To show your configuration(s) use the option `-C`:
+
+```txt
+▶ jobber -C  
+Loaded database (3 entries) from file 'jobber.json'
+Base Configuration:
+
+Resolution: 0.5 hours
+Payment per hour: 100
+Maximum work time: 8 hours
+
+Database unchanged.
+```
