@@ -13,6 +13,7 @@ Command line tool for tracking work time.
       - [End an Open Job](#end-an-open-job)
       - [Add a New Job](#add-a-new-job)
       - [Back to Work](#back-to-work)
+      - [Duration](#duration)
     - [Visualizing Entered Work Times](#visualizing-entered-work-times)
       - [List View](#list-view)
       - [Report View](#report-view)
@@ -170,6 +171,11 @@ As you can see this also worked like a charm.
 
 You can replace the `-s` by `-b` to continue a job.
 Then a new job will be created like with `-s` but message and tags of the last job will be taken automatically for the new one.
+
+#### Duration
+
+Instead of giving an end date and/or time with `-e` you can also user `-d` to give a duration of the job (see section
+*Durations*).
 
 ### Visualizing Entered Work Times
 
