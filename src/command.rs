@@ -55,11 +55,11 @@ pub enum Command {
         context: Context,
     },
     /// Report jobs as CSV
-    ReportCSV {
+    ExportCSV {
         range: Range,
         tags: Option<Vec<String>>,
         context: Context,
-        columns: Option<String>,
+        columns: String,
     },
     /// Display whole configuration
     ShowConfiguration,
@@ -120,6 +120,11 @@ impl Command {
         };
         let report = if let Some(report) = args.report {
             Some(Range::parse(report))
+        } else {
+            None
+        };
+        let export = if let Some(export) = args.export {
+            Some(Range::parse(export))
         } else {
             None
         };
@@ -234,20 +239,18 @@ impl Command {
             Self::End { end, message, tags }
         } else if let Some(range) = list {
             Self::List { range, tags }
+        } else if let Some(range) = export {
+            Self::ExportCSV {
+                range,
+                tags,
+                context: context.clone(),
+                columns: csv,
+            }
         } else if let Some(range) = report {
-            if let Some(columns) = csv {
-                Self::ReportCSV {
-                    range,
-                    tags,
-                    context: context.clone(),
-                    columns,
-                }
-            } else {
-                Self::Report {
-                    range,
-                    tags,
-                    context: context.clone(),
-                }
+            Self::Report {
+                range,
+                tags,
+                context: context.clone(),
             }
         } else if configuration {
             Self::ShowConfiguration
@@ -360,7 +363,7 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::Report{{ list: {range:?}, {tags:?}, {context:?} }}"
             ),
-            Self::ReportCSV { range, tags, context, columns } => write!(
+            Self::ExportCSV { range, tags, context, columns } => write!(
                 f,
                 "Command::ReportCSV{{ list: {range:?}, {tags:?}, {context:?}, {columns:?} }}"
             ),

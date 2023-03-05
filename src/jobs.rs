@@ -6,6 +6,7 @@ use crate::{
     context::Context,
     date_time::DateTime,
     error::{Error, Warning},
+    export::export_csv,
     job::Job,
     job_list::JobList,
     range::Range,
@@ -191,13 +192,13 @@ impl Jobs {
                 //todo!("reporting not implemented")
                 Change::Nothing
             }
-            Command::ReportCSV {
+            Command::ExportCSV {
                 range,
                 tags,
                 context,
                 columns,
             } => {
-                report_csv(
+                export_csv(
                     self.filter(&range, &&TagSet::from_option_vec(&tags)),
                     &context,
                     &columns,

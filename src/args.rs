@@ -79,6 +79,7 @@ pub struct Args {
         required_unless_present("end"),
         required_unless_present("list"),
         required_unless_present("report"),
+        required_unless_present("export"),
         required_unless_present("configuration"),
         required_unless_present("resolution"),
         required_unless_present("pay"),
@@ -112,15 +113,21 @@ pub struct Args {
     #[arg(short, long, conflicts_with_all(["start","end","back","message","report"]))]
     pub list: Option<Option<String>>,
 
-    /// Print report for all jobs or selective by position(s) or time(s)
+    /// Print report of all jobs or selective by position(s) or time(s)
     #[arg(short, long, conflicts_with_all(["start","end","back","message"]))]
     pub report: Option<Option<String>>,
 
-    /// report as CSV
-    /// customize columns by comma separated list of column names (tags,start,end,hours or message)
-    /// default: tags,start,hours,message
-    #[arg(short, long, requires("report"))]
-    pub csv: Option<Option<String>>,
+    /// export all jobs or selective by position(s) or time(s) as CSV
+    #[arg(short='E', long="export", conflicts_with_all(["start","end","back","message"]))]
+    pub export: Option<Option<String>>,
+
+    /// customize CSV export columns by comma separated list of column names (tags,start,end,hours or message)
+    #[arg(
+        long = "csv",
+        requires("export"),
+        default_value = "tags,start,hours,message"
+    )]
+    pub csv: String,
 
     /// Show configuration parameters
     #[arg(short='C', long, conflicts_with_all(["start","end","back","message","list","report"]))]
