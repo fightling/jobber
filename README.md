@@ -23,6 +23,9 @@ Command line tool for tracking work time.
     - [Date and/or Time](#date-andor-time)
     - [Durations](#durations)
     - [Ranges](#ranges)
+  - [Import and Export](#import-and-export)
+    - [Legacy CSV Import](#legacy-csv-import)
+    - [CSV Export](#csv-export)
   - [Errors](#errors)
     - [I/O error](#io-error)
     - [JSON error](#json-error)
@@ -67,7 +70,7 @@ So the basic idea is to provide this in an easy to use command line like this:
 jobber -s start_time -e end_time -m message -t tags
 ```
 
-Of couse it makes sense to start a job and later finish it.
+Of course it makes sense to start a job and later finish it.
 So you can start a job with `-s` and finish it later with calling jobber again with `-e`.
 Also leaving a message often is easier when you know what you have done so you might provide a message when you finish the job - same with the tags.
 
@@ -298,6 +301,66 @@ Time or positional range in one of the following formats:
 **Hints:**
 
 - when using *since time until time* or *since time* format together with *decimal point date without year* remember that three points will be in the middle (e.g. `31.1...1.2.`)
+
+## Import and Export
+
+### Legacy CSV Import
+
+To import the old database format of the legacy *Ruby* version of *jobber* you can use `--legacy-import`:
+
+```txt
+▶ jobber --legacy-import ~/my_old_jobber.dat 
+Loaded database (2 entries) from file 'jobber.json'
+Imported 125 jobs added new tags  consult ,  meeting ,  my_client ,  training .
+Saved database into file 'jobber.json'
+```
+
+*jobber* shows that it have successfully imported `125 jobs` and that four new tags came with this import (again: tag names would be colored but not here in the Markdown text).
+
+### CSV Export
+
+By using the option `-E` you can export the database or parts of it into a CSV file:
+
+```txt
+▶ jobber -E
+Loaded database (2 entries) from file 'jobber.json'
+"tags","start","hours","message"
+"my_tag","03/04/2023 08:15",2.5,"What I did this morning"
+"my_tag","03/04/2023 16:25",0.25,"Did some nice work"
+Database unchanged.
+```
+
+As you can see the default output is a CSV file including the following columns: `tags`, `start`, `hours` and `message`.
+
+**Hint:**
+
+- items in export are sorted by start date and time
+- to write output into a file use the pipe feature of your shell (e.g. `jobber -E > out.csv`)
+
+Top change the columns that are exported you can use option `--csv` (possible values are: `pos`, `tags`, `start`, `end`, `hours` and `message`):
+
+```txt
+▶ jobber -E --csv pos,start,end
+Loaded database (2 entries) from file 'jobber.json'
+"pos","start","hours"
+2,"03/04/2023 08:15",2.5
+1,"03/04/2023 16:25",0.25
+Database unchanged.
+```
+
+In this example we just export `pos`,`start` and `hours` only.
+
+You may also specify a range with option `-E` like when you do a report:
+
+```txt
+▶ jobber -E 3/4,0:00..12:00
+Loaded database (2 entries) from file 'jobber.json'
+"tags","start","hours","message"
+"","03/04/2023 08:15",2.5,"What I did this morning"
+Database unchanged.
+```
+
+As you can see now only one of both jobs has been exported.
 
 ## Errors
 
