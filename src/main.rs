@@ -26,6 +26,24 @@ use command::Command;
 use context::Context;
 use error::Error;
 use jobs::Jobs;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Config {
+    database: String,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        let home = if let Some(base_dirs) = directories::BaseDirs::new() {
+            base_dirs.home_dir().to_string_lossy().to_string()
+        } else {
+            ".".to_string()
+        };
+        let path = format!("{}/jobber.json", home);
+        Self { database: path }
+    }
+}
 
 /// main which just catches errors
 fn main() {
@@ -39,8 +57,14 @@ fn main() {
 /// process program arguments to read/write jobber's database and handle warnings
 fn run(args: Args, context: &Context) -> Result<(), Error> {
     // load database from file or create new
-    let filename = &args.filename.clone();
-    let mut jobs = match Jobs::load(filename) {
+    let filename = if let Some(filename) = &args.filename {
+        filename.clone()
+    } else {
+        let cfg: Config = confy::load("jobber", "config").map_err(|e| Error::Confy(e))?;
+        cfg.database
+    };
+
+    let mut jobs = match Jobs::load(&filename) {
         Ok(jobs) => {
             eprintln!(
                 "Loaded database ({} entries) from file '{filename}'",
@@ -95,7 +119,7 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
         }
     }
     if jobs.modified() {
-        jobs.save(filename)?;
+        jobs.save(&filename)?;
         eprintln!("Saved database into file '{filename}'");
     }
     Ok(())

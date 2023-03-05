@@ -7,6 +7,7 @@ Command line tool for tracking work time.
 - [Jobber](#jobber)
   - [Contents](#contents)
   - [Purpose](#purpose)
+  - [Installation](#installation)
   - [Usage](#usage)
     - [Enter Work Time](#enter-work-time)
       - [Start a New Job](#start-a-new-job)
@@ -43,12 +44,14 @@ Command line tool for tracking work time.
     - [Unknown column name](#unknown-column-name)
     - [Date/Time parse error](#datetime-parse-error)
   - [Configuration](#configuration)
-    - [Setup Base Configuration](#setup-base-configuration)
-      - [Work Time Resolution](#work-time-resolution)
-      - [Hourly Payment Rate](#hourly-payment-rate)
-      - [Maximum Hours Per Day](#maximum-hours-per-day)
-    - [Setup Configuration for Specific Tags](#setup-configuration-for-specific-tags)
-    - [Show Configuration](#show-configuration)
+    - [Location of Database](#location-of-database)
+    - [Database Internal  Configuration](#database-internal--configuration)
+      - [Setup Base Configuration](#setup-base-configuration)
+        - [Work Time Resolution](#work-time-resolution)
+        - [Hourly Payment Rate](#hourly-payment-rate)
+        - [Maximum Hours Per Day](#maximum-hours-per-day)
+      - [Setup Configuration for Specific Tags](#setup-configuration-for-specific-tags)
+      - [Show Configuration](#show-configuration)
 
 ## Purpose
 
@@ -60,6 +63,16 @@ In 2021 I started to learn *Rust* and so I decided to rewrite jobber in that lan
 After several approaches it turned out that *Rust* was a good decision because *Rust* is much more picky about edge cases and has a nice testing environment to prevent any hidden erroneous code which might lead to wrong accounting.
 
 After several month of coding I now can present a first testable version which is not perfect (I still have some more ideas I want to implement) but yet seems more useful and secure than the original *Ruby* version.
+
+## Installation
+
+To install *jobber* you need to install *Rust* via *rustup* (see <https://rustup.rs>) and then use the following line:
+
+```txt
+▶ cargo install jobber
+```
+
+That's it.
 
 ## Usage
 
@@ -319,7 +332,7 @@ You might use `-t` to set up some tags which will filter out every job not using
 
 ### Select Database
 
-With `-f` you can set which database file shall be used by *jobber*:
+With `-f` you can set which database file shall be used by *jobber* (will override the location read from the configuration as described in section *Installation*):
 
 ```txt
 ▶ jobber -f ~/my_jobber.json` [...]
@@ -543,6 +556,20 @@ Parsing of a date and or time went wrong.
 
 ## Configuration
 
+### Location of Database
+
+At the first start *jobber* creates a configuration file (usually at `~/.config/jobber/config.toml`)
+
+This file has currently only one entry which is:
+
+```txt
+database = '~/jobber.json'
+```
+
+Change the path of the database if you like.
+
+### Database Internal  Configuration
+
 There are some settings in *jobber* you may want to change:
 
 - work time resolution
@@ -551,9 +578,9 @@ There are some settings in *jobber* you may want to change:
 
 In *jobber* there is a base configuration but you also can attach configurations to tags to have different configurations for different clients.
 
-### Setup Base Configuration
+#### Setup Base Configuration
 
-#### Work Time Resolution
+##### Work Time Resolution
 
 With `-R` you can set the work time resolution.
 The default is `0.25` which means a quarter of an hour.
@@ -571,7 +598,7 @@ Resolution: 0.5 hours
 Saved database into file 'jobber.json'
 ```
 
-#### Hourly Payment Rate
+##### Hourly Payment Rate
 
 To change your hourly payment rate use `-P` (e.g. `jobber -P 50` to set your hourly rate to 50$).
 There is not default so if you do not set this rates will not be displayed.
@@ -587,7 +614,7 @@ Payment per hour: 100
 Saved database into file 'jobber.json'
 ```
 
-#### Maximum Hours Per Day
+##### Maximum Hours Per Day
 
 If you set this value with `-H` days which work time exceeds this value will be marked yellow in report view.
 In List view jobs that exceed this value will be marked yellow.
@@ -604,11 +631,11 @@ Maximum work time: 8 hours
 Saved database into file 'jobber.json'
 ```
 
-### Setup Configuration for Specific Tags
+#### Setup Configuration for Specific Tags
 
 If you have several clients and each one has for example different payment rates you can add the tag option `-t` when you set the configuration.
 
-### Show Configuration
+#### Show Configuration
 
 To show your configuration(s) use the option `-C`:
 

@@ -68,8 +68,8 @@ Author: {author}"
 )]
 pub struct Args {
     /// Set data base file name
-    #[arg(short, long, default_value = "jobber.json")]
-    pub filename: String,
+    #[arg(short, long)]
+    pub filename: Option<String>,
 
     /// Add job now or at the given starting time
     #[arg(

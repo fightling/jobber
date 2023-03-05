@@ -12,7 +12,9 @@ repository = "https://github.com/fightling/jobber.git"
 [dependencies]
 chrono = { version="0.4", features = ["serde"] }
 clap = { version = "4.1", features = ["derive"] }
+confy = "0.5.1"
 days-in-month = "2.0.0"
+directories = "4.0.1"
 itertools = "0.10.5"
 regex = "1.7"
 serde = { version="1.0.152", features = ["derive","std"] }

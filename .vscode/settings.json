@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "Confy",
         "Datelike",
         "datetime",
         "dmhm",
@@ -14,7 +15,9 @@
         "MDHM",
         "mdyhm",
         "outputln",
+        "rustup",
         "termion",
+        "thiserror",
         "Timelike",
         "ymdhm",
         "YMDHM"
