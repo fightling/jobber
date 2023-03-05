@@ -58,21 +58,21 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
         for (month, days) in months.iter().sorted_by_key(|x| x.0) {
             // print year/month title centered
             let month_year = format!("{}/{}", month, year);
-            println!("{:^68}", month_year);
+            outputln!("{:^68}", month_year);
 
             // insert day of month column
-            print!("{:>3}", "day");
+            output!("{:>3}", "day");
 
             // print weekdays as table header
             const WEEKDAYS: [&str; 7] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
             for weekday in WEEKDAYS {
-                print!("{:>8}", weekday);
+                output!("{:>8}", weekday);
             }
             // add weekly sum to table header
-            println!("{:>8}", "week");
+            outputln!("{:>8}", "week");
 
             // indent day of month column
-            print!("{:>3}", "");
+            output!("{:>3}", "");
 
             // indent to first weekday in this month
             let first_weekday = NaiveDate::from_ymd_opt(*year, *month, 1)
@@ -81,7 +81,7 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                 .num_days_from_sunday()
                 + 1;
             for _ in 1..first_weekday {
-                print!("{:>8}", " ");
+                output!("{:>8}", " ");
             }
 
             // print all days in this month week per week
@@ -95,14 +95,14 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                     == Weekday::Sun
                 {
                     // print weekly sum and restart a new week row
-                    println!("{:>8}", week_hours);
+                    outputln!("{:>8}", week_hours);
 
                     // re-initialize weekly hours sum
                     week_hours = 0.0;
                     week_day_number = 0;
 
                     // indent day of month column
-                    print!("{:>3}", day);
+                    output!("{:>3}", day);
                 }
 
                 // print hours of that day if any or '-'
@@ -122,7 +122,7 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                     }
                     // print hours at this day and mark yellow if exceeded
                     if day_hours > 24.0 {
-                        print!(
+                        output!(
                             "{}{}{:>8}{}{}",
                             style::Bold,
                             Fg(LightRed),
@@ -131,7 +131,7 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                             style::Reset
                         );
                     } else if exceeded {
-                        print!(
+                        output!(
                             "{}{}{:>8}{}{}",
                             style::Bold,
                             Fg(Yellow),
@@ -140,7 +140,7 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                             style::Reset
                         );
                     } else {
-                        print!(
+                        output!(
                             "{}{}{:>8}{}{}",
                             style::Bold,
                             Fg(LightWhite),
@@ -154,16 +154,16 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                     week_hours += day_hours;
                     month_hours += day_hours;
                 } else {
-                    print!("{:>8}", "-");
+                    output!("{:>8}", "-");
                 }
                 week_day_number += 1;
             }
             for _ in 0..(7 - week_day_number) {
-                print!("{:>8}", "");
+                output!("{:>8}", "");
             }
 
             // print weekly sum and restart a new week row
-            println!("{:>8}", week_hours);
+            outputln!("{:>8}", week_hours);
 
             const MONTHS: [&str; 12] = [
                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -174,13 +174,13 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                 year,
                 month_hours
             );
-            println!("{:>68}", monthly_hours);
+            outputln!("{:>68}", monthly_hours);
             month_hours = 0.0;
-            println!("");
+            outputln!("");
         }
     }
 
-    println!(
+    outputln!(
         "Total: {} job(s), {}{}{}{}{} hours",
         jobs.len(),
         style::Bold,
@@ -207,16 +207,16 @@ pub fn report_csv(jobs: JobList, context: &Context, columns: &Option<String>) ->
         .map(|c| format!(r#""{}""#, c))
         .collect::<Vec<String>>()
         .join(",");
-    println!("{}", title);
+    outputln!("{}", title);
     for (pos, job) in jobs.into_iter() {
         for (c, column) in columns.iter().enumerate() {
             if c > 0 {
-                print!(",");
+                output!(",");
             }
             match *column {
-                "pos" => print!("{}", pos + 1),
-                "start" => print!(r#""{}""#, job.start.format("%m/%d/%Y %H:%M")),
-                "end" => print!(
+                "pos" => output!("{}", pos + 1),
+                "start" => output!(r#""{}""#, job.start.format("%m/%d/%Y %H:%M")),
+                "end" => output!(
                     r#""{}""#,
                     if let Some(end) = job.end {
                         end
@@ -224,7 +224,7 @@ pub fn report_csv(jobs: JobList, context: &Context, columns: &Option<String>) ->
                         context.current()
                     }
                 ),
-                "message" => print!(
+                "message" => output!(
                     r#""{}""#,
                     str::replace(
                         job.message.as_ref().unwrap_or(&"".to_string()),
@@ -232,15 +232,15 @@ pub fn report_csv(jobs: JobList, context: &Context, columns: &Option<String>) ->
                         "\"\""
                     )
                 ),
-                "hours" => print!(
+                "hours" => output!(
                     "{}",
                     job.hours(Some(jobs.get_configuration(&job.tags).resolution))
                 ),
-                "tags" => print!(r#""{}""#, job.tags.0.join(",")),
+                "tags" => output!(r#""{}""#, job.tags.0.join(",")),
                 _ => return Err(Error::UnknownColumn(column.to_string())),
             }
         }
-        println!("");
+        outputln!("");
     }
     Ok(())
 }
@@ -265,26 +265,15 @@ fn test_csv_date() {
         &context,
     )
     .unwrap();
-    let filename = "test_csv_date.csv";
-    if std::path::Path::new(filename).exists() {
-        std::fs::remove_file(filename).unwrap();
-    }
     run_args_with(
         &mut jobs,
-        &[
-            "jobber",
-            "-r",
-            "--csv",
-            "tags,start,hours,message",
-            "-o",
-            filename,
-        ],
+        &["jobber", "-r", "--csv", "tags,start,hours,message"],
         &context,
     )
     .unwrap();
 
     assert_eq!(
-        std::fs::read_to_string(filename).unwrap(),
+        crate::output::output(),
         r#""tags","start","hours","message"
 "","02/01/2023 12:00",2,"two hours job at twelve"
 "#

@@ -13,6 +13,7 @@
         "mdhm",
         "MDHM",
         "mdyhm",
+        "outputln",
         "termion",
         "Timelike",
         "ymdhm",

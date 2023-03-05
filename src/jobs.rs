@@ -1,3 +1,4 @@
+use crate::outputln;
 use crate::{
     change::Change,
     command::Command,
@@ -175,7 +176,7 @@ impl Jobs {
                 }
             }
             Command::List { range, tags } => {
-                println!("{}", self.filter(&range, &&TagSet::from_option_vec(&tags)));
+                outputln!("{}", self.filter(&range, &&TagSet::from_option_vec(&tags)));
                 Change::Nothing
             }
             Command::Report {
@@ -236,7 +237,7 @@ impl Jobs {
             }
             Command::ListTags { range, tags } => {
                 let tags = self.filter(&range, &&TagSet::from_option_vec(&tags)).tags();
-                println!("Known tags: {}", tags);
+                outputln!("Known tags: {}", tags);
                 Change::Nothing
             }
         })
