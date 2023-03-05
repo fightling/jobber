@@ -12,17 +12,17 @@ use clap::Parser;
 Arguments:
     START, BACK, END
         Date and time in one of the following formats:
-            mm/dd/yyyy,HH:MM
-            mm/dd/yyyy
-            mm/dd,HH:MM
-            mm/dd
-            dd.mm.yyyy,HH:MM
-            dd.mm.yyyy
-            dd.mm.,HH:MM
-            dd.mm.
-            yyyy-mm-dd,HH:MM
-            yyyy-mm-dd
-            HH:MM
+            m/d/y,H:M
+            m/d/y
+            m/d,H:M
+            m/d
+            d.m.y,HH:MM
+            d.m.y
+            d.m.,H:M
+            d.m.
+            y-m-d,H:M
+            y-m-d
+            H:M
     DURATION
         Duration in one of the following formats:
             HH:MM
@@ -41,11 +41,11 @@ Arguments:
             s..
             D
     where:
-        yyyy = year
-          mm = month
-          dd = day of month
-          HH = hour
-          MM = minute
+           y = year
+           m = month
+           d = day of month
+           H = hour
+           M = minute
            h = hours 
           fr = fraction of an hour
            f = from position

@@ -2,6 +2,32 @@
 
 Command line tool for tracking work time.
 
+## Contents
+
+- [Jobber](#jobber)
+  - [Contents](#contents)
+  - [Purpose](#purpose)
+  - [Usage](#usage)
+    - [Enter Work Time](#enter-work-time)
+    - [Visualizing Entered Work Times](#visualizing-entered-work-times)
+      - [List View](#list-view)
+      - [Report View](#report-view)
+  - [Date, Time, Duration and Range Formats](#date-time-duration-and-range-formats)
+    - [Date and/or Time](#date-andor-time)
+    - [Durations](#durations)
+    - [Ranges](#ranges)
+  - [Errors](#errors)
+    - [I/O error](#io-error)
+    - [JSON error](#json-error)
+    - [There still is an open job](#there-still-is-an-open-job)
+    - [There is no open job](#there-is-no-open-job)
+    - [End of the job is before it's start](#end-of-the-job-is-before-its-start)
+    - [User cancelation](#user-cancelation)
+    - [Can not use tags within same job because they have different configurations](#can-not-use-tags-within-same-job-because-they-have-different-configurations)
+    - [User needs to enter message](#user-needs-to-enter-message)
+    - [Unknown column name](#unknown-column-name)
+    - [Date/Time parse error](#datetime-parse-error)
+
 ## Purpose
 
 I started *jobber* as a *Ruby* script in 2013 because in my opinion usual work time tracking tools often come with awful or overloaded UIs.
@@ -25,6 +51,8 @@ So in general the following information must be provided to track your work time
 - some information to categorize your work (a client, a topic)
 
 That's it.
+
+### Enter Work Time
 
 So the basic idea is to provide this in an easy to use command line like this:
 
@@ -125,6 +153,10 @@ Saved database into file 'jobber.json'
 
 As you can see this also worked like a charm.
 
+### Visualizing Entered Work Times
+
+#### List View
+
 Let's take a look what we already did today:
 
 ```txt
@@ -150,6 +182,8 @@ Database unchanged.
 
 You can see that jobber lists the two jobs we did.
 
+#### Report View
+
 Let's display this in a more fancy view with the report option `-r`:
 
 ```txt
@@ -169,9 +203,104 @@ Database unchanged.
 ```
 
 Wow! What you get now is a monthly report of the jobs.
-Let me explain how this works:
-In the first line of report you see the month and year `3/2023`.
+
+Let me explain how this is to read: In the first line of the report you see the month and the year `3/2023`.
 After that a table follows in which the first column shows the day of month for each line (except the first which would always be `1`).
 The next seven columns show the work time for each day.
 Because I write this README at Saturday under `sat` you see that I worked `2.75` hours today.
 In the last column the weekly work time is summed up and at the end of the table it says that we work the same amount in all of March and - as useless as it seems in our case - at the end it sums up all work time for all displayed jobs.
+
+## Date, Time, Duration and Range Formats
+
+### Date and/or Time
+
+Date and time in one of the following formats:
+
+| Format                      | Type        | Description                     | Example          |
+| :-------------------------- | ----------- | ------------------------------- | ---------------- |
+| *m*`/`*d*`/`*y*`,`*H*`:`*M* | month first | date and time                   | `1/31/2023,1:01` |
+| *m*`/`*d*`/`*y*             | month first | date                            | `1/31/2023`      |
+| *m*`/`*d*`,`*H*`:`*M*       | month first | date without year and with time | `1/31,1:01`      |
+| *m*`/`*d*                   | month first | date without year               | `1/31`           |
+| *d*`.`*m*`.`*y*`,`*H*`:`*M* | day first   | date and time                   | `31.1.2023,1:01` |
+| *d*`.`*m*`.`*y*             | day first   | date                            | `31.1.2023`      |
+| *d*`.`*m*`.,`*H*`:`*M*      | day first   | date without year and with time | `31.1.,1:01`     |
+| *d*`.`*m.*                  | day first   | date without year               | `31.1.`          |
+| *y*`-`*m*`-`*d*`,`*H*`:`*M* | year first  | date and time                   | `2023-1-31,1:01` |
+| *y*`-`*m*`-`*d*             | year first  | date                            | `2023-1-31`      |
+| *H*`:`*M*                   | -           | time                            | `1:01`           |
+
+**Notes:**
+
+- Spaces within the time formats are not allowed and combined date and time formats can also be swapped to time and date.
+- When date or time is missing current time will be used.
+- If giving start and end together only one needs to define a date
+
+### Durations
+
+Duration in one of the following formats:
+
+| Format     | Type               | Description                   | Example |
+| :--------- | ------------------ | ----------------------------- | ------- |
+| *H*`:`*M*  | standard           | hours and minutes             | `1:15`  |
+| *h*`,`*fr* | with comma         | hours and fraction of an hour | `1,25`  |
+| *h*`.`*fr* | with decimal point | hours and fraction of an hour | `1.25`  |
+
+### Ranges
+
+Time or positional range in one of the following formats:
+
+| Format     | Description               | Example            |
+| :--------- | ------------------------- | ------------------ |
+| *f*`-`*t*  | from position to position | `3-5`              |
+| *f*`-`     | since position            | `3-`               |
+| *C*        | count (from end)          | `10`               |
+| *s*`..`*u* | since time until time     | `1/31,15:00..1.2.` |
+| *s*`..`    | since time                | `1/31,15:00..`     |
+| *D*        | single day                | `1/31`             |
+
+**Hints:**
+
+- when using *since time until time* or *since time* format together with *decimal point date without year* remember that three points will be in the middle (e.g. `31.1...1.2.`)
+
+## Errors
+
+### I/O error
+
+Reading or writing to file has failed.
+
+### JSON error
+
+Parsing *JSON* went wrong.
+
+### There still is an open job
+
+You have tried to start a new job but there currently is an open job which needs to be ended before you can add new jobs.
+
+### There is no open job
+
+You tried to end an open job but there is none.
+
+### End of the job is before it's start
+
+End and start time seems swapped in order.
+
+### User cancelation
+
+You refused something after questioned.
+
+### Can not use tags within same job because they have different configurations
+
+You used two tags together which have different configurations.
+
+### User needs to enter message
+
+You need to enter a message but you did not.
+
+### Unknown column name
+
+You stated a column name that is unknown when exporting into *CSV* (only `pos`, `start`, `end`, `hours`, `message` and `tags` are available).
+
+### Date/Time parse error
+
+Parsing of a date and or time went wrong.

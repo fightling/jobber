@@ -13,7 +13,7 @@ pub enum Error {
     NoOpenJob,
     #[error("End {0} of the job is before it's start {1}")]
     EndBeforeStart(DateTime, DateTime),
-    #[error("Found issue(s).")]
+    #[error("Found warming(s).")]
     Warnings(Vec<Warning>),
     #[error("You canceled.")]
     Cancel,
