@@ -16,6 +16,7 @@ Command line tool for tracking work time.
       - [List View](#list-view)
       - [Report View](#report-view)
       - [Filter Your View](#filter-your-view)
+    - [Select Database](#select-database)
   - [Date, Time, Duration and Range Formats](#date-time-duration-and-range-formats)
     - [Date and/or Time](#date-andor-time)
     - [Durations](#durations)
@@ -224,6 +225,14 @@ In the last column the weekly work time is summed up and at the end of the table
 #### Filter Your View
 
 You might use `-t` to set up some tags which will filter out every job not using these tags in all reports.
+
+### Select Database
+
+With `-f` you can set which database file shall be used by *jobber*:
+
+```txt
+▶ jobber -f ~/my_jobber.json` [...]
+```
 
 ## Date, Time, Duration and Range Formats
 
