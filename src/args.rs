@@ -16,7 +16,7 @@ Arguments:
             m/d/y
             m/d,H:M
             m/d
-            d.m.y,HH:MM
+            d.m.y,H:M
             d.m.y
             d.m.,H:M
             d.m.
@@ -25,7 +25,7 @@ Arguments:
             H:M
     DURATION
         Duration in one of the following formats:
-            HH:MM
+            H:M
             h,fr
             h.fr
     MESSAGE
