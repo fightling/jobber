@@ -11,62 +11,59 @@ use clap::Parser;
         "\
 Arguments:
 
-FILENAME, LEGACY_IMPORT
-    File path and name.
+  <FILENAME>, <LEGACY_IMPORT>
+        File path and name.
 
-START, BACK, END
-    Date and time in one of the following formats:
+  <START>, <BACK>, <END>
+        Date and time in one of the following formats:
 
-    m/d/y,H:M   d.m.y,H:M   y-m-d,H:M
-    m/d/y       d.m.y       y-m-d
-    m/d,H:M     d.m.,H:M
-    m/d         d.m.        H:M
+        m/d/y,H:M   d.m.y,H:M   y-m-d,H:M
+        m/d/y       d.m.y       y-m-d
+        m/d,H:M     d.m.,H:M
+        m/d         d.m.        H:M
 
-    y = year    m = month   d = day of month
-    H = hour    M = minute
+        y = year    m = month   d = day of month
+        H = hour    M = minute
 
-DURATION
-    Duration in one of the following formats:
+  <DURATION>
+        Duration in one of the following formats:
 
-    H:M         h,fr        h.fr
+        H:M         h,fr        h.fr
 
-    H = hour    M = minute
-    h = hours  fr = fraction of an hour
+        H = hour    M = minute
+        h = hours  fr = fraction of an hour
 
-MESSAGE
-    Job description text or will ask for if blank
+  <MESSAGE>
+        Job description text or will ask for if blank
 
-TAGS
-    List of comma separated tag names (omit spaces)
+  <TAGS>
+        List of comma separated tag names (omit spaces)
 
-LIST, REPORT, LIST_TAGS
-    Time or positional range in one of the following formats:
+  <LIST>, <REPORT>, <EXPORT>, <LIST_TAGS>
+        Time or positional range in one of the following formats:
 
-    f-t         f-          C
-    s..u        s..         D
+        f-t         f-          C
+        s..u        s..         D
 
-    f = from position
-    t = to position
-    C = backwards count
-    s = since time (like in START)
-    u = until time (like in START)
-    D = single day (like in START but no without time)
+        f = from position
+        t = to position
+        C = backwards count
+        s = since time (like in <START>)
+        u = until time (like in <START>)
+        D = single day (like in <START> but without time)
 
-REPORT, EXPORT
-    Time range as two dates (like in START) separated by '..'
+  <CSV>
+        List of comma separated column names (omit spaces)
+        Available columns: tags, start, end, hours or message
 
-CSV
-    List of comma separated column names (omit spaces)
-    Available columns: tags, start, end, hours or message
+  <RESOLUTION>
+        Work time resolution in fractional hours
 
-RESOLUTION
-    Work time resolution in fractional hours
+  <PAY>
+        Hourly payment rate as floating point number
 
-PAY
-    Hourly payment rate as floating point number
-
-MAX_HOURS
-    Maximum amount of work hours as integer number
+  <MAX_HOURS>
+        Maximum amount of work hours as integer number
 "
     ),
     help_template(
@@ -75,8 +72,14 @@ MAX_HOURS
 {usage-heading} {usage}
 
 {all-args}{after-help}
+Homepage:
+    https://github.com/fightling/jobber
 
-Author: {author}"
+License:
+    jobber is under MIT license.
+
+Author:
+    {author}"
     )
 )]
 pub struct Args {
@@ -134,6 +137,7 @@ pub struct Args {
     #[arg(short='E', long="export", conflicts_with_all(["start","end","back","message"]))]
     pub export: Option<Option<String>>,
 
+    /// customize CSV export columns by comma separated list of column names
     /// customize CSV export columns by comma separated list of column names
     #[arg(
         long = "csv",

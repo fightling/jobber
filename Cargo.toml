@@ -4,7 +4,7 @@ version = "0.4.0"
 edition = "2021"
 description = "Command line tool for tracking work time"
 license = "MIT"
-authors = ["pat@thats-software.com"]
+authors = ["Patrick Hoffmann (pat@thats-software.com)"]
 repository = "https://github.com/fightling/jobber.git"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
