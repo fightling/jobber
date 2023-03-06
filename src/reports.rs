@@ -54,6 +54,7 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
     // enumerate all years in map in sorted order
     for (year, months) in years.iter().sorted_by_key(|x| x.0) {
         let mut month_hours = 0.0;
+        let mut month_costs: Option<f64> = None;
         // enumerate all months in that year in sorted order
         for (month, days) in months.iter().sorted_by_key(|x| x.0) {
             // print year/month title centered
@@ -109,16 +110,22 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                 if let Some(tag_hours) = days.get(&day) {
                     // sum up all hours at this day and determine if work limit is exceeded for any tag
                     let mut day_hours = 0.0;
+                    let mut day_costs: Option<f64> = None;
                     let mut exceeded = false;
                     for (tag, hours) in tag_hours {
-                        if let Some(max_hours) =
-                            jobs.get_configuration(&TagSet::from_one(tag)).max_hours
-                        {
+                        let configuration = jobs.get_configuration(&TagSet::from_one(tag));
+                        if let Some(max_hours) = configuration.max_hours {
                             if *hours > max_hours as f64 {
                                 exceeded = true;
                             }
                         }
                         day_hours += hours;
+                        if let Some(pay) = configuration.pay {
+                            if day_costs.is_none() {
+                                day_costs = Some(0.0);
+                            }
+                            day_costs = Some(day_costs.unwrap() + hours * pay);
+                        }
                     }
                     // print hours at this day and mark yellow if exceeded
                     if day_hours > 24.0 {
@@ -153,6 +160,12 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                     // sum up weekly and monthly hours
                     week_hours += day_hours;
                     month_hours += day_hours;
+                    if let Some(day_costs) = day_costs {
+                        if month_costs.is_none() {
+                            month_costs = Some(0.0);
+                        }
+                        month_costs = Some(month_costs.unwrap() + day_costs);
+                    }
                 } else {
                     output!("{:>8}", "-");
                 }
@@ -168,14 +181,25 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
             const MONTHS: [&str; 12] = [
                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
             ];
+
+            let month_pay = {
+                if let Some(costs) = month_costs {
+                    format!(" = ${}", costs.separated_string(),)
+                } else {
+                    String::new()
+                }
+            };
+
             let monthly_hours = format!(
-                "{} {}: {} hrs.",
+                "{} {}: {} hours{}",
                 MONTHS[*month as usize - 1],
                 year,
-                month_hours
+                month_hours,
+                month_pay
             );
-            outputln!("{:>68}", monthly_hours);
+            outputln!("{:>67}", monthly_hours);
             month_hours = 0.0;
+            month_costs = None;
             outputln!("");
         }
     }
