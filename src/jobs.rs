@@ -167,7 +167,9 @@ impl Jobs {
                 if let Some(job) = self.jobs.last_mut() {
                     let mut new_job = job.clone();
                     new_job.end = Some(end);
-                    new_job.message = message.flatten();
+                    if message.is_some() {
+                        new_job.message = message.flatten();
+                    }
                     if let Some(tags) = tags {
                         new_job.tags.0 = tags;
                     }
