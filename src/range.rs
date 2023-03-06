@@ -70,7 +70,13 @@ impl Range {
     }
 
     fn parse_time_range(list: &str, context: &Context) -> Range {
-        let list: Vec<&str> = list.split("..").collect();
+        let list: Vec<String> = if list.contains("...") {
+            let list: Vec<&str> = list.split("...").collect();
+            vec![list[0].to_string() + ".", list[1].to_string()]
+        } else {
+            let list: Vec<&str> = list.split("..").collect();
+            vec![list[0].to_string(), list[1].to_string()]
+        };
         if list.len() == 2 {
             let from = PartialDateTime::parse(Some(list[0].to_string()));
             let to = PartialDateTime::parse(Some(list[1].to_string()));
