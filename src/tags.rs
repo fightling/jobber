@@ -20,144 +20,26 @@ pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
         color::{Bg, Fg, *},
         style,
     };
+    write!(f, "{}", style::Bold)?;
     if let Some(position) = position(&tag) {
         match position % 11 {
-            0 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(LightCyan),
-                Fg(Black),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            1 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(LightMagenta),
-                Fg(Black),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            2 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(LightYellow),
-                Fg(Black),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            3 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(LightBlue),
-                Fg(Black),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            4 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(LightGreen),
-                Fg(Black),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            5 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(White),
-                Fg(Black),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            6 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(Cyan),
-                Fg(White),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            7 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(Magenta),
-                Fg(White),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            8 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(Yellow),
-                Fg(White),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            9 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(Blue),
-                Fg(White),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
-            10 => write!(
-                f,
-                "{}{}{} {} {}{}{}",
-                Bg(Green),
-                Fg(White),
-                style::Bold,
-                &tag,
-                style::Reset,
-                Fg(Reset),
-                Bg(Reset)
-            ),
+            0 => write!(f, "{}{} {} ", Bg(LightCyan), Fg(Black), &tag,)?,
+            1 => write!(f, "{}{} {} ", Bg(LightMagenta), Fg(Black), &tag,)?,
+            2 => write!(f, "{}{} {} ", Bg(LightYellow), Fg(Black), &tag,)?,
+            3 => write!(f, "{}{} {} ", Bg(LightBlue), Fg(Black), &tag,)?,
+            4 => write!(f, "{}{} {} ", Bg(LightGreen), Fg(Black), &tag,)?,
+            5 => write!(f, "{}{} {} ", Bg(White), Fg(Black), &tag,)?,
+            6 => write!(f, "{}{} {} ", Bg(Cyan), Fg(Black), &tag,)?,
+            7 => write!(f, "{}{} {} ", Bg(Magenta), Fg(Black), &tag,)?,
+            8 => write!(f, "{}{} {} ", Bg(Yellow), Fg(Black), &tag,)?,
+            9 => write!(f, "{}{} {} ", Bg(Blue), Fg(Black), &tag,)?,
+            10 => write!(f, "{}{} {} ", Bg(Green), Fg(Black), &tag,)?,
             _ => panic!("tag index error"),
         }
     } else {
-        write!(
-            f,
-            "{}{}{} {} {}{}{}",
-            Bg(Red),
-            Fg(White),
-            style::Bold,
-            &tag,
-            style::Reset,
-            Fg(Reset),
-            Bg(Reset)
-        )
+        write!(f, "{}{} {} ", Bg(Red), Fg(White), &tag,)?;
     }
+    write!(f, "{}{}{}", style::Reset, Fg(Reset), Bg(Reset))
 }
 
 /// get the position of a tag within the tag index `TAGS` (to assign a color)

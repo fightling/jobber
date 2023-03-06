@@ -416,7 +416,7 @@ impl Jobs {
                 continue;
             }
             writeln!(f, "\n    Pos: {}", n + 1)?;
-            job.writeln(f, Some(self.get_configuration(&job.tags).unwrap()))?;
+            job.writeln(f, self.get_configuration(&job.tags).unwrap())?;
         }
         Ok(())
     }

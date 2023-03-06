@@ -1,7 +1,5 @@
-use crate::{configuration::Configuration, job::Job, jobs::Jobs, tag_set::TagSet};
-use separator::Separatable;
+use crate::{configuration::Configuration, format::*, job::Job, jobs::Jobs, tag_set::TagSet};
 use std::collections::HashMap;
-use termion::{color::*, style};
 
 /// list of jobs extracted from database
 #[derive(Debug)]
@@ -18,32 +16,21 @@ impl std::fmt::Display for JobList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (pos, job) in &self.jobs {
             writeln!(f, "    Pos: {}", pos + 1)?;
-            job.writeln(f, Some(self.get_configuration(&job.tags)))?;
+            job.writeln(f, self.get_configuration(&job.tags))?;
             writeln!(f, "")?;
         }
         let pay = {
             if let Some(pay) = self.pay_overall() {
-                format!(
-                    " = ${}{}{}{}{}",
-                    style::Bold,
-                    Fg(White),
-                    pay.separated_string(),
-                    style::Reset,
-                    Fg(Reset),
-                )
+                format!(" = ${}", format_pay_pure(pay))
             } else {
                 String::new()
             }
         };
         writeln!(
             f,
-            "Total: {} job(s), {}{}{}{}{} hours{}",
+            "Total: {} job(s), {} hours{}",
             self.jobs.len(),
-            style::Bold,
-            Fg(White),
-            self.hours_overall(),
-            style::Reset,
-            Fg(Reset),
+            format_hours_pure(self.hours_overall()),
             pay,
         )?;
         Ok(())

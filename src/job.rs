@@ -1,9 +1,8 @@
 use crate::{
-    configuration::Configuration, context::Context, date_time::DateTime, error::Error,
-    tag_set::TagSet, tags,
+    configuration::Configuration, context::Context, date_time::DateTime, error::Error, format::*,
+    tag_set::TagSet,
 };
 use chrono::{Days, NaiveDateTime, NaiveTime};
-use separator::Separatable;
 use serde::{Deserialize, Serialize};
 
 /// One portion of work
@@ -127,100 +126,28 @@ impl Job {
     pub fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
-        configuration: Option<&Configuration>,
+        configuration: &Configuration,
     ) -> std::fmt::Result {
-        use termion::*;
-        writeln!(
-            f,
-            "  Start: {}{}{}",
-            color::Fg(color::Green),
-            self.start,
-            color::Fg(color::Reset)
-        )?;
-        if let Some(end) = &self.end {
-            writeln!(
-                f,
-                "    End: {}{}{}",
-                color::Fg(color::Magenta),
-                end,
-                color::Fg(color::Reset),
-            )?;
-        } else {
-            writeln!(
-                f,
-                "    End: {}- open -{}",
-                color::Fg(color::Magenta),
-                color::Fg(color::Reset),
-            )?;
+        writeln!(f, "  Start: {}", format_start(&self.start))?;
+        writeln!(f, "    End: {}", format_end(&self.end))?;
+        let hours = self.hours(configuration);
+        writeln!(f, "  Hours: {}", format_hours(hours, configuration),)?;
+        if configuration.pay.is_some() {
+            writeln!(f, "  Costs: {}", format_pay(hours, configuration))?;
         }
-        if let Some(configuration) = configuration {
-            let hours = self.hours(configuration);
-            if hours > 0.0 {
-                if let Some(max_hours) = configuration.max_hours {
-                    if hours > max_hours as f64 {
-                        write!(
-                            f,
-                            "  Hours: {}{}{:.2}{}{}\n",
-                            style::Bold,
-                            color::Fg(color::LightRed),
-                            hours,
-                            color::Fg(color::Reset),
-                            style::Reset
-                        )?;
-                    } else {
-                        write!(f, "  Hours: {}\n", hours)?;
-                    }
-                } else {
-                    write!(f, "  Hours: {}\n", hours)?;
-                }
-                if let Some(pay) = configuration.pay {
-                    write!(f, "  Costs: {}\n", (hours as f64 * pay).separated_string())?;
-                };
-            }
-        } else {
-            let hours = self.hours(&Configuration::default());
-            if hours > 0.0 {
-                write!(f, "  Hours: {}\n", hours)?;
-            }
-        };
-        if !self.tags.0.is_empty() {
-            write!(f, "   Tags: ",)?;
-            for tag in &self.tags.0 {
-                tags::format(f, &tag)?;
-                write!(f, " ")?;
-            }
-
-            writeln!(f, "",)?
+        if !self.tags.is_empty() {
+            writeln!(f, "   Tags: {}", self.tags)?;
         }
         if let Some(message) = &self.message {
-            let mut first = true;
-            let lines = message.split('\n');
-            for line in lines {
-                if first {
-                    first = false;
-                    write!(
-                        f,
-                        "Message: {}{}{}",
-                        style::Bold,
-                        color::Fg(color::LightWhite),
-                        line
-                    )?;
-                } else {
-                    write!(f, "         {}", line)?;
-                }
-                write!(f, "{}{}\n", color::Fg(color::Reset), style::Reset)?;
-            }
-        } else {
-            write!(f, "\n")?;
+            writeln!(f, "Message: {}", format_message(&message, 9))?;
         }
-
         Ok(())
     }
 }
 
 impl std::fmt::Display for Job {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.writeln(f, None)
+        self.writeln(f, &Configuration::default())
     }
 }
 

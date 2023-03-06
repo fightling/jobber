@@ -12,6 +12,7 @@ mod job_list;
 mod jobs;
 #[macro_use]
 mod output;
+mod format;
 mod partial_date_time;
 mod range;
 mod reports;

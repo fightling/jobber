@@ -1,4 +1,4 @@
-use crate::{context::Context, error::Error, job_list::JobList, tag_set::TagSet};
+use crate::{context::Context, error::Error, format::*, job_list::JobList, tag_set::TagSet};
 use chrono::{Datelike, NaiveDate, Weekday};
 use days_in_month::days_in_month;
 use itertools::Itertools;
@@ -127,35 +127,16 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                             day_costs = Some(day_costs.unwrap() + hours * pay);
                         }
                     }
-                    // print hours at this day and mark yellow if exceeded
+                    // print hours at this day and mark yellow if exceeded and red if >24h/day
+                    output!("{}", style::Bold);
                     if day_hours > 24.0 {
-                        output!(
-                            "{}{}{:>8}{}{}",
-                            style::Bold,
-                            Fg(LightRed),
-                            day_hours,
-                            Fg(Reset),
-                            style::Reset
-                        );
+                        output!("{}{:>8}{}", Fg(LightRed), day_hours, Fg(Reset),);
                     } else if exceeded {
-                        output!(
-                            "{}{}{:>8}{}{}",
-                            style::Bold,
-                            Fg(Yellow),
-                            day_hours,
-                            Fg(Reset),
-                            style::Reset
-                        );
+                        output!("{}{:>8}{}", Fg(Yellow), day_hours, Fg(Reset),);
                     } else {
-                        output!(
-                            "{}{}{:>8}{}{}",
-                            style::Bold,
-                            Fg(LightWhite),
-                            day_hours,
-                            Fg(Reset),
-                            style::Reset
-                        );
+                        output!("{}{:>8}{}", Fg(LightWhite), day_hours, Fg(Reset),);
                     }
+                    output!("{}", style::Reset);
 
                     // sum up weekly and monthly hours
                     week_hours += day_hours;
@@ -206,26 +187,15 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
 
     let pay = {
         if let Some(pay) = jobs.pay_overall() {
-            format!(
-                " = ${}{}{}{}{}",
-                style::Bold,
-                Fg(White),
-                pay.separated_string(),
-                style::Reset,
-                Fg(Reset),
-            )
+            format!(" = ${}", format_pay_pure(pay),)
         } else {
             String::new()
         }
     };
     outputln!(
-        "Total: {} job(s), {}{}{}{}{} hours{}",
+        "Total: {} job(s), {} hours{}",
         jobs.len(),
-        style::Bold,
-        Fg(White),
-        jobs.hours_overall(),
-        style::Reset,
-        Fg(Reset),
+        format_hours_pure(jobs.hours_overall()),
         pay,
     );
 
