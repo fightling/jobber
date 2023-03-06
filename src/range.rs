@@ -75,7 +75,11 @@ impl Range {
             vec![list[0].to_string() + ".", list[1].to_string()]
         } else {
             let list: Vec<&str> = list.split("..").collect();
-            vec![list[0].to_string(), list[1].to_string()]
+            match list.len() {
+                1 => vec![list[0].to_string()],
+                2 => vec![list[0].to_string(), list[1].to_string()],
+                _ => return Range::None,
+            }
         };
         if list.len() == 2 {
             let from = PartialDateTime::parse(Some(list[0].to_string()));
