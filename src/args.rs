@@ -54,12 +54,12 @@ Arguments:
 
   <CSV>
         List of comma separated column names (omit spaces)
-        Available columns: tags, start, end, hours or message
+        Available columns: tags, start, end, hours, pay or message
 
   <RESOLUTION>
         Work time resolution in fractional hours
 
-  <PAY>
+  <RATE>
         Hourly payment rate as floating point number
 
   <MAX_HOURS>

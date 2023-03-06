@@ -16,6 +16,7 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
             if c > 0 {
                 output!(",");
             }
+            let configuration = jobs.get_configuration(&job.tags);
             match *column {
                 "pos" => output!("{}", pos + 1),
                 "start" => output!(r#""{}""#, job.start.format("%m/%d/%Y %H:%M")),
@@ -35,11 +36,13 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
                         "\"\""
                     )
                 ),
-                "hours" => output!(
-                    "{}",
-                    job.hours(jobs.get_configuration(&job.tags).resolution)
-                ),
+                "hours" => output!("{}", job.hours(configuration.resolution)),
                 "tags" => output!(r#""{}""#, job.tags.0.join(",")),
+                "pay" => {
+                    if let Some(pay) = configuration.pay {
+                        output!("{}", job.hours(configuration.resolution) * pay)
+                    }
+                }
                 _ => return Err(Error::UnknownColumn(column.to_string())),
             }
         }

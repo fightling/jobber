@@ -405,7 +405,7 @@ Items in export are automatically sorted by start date and time for your conveni
 
 To write output into a file use the pipe feature of your shell (e.g. `jobber -E > out.csv`)
 
-To change the columns which are exported you can use option `--csv` (possible values are: `pos`, `tags`, `start`, `end`, `hours` and `message`):
+To change the columns which are exported you can use option `--csv` (possible values are: `pos`, `tags`, `start`, `end`, `hours`, `pay` and `message`):
 
 ```txt
 ▶ jobber -E --csv pos,start,end
