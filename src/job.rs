@@ -3,6 +3,7 @@ use crate::{
     tag_set::TagSet, tags,
 };
 use chrono::{Days, NaiveDateTime, NaiveTime};
+use separator::Separatable;
 use serde::{Deserialize, Serialize};
 
 /// One portion of work
@@ -173,7 +174,7 @@ impl Job {
                     write!(f, "  Hours: {}\n", hours)?;
                 }
                 if let Some(pay) = configuration.pay {
-                    write!(f, "  Costs: {}\n", hours as f64 * pay)?;
+                    write!(f, "  Costs: {}\n", (hours as f64 * pay).separated_string())?;
                 };
             }
         } else {

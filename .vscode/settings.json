@@ -16,6 +16,7 @@
         "mdyhm",
         "outputln",
         "rustup",
+        "Separatable",
         "termion",
         "thiserror",
         "Timelike",

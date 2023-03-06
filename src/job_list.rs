@@ -1,7 +1,7 @@
-use termion::{color::*, style};
-
 use crate::{configuration::Configuration, job::Job, jobs::Jobs, tag_set::TagSet};
+use separator::Separatable;
 use std::collections::HashMap;
+use termion::{color::*, style};
 
 /// list of jobs extracted from database
 #[derive(Debug)]
@@ -21,15 +21,30 @@ impl std::fmt::Display for JobList {
             job.writeln(f, Some(self.get_configuration(&job.tags)))?;
             writeln!(f, "")?;
         }
+        let pay = {
+            if let Some(pay) = self.pay_overall() {
+                format!(
+                    " = ${}{}{}{}{}",
+                    style::Bold,
+                    Fg(White),
+                    pay.separated_string(),
+                    style::Reset,
+                    Fg(Reset),
+                )
+            } else {
+                String::new()
+            }
+        };
         writeln!(
             f,
-            "Total: {} job(s), {}{}{}{}{} hours",
+            "Total: {} job(s), {}{}{}{}{} hours{}",
             self.jobs.len(),
             style::Bold,
             Fg(White),
             self.hours_overall(),
             style::Reset,
-            Fg(Reset)
+            Fg(Reset),
+            pay,
         )?;
         Ok(())
     }
@@ -86,6 +101,22 @@ impl JobList {
             hours += job.hours(self.get_configuration(&job.tags).resolution)
         }
         hours
+    }
+    pub fn pay_overall(&self) -> Option<f64> {
+        let mut pay_sum = 0.0;
+        let mut has_payment = false;
+        for (_, job) in &self.jobs {
+            let configuration = self.get_configuration(&job.tags);
+            if let Some(pay) = configuration.pay {
+                pay_sum += pay * job.hours(configuration.resolution);
+                has_payment = true;
+            }
+        }
+        if has_payment {
+            Some(pay_sum)
+        } else {
+            None
+        }
     }
 }
 

@@ -2,6 +2,7 @@ use crate::{context::Context, error::Error, job_list::JobList, tag_set::TagSet};
 use chrono::{Datelike, NaiveDate, Weekday};
 use days_in_month::days_in_month;
 use itertools::Itertools;
+use separator::Separatable;
 use std::collections::HashMap;
 use termion::{color::*, style};
 
@@ -179,14 +180,29 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
         }
     }
 
+    let pay = {
+        if let Some(pay) = jobs.pay_overall() {
+            format!(
+                " = ${}{}{}{}{}",
+                style::Bold,
+                Fg(White),
+                pay.separated_string(),
+                style::Reset,
+                Fg(Reset),
+            )
+        } else {
+            String::new()
+        }
+    };
     outputln!(
-        "Total: {} job(s), {}{}{}{}{} hours",
+        "Total: {} job(s), {}{}{}{}{} hours{}",
         jobs.len(),
         style::Bold,
         Fg(White),
         jobs.hours_overall(),
         style::Reset,
-        Fg(Reset)
+        Fg(Reset),
+        pay,
     );
 
     Ok(())
