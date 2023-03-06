@@ -98,7 +98,7 @@ impl JobList {
     pub fn hours_overall(&self) -> f64 {
         let mut hours = 0.0;
         for (_, job) in &self.jobs {
-            hours += job.hours(self.get_configuration(&job.tags).resolution)
+            hours += job.hours(self.get_configuration(&job.tags))
         }
         hours
     }
@@ -108,7 +108,7 @@ impl JobList {
         for (_, job) in &self.jobs {
             let configuration = self.get_configuration(&job.tags);
             if let Some(pay) = configuration.pay {
-                pay_sum += pay * job.hours(configuration.resolution);
+                pay_sum += pay * job.hours(configuration);
                 has_payment = true;
             }
         }

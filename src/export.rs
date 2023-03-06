@@ -36,11 +36,11 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
                         "\"\""
                     )
                 ),
-                "hours" => output!("{}", job.hours(configuration.resolution)),
+                "hours" => output!("{}", job.hours(&configuration)),
                 "tags" => output!(r#""{}""#, job.tags.0.join(",")),
                 "pay" => {
                     if let Some(pay) = configuration.pay {
-                        output!("{}", job.hours(configuration.resolution) * pay)
+                        output!("{}", job.hours(&configuration) * pay)
                     }
                 }
                 _ => return Err(Error::UnknownColumn(column.to_string())),

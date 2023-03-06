@@ -60,8 +60,8 @@ impl Job {
         };
         (&end - &self.start).num_minutes()
     }
-    pub fn hours(&self, resolution: Option<f64>) -> f64 {
-        if let Some(resolution) = resolution {
+    pub fn hours(&self, configuration: &Configuration) -> f64 {
+        if let Some(resolution) = configuration.resolution {
             (self.minutes() as f64 / 60.0 / resolution).ceil() * resolution
         } else {
             (self.minutes() as f64 / 60.0 / 0.01).round() * 0.01
@@ -154,7 +154,7 @@ impl Job {
             )?;
         }
         if let Some(configuration) = configuration {
-            let hours = self.hours(configuration.resolution);
+            let hours = self.hours(configuration);
             if hours > 0.0 {
                 if let Some(max_hours) = configuration.max_hours {
                     if hours > max_hours as f64 {
@@ -178,7 +178,7 @@ impl Job {
                 };
             }
         } else {
-            let hours = self.hours(None);
+            let hours = self.hours(&Configuration::default());
             if hours > 0.0 {
                 write!(f, "  Hours: {}\n", hours)?;
             }
