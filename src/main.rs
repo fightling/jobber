@@ -85,7 +85,11 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
     let mut command = Command::parse(args, jobs.open_start(), context);
     match jobs.process(&command, true, context) {
         Err(Error::Warnings(warnings)) => {
-            eprintln!("There {} warning(s) you have to omit:", warnings.len());
+            if warnings.len() == 1 {
+                eprintln!("There ist one warning you have to omit:");
+            } else {
+                eprintln!("There are {} warnings you have to omit:", warnings.len());
+            }
             for (n, warning) in warnings.iter().enumerate() {
                 eprintln!("\nWARNING {}) {}", n + 1, warning);
                 if !ask("Do you still want to add this job?", false)? {
