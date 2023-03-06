@@ -283,7 +283,7 @@ Let's display this in a more fancy view with the report option `-r`:
 ▶ jobber -r
 Loaded database (2 entries) from file '/home/pat/jobber.json'
                                3/2023                               
-day     sun     mon     tue     wed     thu     fri     sat    week
+Day     Sun     Mon     Tue     Wed     Thu     Fri     Sat    Week
                                   -       -       -       3       3
   5       2       -       -       -       -       -       -       2
  12       -       -       -       -       -       -       -       0

@@ -60,15 +60,15 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
             outputln!("{:^68}", month_year);
 
             // insert day of month column
-            output!("{:>3}", "day");
+            output!("{:>3}", "Day");
 
             // print weekdays as table header
-            const WEEKDAYS: [&str; 7] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+            const WEEKDAYS: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             for weekday in WEEKDAYS {
                 output!("{:>8}", weekday);
             }
             // add weekly sum to table header
-            outputln!("{:>8}", "week");
+            outputln!("{:>8}", "Week");
 
             // indent day of month column
             output!("{:>3}", "");
