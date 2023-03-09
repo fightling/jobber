@@ -128,6 +128,22 @@ impl Jobs {
         }
         jobs
     }
+    fn copy_last_or_enter_message(
+        &self,
+        message: Option<Option<String>>,
+    ) -> Result<Option<String>, Error> {
+        if let Some(last) = self.jobs.last() {
+            Ok(last.message.clone())
+        } else {
+            Self::check_force_enter_message(message)
+        }
+    }
+    fn check_force_enter_message(message: Option<Option<String>>) -> Result<Option<String>, Error> {
+        if message.is_some() && message.clone().flatten().is_none() {
+            return Err(Error::EnterMessage);
+        }
+        Ok(message.flatten())
+    }
     fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
         // debug
         // eprintln!("{command:?}");
@@ -138,37 +154,52 @@ impl Jobs {
                 start,
                 message,
                 tags,
-            } => {
-                if message.is_some() && message.clone().flatten().is_none() {
-                    return Err(Error::EnterMessage);
-                } else {
-                    Change::Push(Job::new(start, None, message.flatten(), tags)?)
-                }
-            }
+            } => Change::Push(Job::new(
+                start,
+                None,
+                Self::check_force_enter_message(message)?,
+                tags,
+            )?),
             Command::Add {
                 start,
                 end,
                 message,
                 tags,
-            } => Change::Push(Job::new(start, Some(end), message.flatten(), tags)?),
+            } => Change::Push(Job::new(
+                start,
+                Some(end),
+                Self::check_force_enter_message(message)?,
+                tags,
+            )?),
             Command::Back {
                 start,
                 message,
                 tags,
-            } => Change::Push(Job::new(start, None, message.flatten(), tags)?),
+            } => Change::Push(Job::new(
+                start,
+                None,
+                self.copy_last_or_enter_message(message)?,
+                tags,
+            )?),
             Command::BackAdd {
                 start,
                 end,
                 message,
                 tags,
-            } => Change::Push(Job::new(start, Some(end), message.flatten(), tags)?),
+            } => Change::Push(Job::new(
+                start,
+                Some(end),
+                self.copy_last_or_enter_message(message)?,
+                tags,
+            )?),
             Command::End { end, message, tags } => {
                 self.check_open()?;
+                let message = Self::check_force_enter_message(message)?;
                 if let Some((pos, job)) = self.get_open_with_pos() {
                     let mut new_job = job.clone();
                     new_job.end = Some(end);
                     if message.is_some() {
-                        new_job.message = message.flatten();
+                        new_job.message = message;
                     }
                     if let Some(tags) = tags {
                         new_job.tags.0 = tags;
