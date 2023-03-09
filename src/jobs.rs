@@ -164,7 +164,7 @@ impl Jobs {
             } => Change::Push(Job::new(start, Some(end), message.flatten(), tags)?),
             Command::End { end, message, tags } => {
                 self.check_open()?;
-                if let Some(job) = self.jobs.last_mut() {
+                if let Some(job) = self.get_open_mut() {
                     let mut new_job = job.clone();
                     new_job.end = Some(end);
                     if message.is_some() {
@@ -284,26 +284,26 @@ impl Jobs {
         }
     }
     fn check_finished(&self) -> Result<(), Error> {
-        if let Some(job) = self.jobs.last() {
-            if job.is_open() {
-                return Err(Error::OpenJob(job.clone()));
-            }
+        if let Some(job) = self.get_open() {
+            return Err(Error::OpenJob(job.clone()));
         }
         Ok(())
     }
+    fn get_open(&self) -> Option<&Job> {
+        self.jobs.iter().find(|j| j.is_open())
+    }
+    fn get_open_mut(&mut self) -> Option<&mut Job> {
+        self.jobs.iter_mut().find(|j| j.is_open())
+    }
     fn check_open(&self) -> Result<(), Error> {
-        if let Some(job) = self.jobs.last() {
-            if job.is_open() {
-                return Ok(());
-            }
+        if self.get_open().is_some() {
+            return Ok(());
         }
         Err(Error::NoOpenJob)
     }
     pub fn open_start(&self) -> Option<DateTime> {
-        if let Some(job) = self.jobs.last() {
-            if job.is_open() {
-                return job.end;
-            }
+        if let Some(job) = self.get_open() {
+            return job.end;
         }
         None
     }
