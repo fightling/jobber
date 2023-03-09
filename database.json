@@ -1,0 +1,30 @@
+{
+  "jobs": [
+    {
+      "start": "2023-03-04T15:25:00Z",
+      "end": "2023-03-04T15:34:00Z",
+      "message": "Did some nice work",
+      "tags": []
+    },
+    {
+      "start": "2023-03-04T07:15:00Z",
+      "end": "2023-03-04T09:45:00Z",
+      "message": "What I did this morning",
+      "tags": []
+    },
+    {
+      "start": "2023-03-05T20:24:00Z",
+      "end": "2023-03-05T22:24:00Z",
+      "message": "meeting about new design",
+      "tags": [
+        "meeting"
+      ]
+    }
+  ],
+  "tag_configurations": {},
+  "base_configuration": {
+    "resolution": 0.5,
+    "pay": 100.0,
+    "max_hours": 8
+  }
+}
