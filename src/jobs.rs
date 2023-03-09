@@ -164,7 +164,7 @@ impl Jobs {
             } => Change::Push(Job::new(start, Some(end), message.flatten(), tags)?),
             Command::End { end, message, tags } => {
                 self.check_open()?;
-                if let Some(job) = self.get_open_mut() {
+                if let Some((pos, job)) = self.get_open_with_pos() {
                     let mut new_job = job.clone();
                     new_job.end = Some(end);
                     if message.is_some() {
@@ -173,13 +173,16 @@ impl Jobs {
                     if let Some(tags) = tags {
                         new_job.tags.0 = tags;
                     }
-                    Change::Modify(self.jobs.len() - 1, new_job)
+                    Change::Modify(pos, new_job)
                 } else {
                     return Err(Error::NoOpenJob);
                 }
             }
             Command::List { range, tags } => {
                 outputln!("{}", self.filter(&range, &&TagSet::from_option_vec(&tags)));
+                if let Some(job) = self.get_open_with_pos() {
+                    eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
+                }
                 Change::Nothing
             }
             Command::Report {
@@ -191,7 +194,9 @@ impl Jobs {
                     self.filter(&range, &&TagSet::from_option_vec(&tags)),
                     &context,
                 )?;
-                //todo!("reporting not implemented")
+                if let Some(job) = self.get_open_with_pos() {
+                    eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
+                }
                 Change::Nothing
             }
             Command::ExportCSV {
@@ -292,8 +297,8 @@ impl Jobs {
     fn get_open(&self) -> Option<&Job> {
         self.jobs.iter().find(|j| j.is_open())
     }
-    fn get_open_mut(&mut self) -> Option<&mut Job> {
-        self.jobs.iter_mut().find(|j| j.is_open())
+    fn get_open_with_pos(&self) -> Option<(usize, &Job)> {
+        self.jobs.iter().enumerate().find(|(_, j)| j.is_open())
     }
     fn check_open(&self) -> Result<(), Error> {
         if self.get_open().is_some() {
