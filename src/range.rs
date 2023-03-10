@@ -117,3 +117,18 @@ impl Range {
         Self::None
     }
 }
+
+impl std::fmt::Display for Range {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "none"),
+            Self::All => write!(f, "all job(s)"),
+            Self::Count(count) => write!(f, "last {count} job(s)"),
+            Self::PositionRange(from, to) => write!(f, "job(s) from position {from} to {to}"),
+            Self::FromPosition(from) => write!(f, "job(s) from position {from}"),
+            Self::Day(day) => write!(f, "job(s) at {day}"),
+            Self::TimeRange(since, until) => write!(f, "job(s) since {since} until {until}"),
+            Self::Since(since) => write!(f, "job(s) since {since}"),
+        }
+    }
+}

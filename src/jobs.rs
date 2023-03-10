@@ -233,6 +233,15 @@ impl Jobs {
             }
             Command::List { range, tags } => {
                 eprintln!("");
+                if tags.is_some() {
+                    eprintln!(
+                        "Listing {range} with tags {tags}:",
+                        tags = TagSet::from_option_vec(&tags)
+                    );
+                } else {
+                    eprintln!("Listing {range}:");
+                }
+                eprintln!("");
                 outputln!("{}", self.filter(&range, &&TagSet::from_option_vec(&tags)));
                 if let Some(job) = self.get_open_with_pos() {
                     eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
@@ -244,10 +253,21 @@ impl Jobs {
                 tags,
                 context,
             } => {
+                eprintln!("");
+                if tags.is_some() {
+                    eprintln!(
+                        "Reporting {range} with tags {tags}:",
+                        tags = TagSet::from_option_vec(&tags)
+                    );
+                } else {
+                    eprintln!("Reporting {range}:");
+                }
+                eprintln!("");
                 report(
                     self.filter(&range, &&TagSet::from_option_vec(&tags)),
                     &context,
                 )?;
+                eprintln!("");
                 if let Some(job) = self.get_open_with_pos() {
                     eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
                 }
