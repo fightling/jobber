@@ -144,6 +144,16 @@ impl Jobs {
         }
         Ok(message.flatten())
     }
+    fn copy_last_tags_or_given(
+        &self,
+        tags: Option<Vec<String>>,
+    ) -> Result<Option<Vec<String>>, Error> {
+        if let Some(last) = self.jobs.last() {
+            Ok(Some(last.tags.0.clone()))
+        } else {
+            Ok(tags)
+        }
+    }
     fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
         // debug
         // eprintln!("{command:?}");
@@ -179,7 +189,7 @@ impl Jobs {
                 start,
                 None,
                 self.copy_last_or_enter_message(message)?,
-                tags,
+                self.copy_last_tags_or_given(tags)?,
             )?),
             Command::BackAdd {
                 start,
@@ -190,7 +200,7 @@ impl Jobs {
                 start,
                 Some(end),
                 self.copy_last_or_enter_message(message)?,
-                tags,
+                self.copy_last_tags_or_given(tags)?,
             )?),
             Command::End { end, message, tags } => {
                 self.check_open()?;
