@@ -232,6 +232,7 @@ impl Jobs {
                 }
             }
             Command::List { range, tags } => {
+                eprintln!("");
                 outputln!("{}", self.filter(&range, &&TagSet::from_option_vec(&tags)));
                 if let Some(job) = self.get_open_with_pos() {
                     eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
