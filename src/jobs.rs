@@ -132,12 +132,23 @@ impl Jobs {
         &self,
         message: Option<Option<String>>,
     ) -> Result<Option<String>, Error> {
-        if let Some(last) = self.jobs.last() {
-            Ok(last.message.clone())
+        // check if parameter -m was not given
+        if message.is_none() {
+            // check if there is a last job
+            if let Some(last) = self.jobs.last() {
+                Ok(last.message.clone())
+            } else {
+                Err(Error::DatabaseEmpty)
+            }
+        } else if let Some(message) = message {
+            // use given message
+            Ok(message)
         } else {
+            // no message via argument nor via last job -> please enter one
             Self::check_force_enter_message(message)
         }
     }
+
     fn check_force_enter_message(message: Option<Option<String>>) -> Result<Option<String>, Error> {
         if message.is_some() && message.clone().flatten().is_none() {
             return Err(Error::EnterMessage);
@@ -148,11 +159,12 @@ impl Jobs {
         &self,
         tags: Option<Vec<String>>,
     ) -> Result<Option<Vec<String>>, Error> {
-        if let Some(last) = self.jobs.last() {
-            Ok(Some(last.tags.0.clone()))
-        } else {
-            Ok(tags)
+        if !tags.is_some() {
+            if let Some(last) = self.jobs.last() {
+                return Ok(Some(last.tags.0.clone()));
+            }
         }
+        Ok(tags)
     }
     fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
         // debug
