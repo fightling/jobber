@@ -8,11 +8,13 @@ fn test_partial_start_end() {
     let context = Context::new_test("2023-01-01 12:00");
     run_args(
         &["jobber", "-s", "12:00", "-e", "13:00", "-m", "simple job"],
+        None,
         &context,
     )
     .unwrap();
     run_args(
-        &["jobber", "-s", "23:00", "-e", "1:00", "-m", "simple job"],
+        &["jobber", "-b", "23:00", "-e", "1:00", "-m", "simple job"],
+        None,
         &context,
     )
     .unwrap();

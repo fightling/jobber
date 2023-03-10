@@ -131,15 +131,20 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
 }
 
 #[cfg(test)]
-pub fn run_args(args: &[&str], context: &Context) -> Result<Change, Error> {
-    let mut jobs = Jobs::new();
-    run_args_with(&mut jobs, args, context)
+pub fn run_args(args: &[&str], jobs: Option<Jobs>, context: &Context) -> Result<Jobs, Error> {
+    let mut jobs = if let Some(jobs) = jobs {
+        jobs
+    } else {
+        Jobs::new()
+    };
+    run_args_with(&mut jobs, args, context)?;
+    Ok(jobs)
 }
 
 #[cfg(test)]
 pub fn run_args_with(jobs: &mut Jobs, args: &[&str], context: &Context) -> Result<Change, Error> {
     let command = Command::parse(Args::parse_from(args), None, context);
-    jobs.process(&command, true, context)
+    jobs.process(&command, false, context)
 }
 
 /// Asks user on console a yes-no-question

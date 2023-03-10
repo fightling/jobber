@@ -1,13 +1,5 @@
 #[cfg(test)]
-use crate::{command::Command, context::Context, date_time::DateTime};
-
-#[cfg(test)]
-pub fn test_command(args: &[&str], context: &Context) -> Command {
-    use crate::args::Args;
-    use clap::Parser;
-
-    Command::parse(Args::parse_from(args), None, &context)
-}
+use crate::{command::Command, context::Context, date_time::DateTime, tests::test_command};
 
 #[test]
 fn test_add() {

@@ -5,6 +5,8 @@ use thiserror::Error;
 pub enum Error {
     #[error("No database found")]
     NoDatabase,
+    #[error("Database is empty")]
+    DatabaseEmpty,
     #[error("Global configuration error")]
     Confy(confy::ConfyError),
     #[error("I/O error: {0}")]
