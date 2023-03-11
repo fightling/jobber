@@ -183,4 +183,8 @@ pub struct Args {
     /// Delete some jobs by it's position
     #[arg(long="delete", conflicts_with_all(["start","back","end","list","report","edit"]))]
     pub delete: Option<String>,
+
+    /// Run dry (don't write any changes into database)
+    #[arg(short = 'D', long = "dry")]
+    pub dry: bool,
 }

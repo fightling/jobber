@@ -57,6 +57,8 @@ fn main() {
 
 /// process program arguments to read/write jobber's database and handle warnings
 fn run(args: Args, context: &Context) -> Result<(), Error> {
+    let dry = args.dry;
+
     // load database from file or create new
     let filename = if let Some(filename) = &args.filename {
         filename.clone()
@@ -124,8 +126,12 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
         }
     }
     if jobs.modified() {
-        jobs.save(&filename)?;
-        eprintln!("Saved database into file '{filename}'");
+        if dry {
+            eprintln!("DRY RUN: Changes were NOT saved into database file '{filename}'!");
+        } else {
+            jobs.save(&filename)?;
+            eprintln!("Saved database into file '{filename}'");
+        }
     }
     Ok(())
 }
