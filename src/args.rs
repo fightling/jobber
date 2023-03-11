@@ -64,6 +64,9 @@ Arguments:
 
   <MAX_HOURS>
         Maximum amount of work hours as integer number
+
+  <EDIT>
+        Position of a job to edit.
 "
     ),
     help_template(
