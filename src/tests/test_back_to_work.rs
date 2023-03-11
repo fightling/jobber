@@ -25,9 +25,9 @@ fn test_back_to_work() {
 
     // continue back to work
     let jobs = run_args(&["jobber", "-b", "11:00"], Some(jobs), &context).unwrap();
-    assert!(jobs.jobs.len() == 2);
-    assert!(jobs.jobs[0].message == jobs.jobs[1].message);
-    assert!(jobs.jobs[0].tags == jobs.jobs[1].tags);
+    assert_eq!(jobs.jobs.len(), 2);
+    assert_eq!(jobs.jobs[0].message, jobs.jobs[1].message);
+    assert_eq!(jobs.jobs[0].tags, jobs.jobs[1].tags);
 
     // end job
     let jobs = run_args(&["jobber", "-e", "12:30"], Some(jobs), &context).unwrap();
@@ -39,8 +39,8 @@ fn test_back_to_work() {
         &context,
     )
     .unwrap();
-    assert!(jobs.jobs.len() == 3);
-    assert!(jobs.jobs[1].message == jobs.jobs[2].message);
+    assert_eq!(jobs.jobs.len(), 3);
+    assert_eq!(jobs.jobs[1].message, jobs.jobs[2].message);
     assert!(!jobs.jobs[2].tags.contains(&"tag".into()));
     assert!(jobs.jobs[2].tags.contains(&"new_tag".into()));
 
@@ -51,7 +51,7 @@ fn test_back_to_work() {
         &context,
     )
     .unwrap();
-    assert!(jobs.jobs.len() == 4);
-    assert!(jobs.jobs[3].message == Some("new message".into()));
-    assert!(jobs.jobs[3].tags == jobs.jobs[2].tags);
+    assert_eq!(jobs.jobs.len(), 4);
+    assert_eq!(jobs.jobs[3].message, Some("new message".into()));
+    assert_eq!(jobs.jobs[3].tags, jobs.jobs[2].tags);
 }
