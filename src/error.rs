@@ -33,6 +33,10 @@ pub enum Error {
     OutputFileExists(String),
     #[error("Date/Time parse error: {0}")]
     DateTimeParse(chrono::ParseError),
+    #[error("No job found at position {0}")]
+    JobNotFound(usize),
+    #[error("a value is required for '--tags <TAGS>' but none was supplied")]
+    MissingTags,
 }
 
 #[derive(Error, Debug)]

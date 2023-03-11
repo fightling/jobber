@@ -1,3 +1,4 @@
+mod edit;
 #[cfg(test)]
 mod simple;
 mod test_back_to_work;

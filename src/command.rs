@@ -3,6 +3,13 @@ use crate::{
     partial_date_time::PartialDateTime, range::Range,
 };
 
+#[derive(PartialEq, Clone, Debug)]
+pub enum EndOrDuration {
+    None,
+    End(DateTime),
+    Duration(Duration),
+}
+
 /// Commands which can be applied to jobber's database
 #[derive(PartialEq, Clone)]
 pub enum Command {
@@ -77,6 +84,13 @@ pub enum Command {
         range: Range,
         tags: Option<Vec<String>>,
     },
+    Edit {
+        pos: usize,
+        start: Option<DateTime>,
+        end: EndOrDuration,
+        message: Option<Option<String>>,
+        tags: Option<Vec<String>>,
+    },
 }
 
 impl Command {
@@ -87,6 +101,11 @@ impl Command {
     pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Self {
         // parse everything from arguments...
 
+        let edit = if let Some(edit) = args.edit {
+            Some(edit - 1)
+        } else {
+            None
+        };
         let start = if let Some(start) = args.start {
             Some(PartialDateTime::parse(start))
         } else {
@@ -109,7 +128,11 @@ impl Command {
         };
         let message = args.message;
         let tags = if let Some(tags) = args.tags {
-            Some(tags.split(",").map(|t| t.to_string()).collect())
+            if let Some(tags) = tags {
+                Some(tags.split(",").map(|t| t.to_string()).collect())
+            } else {
+                Some(vec![])
+            }
         } else {
             None
         };
@@ -148,7 +171,77 @@ impl Command {
         };
 
         // create command depending on what arguments were given...
-        if let Some(start) = start {
+        if let Some(pos) = edit {
+            if let Some(start) = start {
+                let mut start = start.into(context.current());
+                if let Some(end) = end {
+                    if end == PartialDateTime::None {
+                        let end = end.into(context.current());
+                        if end < start {
+                            start -= Duration::days(1);
+                        }
+                        Self::Edit {
+                            pos,
+                            start: Some(start),
+                            end: EndOrDuration::End(end),
+                            message,
+                            tags,
+                        }
+                    } else {
+                        Self::Edit {
+                            pos,
+                            start: Some(start),
+                            end: EndOrDuration::None,
+                            message,
+                            tags,
+                        }
+                    }
+                } else if let Some(duration) = duration {
+                    Self::Edit {
+                        pos,
+                        start: Some(start),
+                        end: EndOrDuration::Duration(duration),
+                        message,
+                        tags,
+                    }
+                } else {
+                    Self::Edit {
+                        pos,
+                        start: Some(start),
+                        end: EndOrDuration::None,
+                        message,
+                        tags,
+                    }
+                }
+            } else {
+                if let Some(end) = end {
+                    let end = end.into(context.current());
+                    Self::Edit {
+                        pos,
+                        start: None,
+                        end: EndOrDuration::End(end),
+                        message,
+                        tags,
+                    }
+                } else if let Some(duration) = duration {
+                    Self::Edit {
+                        pos,
+                        start: None,
+                        end: EndOrDuration::Duration(duration),
+                        message,
+                        tags,
+                    }
+                } else {
+                    Self::Edit {
+                        pos,
+                        start: None,
+                        end: EndOrDuration::None,
+                        message,
+                        tags,
+                    }
+                }
+            }
+        } else if let Some(start) = start {
             let mut start = start.into(context.current());
             if let Some(end) = end {
                 if end == PartialDateTime::None {
@@ -313,7 +406,7 @@ impl Command {
 impl std::fmt::Debug for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Start {
+            Command::Start {
                 start,
                 message,
                 tags,
@@ -321,7 +414,7 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::Start{{ start: {start:?}, message: {message:?}, tags: {tags:?} }}"
             ),
-            Self::Add {
+            Command::Add {
                 start,
                 end,
                 message,
@@ -330,7 +423,7 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::Add{{ start: {start:?}, end: {end:?}, message: {message:?}, tags: {tags:?} }}"
             ),
-            Self::Back {
+            Command::Back {
                 start,
                 message,
                 tags,
@@ -338,7 +431,7 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::Back{{ start: {start:?}, message: {message:?}, tags: {tags:?} }}"
             ),
-            Self::BackAdd {
+            Command::BackAdd {
                 start,
                 end,
                 message,
@@ -347,41 +440,45 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::BackAdd{{ start: {start:?}, end: {end:?}, message: {message:?}, tags: {tags:?} }}"
             ),
-            Self::End { end, message, tags } => write!(
+            Command::End { end, message, tags } => write!(
                 f,
                 "Command::End{{ end: {end:?}, message: {message:?}, tags: {tags:?} }}"                
             ),
-            Self::MessageTags { message, tags } =>  write!(
+            Command::MessageTags { message, tags } =>  write!(
                 f,
                 "Command::MessageTags{{ message: {message:?}, tags: {tags:?} }}"
             ),
-            Self::List { range, tags } => write!(
+            Command::List { range, tags } => write!(
                 f,
-                "Command::List{{ list: {range:?}, {tags:?} }}"
+                "Command::List{{ range: {range:?}, tags: {tags:?} }}"
             ),
-            Self::Report { range, tags, context } => write!(
+            Command::Report { range, tags, context } => write!(
                 f,
-                "Command::Report{{ list: {range:?}, {tags:?}, {context:?} }}"
+                "Command::Report{{ range: {range:?}, tags: {tags:?}, context: {context:?} }}"
             ),
-            Self::ExportCSV { range, tags, context, columns } => write!(
+            Command::ExportCSV { range, tags, context, columns } => write!(
                 f,
-                "Command::ReportCSV{{ list: {range:?}, {tags:?}, {context:?}, {columns:?} }}"
+                "Command::ReportCSV{{ range: {range:?}, tags: {tags:?}, context: {context:?}, columns: {columns:?} }}"
             ),
-            Self::ShowConfiguration => write!(
+            Command::ShowConfiguration => write!(
                 f,
                 "Command::ShowConfiguration"
             ),
-            Self::SetConfiguration { resolution, pay, tags, max_hours } => write!(
+            Command::SetConfiguration { resolution, pay, tags, max_hours } => write!(
                 f,
-                "Command::SetConfiguration{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?}, max hours: {max_hours:?} }}"
+                "Command::SetConfiguration{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?}, max_hours: {max_hours:?} }}"
             ),
-            Self::LegacyImport { filename } => write!(
+            Command::LegacyImport { filename } => write!(
                 f,
                 "Command::LegacyImport{{ filename: {filename} }}"
             ),
-            Self::ListTags{tags, range }  => write!(
+            Command::ListTags{tags, range }  => write!(
                 f,
-                "Command::ListTags{{ tags: {range:?}, {tags:?} }}"
+                "Command::ListTags{{ range: {range:?}, tags: {tags:?} }}"
+            ),
+            Command::Edit { pos, start, end, message, tags } => write!(
+                f,
+                "Command::Edit{{ pos: {pos:?}, {start:?}, {end:?}, {message:?}, {tags:?} }}"
             ),
         }
     }

@@ -101,7 +101,8 @@ pub struct Args {
         required_unless_present("pay"),
         required_unless_present("max_hours"),
         required_unless_present("legacy_import"),
-        required_unless_present("list_tags")
+        required_unless_present("list_tags"),
+        required_unless_present("edit")
     )]
     pub start: Option<Option<String>>,
 
@@ -123,18 +124,18 @@ pub struct Args {
 
     /// Add list of tags separated by comma or for reporting filter by tags
     #[arg(short, long)]
-    pub tags: Option<String>,
+    pub tags: Option<Option<String>>,
 
     /// List all jobs or selective by position(s) or time(s)
-    #[arg(short, long, conflicts_with_all(["start","end","back","message","report"]))]
+    #[arg(short, long, conflicts_with_all(["start","end","back","message","report","edit"]))]
     pub list: Option<Option<String>>,
 
     /// Print report of all jobs or selective by position(s) or time(s)
-    #[arg(short, long, conflicts_with_all(["start","end","back","message"]))]
+    #[arg(short, long, conflicts_with_all(["start","end","back","message","list","edit"]))]
     pub report: Option<Option<String>>,
 
     /// export all jobs or selective by position(s) or time(s) as CSV
-    #[arg(short='E', long="export", conflicts_with_all(["start","end","back","message"]))]
+    #[arg(short='E', long="export", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub export: Option<Option<String>>,
 
     /// customize CSV export columns by comma separated list of column names
@@ -147,26 +148,30 @@ pub struct Args {
     pub csv: String,
 
     /// Show configuration parameters
-    #[arg(short='C', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='C', long, conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub configuration: bool,
 
     /// Set the resolution for counting of hours (can be combined with --tags)
-    #[arg(short='R', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='R', long, conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub resolution: Option<f64>,
 
     /// Set the payment for one hour (can be combined with --tags)
-    #[arg(short='P', long, conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='P', long, conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub pay: Option<f64>,
 
     /// Set maximum hours per day above you will get a warning (can be combined with --tags)
-    #[arg(short='H', long="max-hours-day", conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='H', long="max-hours-day", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub max_hours: Option<u32>,
 
     /// Import jobs from legacy jobber (ruby version)
-    #[arg(long="legacy-import", conflicts_with_all(["start","end","back","tags","message","list","report"]))]
+    #[arg(long="legacy-import", conflicts_with_all(["start","end","back","tags","message","list","report","edit"]))]
     pub legacy_import: Option<String>,
 
     /// List all known tags (may use -t to filter by super tag)
-    #[arg(short='T', long="list-tags", conflicts_with_all(["start","end","back","message","list","report"]))]
+    #[arg(short='T', long="list-tags", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub list_tags: Option<Option<String>>,
+
+    /// List all known tags (may use -t to filter by super tag)
+    #[arg(long="edit", conflicts_with_all(["back","list","report",]))]
+    pub edit: Option<usize>,
 }

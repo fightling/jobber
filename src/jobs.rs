@@ -1,3 +1,4 @@
+use crate::command::EndOrDuration;
 use crate::outputln;
 use crate::{
     change::Change,
@@ -23,7 +24,7 @@ use std::{
 };
 
 /// serializable instance of the *jobber* database
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Jobs {
     // flag if database was modified in memory
     #[serde(skip)]
@@ -148,7 +149,6 @@ impl Jobs {
             Self::check_force_enter_message(message)
         }
     }
-
     fn check_force_enter_message(message: Option<Option<String>>) -> Result<Option<String>, Error> {
         if message.is_some() && message.clone().flatten().is_none() {
             return Err(Error::EnterMessage);
@@ -326,7 +326,51 @@ impl Jobs {
                 }
                 Change::Nothing
             }
+            Command::Edit {
+                pos,
+                start,
+                end,
+                message,
+                tags,
+            } => {
+                if let Some(job) = self.get(pos) {
+                    let mut job = job.clone();
+                    if let Some(start) = start {
+                        job.start = start;
+                    }
+                    match end {
+                        EndOrDuration::End(end) => {
+                            job.end = Some(end);
+                        }
+                        EndOrDuration::Duration(duration) => {
+                            job.end = Some(job.start + duration);
+                        }
+                        _ => (),
+                    }
+                    if let Some(end) = job.end {
+                        if job.start >= end {
+                            return Err(Error::EndBeforeStart(job.start, end));
+                        }
+                    }
+                    if let Some(message) = message {
+                        job.message = message;
+                    }
+                    if let Some(tags) = tags {
+                        job.tags = TagSet::from_option_vec(&Some(tags));
+                    }
+                    Change::Modify(pos, job.clone())
+                } else {
+                    return Err(Error::JobNotFound(pos));
+                }
+            }
         })
+    }
+    fn get(&self, pos: usize) -> Option<&Job> {
+        if let Some((_, job)) = &self.jobs.iter().enumerate().find(|(p, _)| *p == pos) {
+            Some(job)
+        } else {
+            None
+        }
     }
     fn change(&mut self, change: Change, check: bool, context: &Context) -> Result<(), Error> {
         match change {
