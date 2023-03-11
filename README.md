@@ -16,6 +16,7 @@ Command line tool for tracking work time.
       - [Back to Work](#back-to-work)
       - [Duration](#duration)
       - [Tagging your Jobs](#tagging-your-jobs)
+  - [Editing Jobs](#editing-jobs)
     - [Visualizing Entered Jobs](#visualizing-entered-jobs)
       - [Listing Jobs](#listing-jobs)
       - [Reporting by Work Days](#reporting-by-work-days)
@@ -239,6 +240,26 @@ You can add multiple tags by listing them separated by comma (e.g. `meeting,desi
 
 You also can use tags to differ between clients and give every client a different configuration (see section *Configuration*).
 
+## Editing Jobs
+
+Jobs can be edited by using `--edit <POS>` then add some `-s`, `-e`, `-d`, `-m` or `-t` to change single properties.
+The only property which can be forced to change to empty is `-t`.
+By giving no tags to `-t` tags will be deleted when editing.
+
+```txt
+▶ jobber --edit 2 -m "What I did early this morning"
+Loaded database (3 entries) from file 'jobber.json'
+Modified job:
+
+    Pos: 2
+  Start: Sat Mar 04 2023, 08:15
+    End: Sat Mar 04 2023, 10:45
+  Hours: 2.5
+Message: What I did early this morning
+
+Saved database into file 'jobber.json'
+```
+
 ### Visualizing Entered Jobs
 
 #### Listing Jobs
@@ -258,7 +279,7 @@ Message: Did some nice work
   Start: Sat Mar 04 2023, 08:15
     End: Sat Mar 04 2023, 10:45
   Hours: 2.5
-Message: What I did this morning
+Message: What I did early this morning
 
     Pos: 3
   Start: Sun Mar 05 2023, 21:24
@@ -393,7 +414,7 @@ By using the option `-E` you can export the database or parts of it into a CSV f
 ▶ jobber -E
 Loaded database (3 entries) from file 'git/private/jobber/jobber.json'
 "tags","start","hours","message"
-"","03/04/2023 08:15",2.5,"What I did this morning"
+"","03/04/2023 08:15",2.5,"What I did early this morning"
 "","03/04/2023 16:25",0.5,"Did some nice work"
 "meeting","03/05/2023 21:24",2,"meeting about new design"
 Database unchanged.
@@ -425,7 +446,7 @@ You may also specify a range with option `-E` like when you do a report:
 ▶ jobber -E 3/4,0:00..12:00
 Loaded database (3 entries) from file '/home/pat/jobber.json'
 "tags","start","hours","message"
-"","03/04/2023 08:15",2.5,"What I did this morning"
+"","03/04/2023 08:15",2.5,"What I did early this morning"
 Database unchanged.
 ```
 
@@ -460,7 +481,7 @@ Existing overlapping jobs:
   Start: Sat Mar 04 2023, 08:15
     End: Sat Mar 04 2023, 10:45
   Hours: 2.5
-Message: What I did this morning
+Message: What I did early this morning
 
 Total: 1 job(s), 2.5 hours
 
