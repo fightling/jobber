@@ -380,7 +380,7 @@ impl Jobs {
                     self.check_finished()?;
                 }
                 if check {
-                    self.check(&job, context)?;
+                    self.check(None, &job, context)?;
                 }
                 if job.message.is_none() && !job.is_open() {
                     Err(Error::EnterMessage)
@@ -392,7 +392,7 @@ impl Jobs {
             }
             Change::Modify(pos, job) => {
                 if check {
-                    self.check(&job, context)?;
+                    self.check(Some(pos), &job, context)?;
                 }
                 if job.message.is_none() {
                     Err(Error::EnterMessage)
@@ -497,14 +497,20 @@ impl Jobs {
             _ => Err(Error::TagCollision(found)),
         }
     }
-    fn check(&self, job: &Job, context: &Context) -> Result<(), Error> {
+    fn check(&self, pos: Option<usize>, job: &Job, context: &Context) -> Result<(), Error> {
         let mut warnings = Vec::new();
 
         // check for overlapping
         let mut overlapping = JobList::new_from(&self);
         for (n, j) in self.jobs.iter().enumerate() {
             if job.overlaps(j, context) {
-                overlapping.push(n, j.clone());
+                if let Some(pos) = pos {
+                    if n != pos {
+                        overlapping.push(n, j.clone());
+                    }
+                } else {
+                    overlapping.push(n, j.clone());
+                }
             }
         }
         if !overlapping.is_empty() {
