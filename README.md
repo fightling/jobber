@@ -16,8 +16,9 @@ Command line tool for tracking work time.
       - [Back to Work](#back-to-work)
       - [Duration](#duration)
       - [Tagging your Jobs](#tagging-your-jobs)
-  - [Editing Jobs](#editing-jobs)
-  - [Deleting Jobs](#deleting-jobs)
+    - [Editing Jobs](#editing-jobs)
+    - [Deleting Jobs](#deleting-jobs)
+    - [Dry Run](#dry-run)
     - [Visualizing Entered Jobs](#visualizing-entered-jobs)
       - [Listing Jobs](#listing-jobs)
       - [Reporting by Work Days](#reporting-by-work-days)
@@ -241,7 +242,7 @@ You can add multiple tags by listing them separated by comma (e.g. `meeting,desi
 
 You also can use tags to differ between clients and give every client a different configuration (see section *Configuration*).
 
-## Editing Jobs
+### Editing Jobs
 
 Jobs can be edited by using `--edit <POS>` then add some `-s`, `-e`, `-d`, `-m` or `-t` to change single properties.
 The only property which can be forced to change to empty is `-t`.
@@ -261,7 +262,7 @@ Message: What I did early this morning
 Saved database into file 'jobber.json'
 ```
 
-## Deleting Jobs
+### Deleting Jobs
 
 You can delete jobs by ranges (like you can use in `-r` or `-l`) and you will get asked before deletion is done.
 Deleted jobs will not be removed from the database but marked internally with the date and time of deletion (this is for further use).
@@ -279,6 +280,27 @@ y
 Deleting job(s) at position(s): 3-6
 Saved database into file 'jobber.json'
 ```
+
+### Dry Run
+
+If you are experiencing with *jobber* and you want to be safe that your database won't be corrupted by any wrong input, you may use `-D` to process a so-called *Dry Run*.
+
+In a *Dry Run* the everything works as usual but the database won't be saved into the filesystem.
+
+```txt
+git/private/jobber  master ✗                                                                                                                                                            5m ⚑  
+▶ jobber -D --delete 3-6
+Loaded database (138 entries) from file '/home/pat/git/ts.officestuff/jobber.json'
+There ist one warning you have to omit:
+
+WARNING 1) You are about to delete job(s) at the following position(s): 3-6
+Do you still want to add this job? (y/N)
+y
+Deleting job(s) at position(s): 3-6
+DRY RUN: Changes were NOT saved into database file '/home/pat/git/ts.officestuff/jobber.json'!
+```
+
+This example is the same as above (in section *Deleting Jobs*) but the last message tells you, that `Changes were NOT saved`.
 
 ### Visualizing Entered Jobs
 
