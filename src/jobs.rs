@@ -354,11 +354,6 @@ impl Jobs {
                         }
                         _ => (),
                     }
-                    if let Some(end) = job.end {
-                        if job.start >= end {
-                            return Err(Error::EndBeforeStart(job.start, end));
-                        }
-                    }
                     if let Some(message) = message {
                         job.message = message;
                     }
@@ -507,6 +502,13 @@ impl Jobs {
     }
     fn check(&self, pos: Option<usize>, job: &Job, context: &Context) -> Result<(), Error> {
         let mut warnings = Vec::new();
+
+        // check for temporal plausibility
+        if let Some(end) = job.end {
+            if job.start >= end {
+                return Err(Error::EndBeforeStart(job.start, end));
+            }
+        }
 
         // check for overlapping
         let mut overlapping = JobList::new_from(&self);
