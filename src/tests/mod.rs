@@ -1,8 +1,8 @@
+mod back_to_work;
+mod commands;
 mod edit;
 #[cfg(test)]
 mod simple;
-mod test_back_to_work;
-mod test_commands;
 
 #[cfg(test)]
 pub fn test_command(args: &[&str], context: &crate::Context) -> crate::Command {
