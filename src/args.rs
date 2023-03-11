@@ -171,7 +171,7 @@ pub struct Args {
     #[arg(short='T', long="list-tags", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub list_tags: Option<Option<String>>,
 
-    /// List all known tags (may use -t to filter by super tag)
+    /// Edit some items of a job by it's position
     #[arg(long="edit", conflicts_with_all(["back","list","report",]))]
     pub edit: Option<usize>,
 }
