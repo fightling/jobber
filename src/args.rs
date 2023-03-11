@@ -42,11 +42,12 @@ Arguments:
   <LIST>, <REPORT>, <EXPORT>, <LIST_TAGS>
         Time or positional range in one of the following formats:
 
-        f-t         f-          C
+        f-t         f-          p         ~C
         s..u        s..         D
 
         f = from position
         t = to position
+        p = single position
         C = backwards count
         s = since time (like in <START>)
         u = until time (like in <START>)

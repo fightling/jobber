@@ -384,7 +384,8 @@ Time or positional range have to be entered in one of the following formats:
 | :--------- | ------------------------- | ------------------ |
 | *f*`-`*t*  | from position to position | `3-5`              |
 | *f*`-`     | since position            | `3-`               |
-| *C*        | count (from end)          | `10`               |
+| *p*        | single position           | `3`                |
+| `~`*C*     | count (from end)          | `10`               |
 | *s*`..`*u* | since time until time     | `1/31,15:00..1.2.` |
 | *s*`..`    | since time                | `1/31,15:00..`     |
 | *D*        | single day                | `1/31`             |

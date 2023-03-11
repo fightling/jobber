@@ -8,6 +8,7 @@ pub enum Range {
     None,
     All,
     Count(usize),
+    At(usize),
     PositionRange(usize, usize),
     FromPosition(usize),
     Day(NaiveDate),
@@ -18,10 +19,14 @@ pub enum Range {
 impl Range {
     pub fn parse(list: Option<String>, context: &Context) -> Self {
         if let Some(list) = list {
-            Self::parse_position(&list).or(Self::parse_position_range(&list).or(
-                Self::parse_time_range(&list, context).or(Self::parse_day(&list, context)
-                    .or(Self::parse_from_position(&list).or(Self::parse_since(&list, context)))),
-            ))
+            Self::parse_count(&list).or(Self::parse_at(&list).or(Self::parse_position_range(&list)
+                .or(
+                    Self::parse_time_range(&list, context).or(
+                        Self::parse_day(&list, context)
+                            .or(Self::parse_from_position(&list)
+                                .or(Self::parse_since(&list, context))),
+                    ),
+                )))
         } else {
             Self::All
         }
@@ -34,10 +39,18 @@ impl Range {
         }
     }
 
-    fn parse_position(list: &str) -> Range {
-        let re = Regex::new(r"^(\d+)$").unwrap();
+    fn parse_count(list: &str) -> Range {
+        let re = Regex::new(r"^~(\d+)$").unwrap();
         for cap in re.captures_iter(list) {
             return Self::Count(cap[1].parse::<usize>().unwrap());
+        }
+        Self::None
+    }
+
+    fn parse_at(list: &str) -> Range {
+        let re = Regex::new(r"^(\d+)$").unwrap();
+        for cap in re.captures_iter(list) {
+            return Self::At(cap[1].parse::<usize>().unwrap() - 1);
         }
         Self::None
     }
@@ -46,8 +59,8 @@ impl Range {
         let re = Regex::new(r"^(\d+)-(\d+)$").unwrap();
         for cap in re.captures_iter(list) {
             return Self::PositionRange(
-                cap[1].parse::<usize>().unwrap(),
-                cap[2].parse::<usize>().unwrap(),
+                cap[1].parse::<usize>().unwrap() - 1,
+                cap[2].parse::<usize>().unwrap() - 1,
             );
         }
         Self::None
@@ -56,7 +69,7 @@ impl Range {
     fn parse_from_position(list: &str) -> Range {
         let re = Regex::new(r"^(\d+)-$").unwrap();
         for cap in re.captures_iter(list) {
-            return Self::FromPosition(cap[1].parse::<usize>().unwrap());
+            return Self::FromPosition(cap[1].parse::<usize>().unwrap() - 1);
         }
         Self::None
     }
@@ -124,6 +137,7 @@ impl std::fmt::Display for Range {
             Self::None => write!(f, "none"),
             Self::All => write!(f, "all job(s)"),
             Self::Count(count) => write!(f, "last {count} job(s)"),
+            Self::At(pos) => write!(f, "job at position {pos}"),
             Self::PositionRange(from, to) => write!(f, "job(s) from position {from} to {to}"),
             Self::FromPosition(from) => write!(f, "job(s) from position {from}"),
             Self::Day(day) => write!(f, "job(s) at {day}"),

@@ -92,8 +92,9 @@ impl Jobs {
                 Range::None => false,
                 Range::All => true,
                 Range::Count(_) => true,
-                Range::PositionRange(f, t) => n + 1 >= *f && n + 1 <= *t,
-                Range::FromPosition(p) => n + 1 >= *p,
+                Range::At(pos) => n == *pos,
+                Range::PositionRange(f, t) => n >= *f && n <= *t,
+                Range::FromPosition(p) => n >= *p,
                 Range::Day(d) => {
                     job.start.into_local().date() <= *d
                         && if let Some(end) = job.end {
