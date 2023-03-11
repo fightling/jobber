@@ -288,7 +288,6 @@ If you are experiencing with *jobber* and you want to be safe that your database
 In a *Dry Run* the everything works as usual but the database won't be saved into the filesystem.
 
 ```txt
-git/private/jobber  master ✗                                                                                                                                                            5m ⚑  
 ▶ jobber -D --delete 3-6
 Loaded database (138 entries) from file '/home/pat/git/ts.officestuff/jobber.json'
 There ist one warning you have to omit:
