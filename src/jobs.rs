@@ -15,13 +15,119 @@ use crate::{
     tag_set::TagSet,
     tags,
 };
+use itertools::Itertools;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 use std::{
     collections::HashMap,
     fs::File,
     io::{BufRead, BufReader, BufWriter},
 };
+
+pub struct PositionalRanges(Vec<(usize, usize)>);
+
+impl PositionalRanges {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    pub fn push(&mut self, item: (usize, usize)) {
+        self.0.push(item)
+    }
+    pub fn last(&self) -> Option<&(usize, usize)> {
+        self.0.last()
+    }
+    pub fn last_mut(&mut self) -> Option<&mut (usize, usize)> {
+        self.0.last_mut()
+    }
+}
+
+impl Display for PositionalRanges {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.0
+                .iter()
+                .map(|(f, t)| {
+                    if f == t {
+                        format!("{f}", f = f + 1)
+                    } else {
+                        format!("{f}-{t}", f = f + 1, t = t + 1)
+                    }
+                })
+                .join(",")
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Positions(Vec<usize>);
+
+impl Positions {
+    pub fn into_ranges(&self) -> PositionalRanges {
+        let mut ranges = PositionalRanges::new();
+        for pos in self {
+            if ranges.is_empty() {
+                ranges.push((pos, pos));
+            } else if ranges.last().unwrap().1 == (pos - 1) {
+                ranges.last_mut().unwrap().1 = pos;
+            } else {
+                ranges.push((pos, pos));
+            }
+        }
+        ranges
+    }
+}
+
+pub struct PositionsIterator<'a> {
+    positions: &'a Positions,
+    index: usize,
+}
+
+impl<'a> Iterator for PositionsIterator<'a> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(position) = self.positions.0.get(self.index) {
+            self.index += 1;
+            Some(*position)
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a Positions {
+    type Item = usize;
+    type IntoIter = PositionsIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PositionsIterator {
+            positions: self,
+            index: 0,
+        }
+    }
+}
+
+impl FromIterator<usize> for Positions {
+    fn from_iter<T: IntoIterator<Item = usize>>(iter: T) -> Self {
+        let mut positions = Positions(Vec::new());
+        for i in iter {
+            positions.0.push(i)
+        }
+        positions
+    }
+}
+
+impl Display for Positions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.into_ranges())
+    }
+}
 
 /// serializable instance of the *jobber* database
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -80,6 +186,10 @@ impl Jobs {
     fn filter(&self, range: &Range, tags: &TagSet) -> JobList {
         let mut jobs = JobList::new_from(&self);
         for (n, job) in self.jobs.iter().enumerate() {
+            // sort out any deleted jobs
+            if job.deleted.is_some() {
+                continue;
+            }
             let mut tag_ok = true;
             for tag in &tags.0 {
                 if !job.tags.0.contains(&tag) {
@@ -326,7 +436,7 @@ impl Jobs {
                 Change::Import(count, new_tags)
             }
             Command::ListTags { range, tags } => {
-                let tags = self.filter(&range, &&TagSet::from_option_vec(&tags)).tags();
+                let tags = self.filter(&range, &TagSet::from_option_vec(&tags)).tags();
                 if tags.is_empty() {
                     outputln!("Currently no tags are used.");
                 } else {
@@ -366,6 +476,10 @@ impl Jobs {
                     return Err(Error::JobNotFound(pos));
                 }
             }
+            Command::Delete { range, tags } => {
+                let jobs = self.filter(&range, &TagSet::from_option_vec(&tags));
+                Change::Delete(jobs.positions())
+            }
         })
     }
     fn get(&self, pos: usize) -> Option<&Job> {
@@ -403,6 +517,17 @@ impl Jobs {
                 } else {
                     self.jobs[pos] = job;
                     self.modified = true;
+                    Ok(())
+                }
+            }
+            Change::Delete(positions) => {
+                if check {
+                    Err(Error::Warnings(vec![Warning::ConfirmDeletion(positions)]))
+                } else {
+                    for pos in &positions {
+                        self.jobs[pos].deleted = Some(context.current());
+                        self.modified = true;
+                    }
                     Ok(())
                 }
             }

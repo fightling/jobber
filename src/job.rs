@@ -5,6 +5,10 @@ use crate::{
 use chrono::{Days, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 
+fn none<T>() -> Option<T> {
+    Option::None
+}
+
 /// One portion of work
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Job {
@@ -16,6 +20,9 @@ pub struct Job {
     pub message: Option<String>,
     /// List of tags
     pub tags: TagSet,
+    /// Deletion Mark
+    #[serde(default = "none")]
+    pub deleted: Option<DateTime>,
 }
 
 impl Job {
@@ -44,11 +51,12 @@ impl Job {
             } else {
                 TagSet::new()
             },
+            deleted: None,
         })
     }
     /// returns true if latest job has no ending
     pub fn is_open(&self) -> bool {
-        self.end.is_none()
+        self.end.is_none() && self.deleted.is_none()
     }
     /// get hours without rounding to resolution
     fn minutes(&self) -> i64 {
@@ -109,6 +117,7 @@ impl Job {
                     end: Some(DateTime::from_local(&end)),
                     message: self.message.clone(),
                     tags: self.tags.clone(),
+                    deleted: None,
                 });
                 break;
             }
@@ -118,6 +127,7 @@ impl Job {
                 end: Some(DateTime::from_local(&e)),
                 message: self.message.clone(),
                 tags: self.tags.clone(),
+                deleted: None,
             });
             start = e;
         }

@@ -106,7 +106,8 @@ pub struct Args {
         required_unless_present("max_hours"),
         required_unless_present("legacy_import"),
         required_unless_present("list_tags"),
-        required_unless_present("edit")
+        required_unless_present("edit"),
+        required_unless_present("delete")
     )]
     pub start: Option<Option<String>>,
 
@@ -176,6 +177,10 @@ pub struct Args {
     pub list_tags: Option<Option<String>>,
 
     /// Edit some items of a job by it's position
-    #[arg(long="edit", conflicts_with_all(["back","list","report",]))]
+    #[arg(long="edit", conflicts_with_all(["back","list","report","delete"]))]
     pub edit: Option<usize>,
+
+    /// Delete some jobs by it's position
+    #[arg(long="delete", conflicts_with_all(["start","back","end","list","report","edit"]))]
+    pub delete: Option<String>,
 }

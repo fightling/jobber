@@ -1,4 +1,4 @@
-use crate::{date_time::DateTime, job::Job, job_list::JobList, tag_set::TagSet};
+use crate::{date_time::DateTime, job::Job, job_list::JobList, jobs::Positions, tag_set::TagSet};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -47,4 +47,6 @@ pub enum Warning {
         "You have used some tags ({0}) which are unknown so far. Continue if you want to create them."
     )]
     UnknownTags(TagSet),
+    #[error("You are about to delete job(s) at the following position(s): {0}")]
+    ConfirmDeletion(Positions),
 }

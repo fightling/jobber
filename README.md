@@ -17,6 +17,7 @@ Command line tool for tracking work time.
       - [Duration](#duration)
       - [Tagging your Jobs](#tagging-your-jobs)
   - [Editing Jobs](#editing-jobs)
+  - [Deleting Jobs](#deleting-jobs)
     - [Visualizing Entered Jobs](#visualizing-entered-jobs)
       - [Listing Jobs](#listing-jobs)
       - [Reporting by Work Days](#reporting-by-work-days)
@@ -257,6 +258,25 @@ Modified job:
   Hours: 2.5
 Message: What I did early this morning
 
+Saved database into file 'jobber.json'
+```
+
+## Deleting Jobs
+
+You can delete jobs by ranges (like you can use in `-r` or `-l`) and you will get asked before deletion is done.
+Deleted jobs will not be removed from the database but marked internally with the date and time of deletion (this is for further use).
+
+Any deleted job won't appear in any report, export or listing.
+
+```txt
+▶ jobber --delete 3-6  
+Loaded database (138 entries) from file '/home/pat/git/ts.officestuff/jobber.json'
+There ist one warning you have to omit:
+
+WARNING 1) You are about to delete job(s) at the following position(s): 3-6
+Do you still want to add this job? (y/N)
+y
+Deleting job(s) at position(s): 3-6
 Saved database into file 'jobber.json'
 ```
 

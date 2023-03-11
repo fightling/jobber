@@ -91,6 +91,10 @@ pub enum Command {
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
+    Delete {
+        range: Range,
+        tags: Option<Vec<String>>,
+    },
 }
 
 impl Command {
@@ -101,11 +105,6 @@ impl Command {
     pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Self {
         // parse everything from arguments...
 
-        let edit = if let Some(edit) = args.edit {
-            Some(edit - 1)
-        } else {
-            None
-        };
         let start = if let Some(start) = args.start {
             Some(PartialDateTime::parse(start))
         } else {
@@ -166,6 +165,17 @@ impl Command {
 
         let list_tags = if let Some(list_tags) = args.list_tags {
             Some(Range::parse(list_tags, context))
+        } else {
+            None
+        };
+
+        let edit = if let Some(edit) = args.edit {
+            Some(edit - 1)
+        } else {
+            None
+        };
+        let delete = if let Some(delete) = args.delete {
+            Some(Range::parse(Some(delete), context))
         } else {
             None
         };
@@ -241,6 +251,8 @@ impl Command {
                     }
                 }
             }
+        } else if let Some(range) = delete {
+            Self::Delete { range, tags }
         } else if let Some(start) = start {
             let mut start = start.into(context.current());
             if let Some(end) = end {
@@ -479,6 +491,10 @@ impl std::fmt::Debug for Command {
             Command::Edit { pos, start, end, message, tags } => write!(
                 f,
                 "Command::Edit{{ pos: {pos:?}, {start:?}, {end:?}, {message:?}, {tags:?} }}"
+            ),
+            Command::Delete { range, tags } => write!(
+                f,
+                "Command::Delete{{ range: {range:?}, tags {tags:?} }}"
             ),
         }
     }

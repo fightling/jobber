@@ -1,4 +1,4 @@
-use crate::{configuration::Configuration, job::Job, tag_set::TagSet};
+use crate::{configuration::Configuration, job::Job, jobs::Positions, tag_set::TagSet};
 
 /// catches what to change the jobs within the database
 #[derive(Clone, Debug)]
@@ -9,6 +9,8 @@ pub enum Change {
     Push(usize, Job),
     /// Change an existing `Job` at index `usize` into database but return error if message is missing
     Modify(usize, Job),
+    /// Remove jobs from
+    Delete(Positions),
     /// Imported `usize` entries
     Import(usize, TagSet),
     /// Change configuration
@@ -34,6 +36,13 @@ impl std::fmt::Display for Change {
                 } else {
                     write!(f, "Modified job:\n\n    Pos: {}\n{job}", position + 1)
                 }
+            }
+            Self::Delete(positions) => {
+                write!(
+                    f,
+                    "Deleting job(s) at position(s): {}",
+                    positions.into_ranges()
+                )
             }
             Self::Import(count, new_tags) => {
                 if new_tags.is_empty() {

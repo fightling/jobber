@@ -1,4 +1,6 @@
-use crate::{configuration::Configuration, format::*, job::Job, jobs::Jobs, tag_set::TagSet};
+use crate::{
+    configuration::Configuration, format::*, job::Job, jobs::Jobs, jobs::Positions, tag_set::TagSet,
+};
 use std::collections::HashMap;
 
 /// list of jobs extracted from database
@@ -68,6 +70,9 @@ impl JobList {
             tags.insert_many(job.tags.0.clone());
         }
         tags
+    }
+    pub fn positions(&self) -> Positions {
+        Positions::from_iter(self.jobs.iter().map(|(n, _)| *n))
     }
     /// provides configurations for display trait implementation
     pub fn get_configuration(&self, tags: &TagSet) -> &Configuration {
