@@ -176,44 +176,51 @@ impl Jobs {
                 start,
                 message,
                 tags,
-            } => Change::Push(Job::new(
-                start,
-                None,
-                Self::check_force_enter_message(message)?,
-                tags,
-            )?),
+            } => Change::Push(
+                self.jobs.len(),
+                Job::new(start, None, Self::check_force_enter_message(message)?, tags)?,
+            ),
             Command::Add {
                 start,
                 end,
                 message,
                 tags,
-            } => Change::Push(Job::new(
-                start,
-                Some(end),
-                Self::check_force_enter_message(message)?,
-                tags,
-            )?),
+            } => Change::Push(
+                self.jobs.len(),
+                Job::new(
+                    start,
+                    Some(end),
+                    Self::check_force_enter_message(message)?,
+                    tags,
+                )?,
+            ),
             Command::Back {
                 start,
                 message,
                 tags,
-            } => Change::Push(Job::new(
-                start,
-                None,
-                self.copy_last_or_enter_message(message)?,
-                self.copy_last_tags_or_given(tags)?,
-            )?),
+            } => Change::Push(
+                self.jobs.len(),
+                Job::new(
+                    start,
+                    None,
+                    self.copy_last_or_enter_message(message)?,
+                    self.copy_last_tags_or_given(tags)?,
+                )?,
+            ),
             Command::BackAdd {
                 start,
                 end,
                 message,
                 tags,
-            } => Change::Push(Job::new(
-                start,
-                Some(end),
-                self.copy_last_or_enter_message(message)?,
-                self.copy_last_tags_or_given(tags)?,
-            )?),
+            } => Change::Push(
+                self.jobs.len(),
+                Job::new(
+                    start,
+                    Some(end),
+                    self.copy_last_or_enter_message(message)?,
+                    self.copy_last_tags_or_given(tags)?,
+                )?,
+            ),
             Command::End { end, message, tags } => {
                 self.check_open()?;
                 let message = Self::check_force_enter_message(message)?;
@@ -375,7 +382,8 @@ impl Jobs {
     fn change(&mut self, change: Change, check: bool, context: &Context) -> Result<(), Error> {
         match change {
             Change::Nothing => Ok(()),
-            Change::Push(job) => {
+            Change::Push(position, job) => {
+                assert!(position == self.jobs.len());
                 if job.is_open() {
                     self.check_finished()?;
                 }

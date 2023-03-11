@@ -6,7 +6,7 @@ pub enum Change {
     /// No change
     Nothing,
     /// Push a new `Job` into database
-    Push(Job),
+    Push(usize, Job),
     /// Change an existing `Job` at index `usize` into database but return error if message is missing
     Modify(usize, Job),
     /// Imported `usize` entries
@@ -21,11 +21,11 @@ impl std::fmt::Display for Change {
             Self::Nothing => {
                 write!(f, "Database unchanged.")
             }
-            Self::Push(job) => {
+            Self::Push(position, job) => {
                 if job.is_open() {
-                    write!(f, "Started new job:\n\n{job}")
+                    write!(f, "Started new job:\n\n    Pos: {}\n{job}", position + 1)
                 } else {
-                    write!(f, "Added new job:\n\n{job}")
+                    write!(f, "Added new job:\n\n    Pos: {}\n{job}", position + 1)
                 }
             }
             Self::Modify(position, job) => {
