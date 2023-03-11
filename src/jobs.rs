@@ -536,8 +536,8 @@ impl Jobs {
         }
     }
     fn check_finished(&self) -> Result<(), Error> {
-        if let Some(job) = self.get_open() {
-            return Err(Error::OpenJob(job.clone()));
+        if let Some((pos, job)) = self.get_open_with_pos() {
+            return Err(Error::OpenJob(pos, job.clone()));
         }
         Ok(())
     }
