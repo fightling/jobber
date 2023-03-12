@@ -113,14 +113,14 @@ We use the start option `-s` to start a new job:
 
 ```txt
 ▶ jobber -s
-Beginning new database file '/home/pat/jobber.json'
+Beginning new database file 'jobber.json'
 Started new job:
 
   Start: Sat Mar 04 2023, 16:25
     End: - open -
 
 
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 As you can see *jobber* tells you that it began with a new database in a file called `jobber.json` in my home directory and has started a new job which end is still left open.
@@ -132,7 +132,7 @@ We can check what we have done by using the list option `-l` (see also later in 
 
 ```txt
 ▶ jobber -l 
-Loaded database (1 entries) from file '/home/pat/jobber.json'
+Loaded database (1 entries) from file 'jobber.json'
     Pos: 1
   Start: Sat Mar 04 2023, 16:25
     End: - open -
@@ -154,7 +154,7 @@ So let's end the job because let's assume we did something useful and want to fi
 
 ```txt
 ▶ jobber -e
-Loaded database (1 entries) from file '/home/pat/jobber.json'
+Loaded database (1 entries) from file 'jobber.json'
 You need to enter a message about what you did to finish the job.
 Finish input with empty line (or Ctrl+C to cancel):
 Did some nice work
@@ -167,7 +167,7 @@ Modified job:
   Hours: 0.15
 Message: Did some nice work
 
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 As you can see *jobber* detects that we have not given any description about what we have done and so it asks us for a message to enter.
@@ -185,7 +185,7 @@ And this time we give all the data in the command line by using `-s` and `-e` wi
 
 ```txt
 ▶ jobber -s 8:15 -e 10:45 -m "What I did this morning"    
-Loaded database (1 entries) from file '/home/pat/jobber.json'
+Loaded database (1 entries) from file 'jobber.json'
 Added new job:
 
   Start: Sat Mar 04 2023, 08:15
@@ -193,7 +193,7 @@ Added new job:
   Hours: 2.5
 Message: What I did this morning
 
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 As you can see this also worked like a charm.
@@ -217,7 +217,7 @@ Just add option `-t` to give a list of tags when you create a job:
 
 ```txt
 ▶ jobber -s -t meeting -m "meeting about new design" -d 2:00
-Loaded database (2 entries) from file '/home/pat/jobber.json'
+Loaded database (2 entries) from file 'jobber.json'
 There is one warning you have to omit:
 
 WARNING 1) You have used some tags ( meeting ) which are unknown so far. Continue if you want to create them.
@@ -231,7 +231,7 @@ Added new job:
    Tags:  meeting  
 Message: meeting about new design
 
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 Here *jobber* asks us if we want to add the unknown tag `meeting` and we answered yes by entering `y`.
@@ -271,7 +271,7 @@ Any deleted job won't appear in any report, export or listing.
 
 ```txt
 ▶ jobber --delete 3-6  
-Loaded database (138 entries) from file '/home/pat/git/ts.officestuff/jobber.json'
+Loaded database (138 entries) from file 'jobber.json'
 There ist one warning you have to omit:
 
 WARNING 1) You are about to delete job(s) at the following position(s): 3-6
@@ -289,14 +289,14 @@ In a *Dry Run* the everything works as usual but the database won't be saved int
 
 ```txt
 ▶ jobber -D --delete 3-6
-Loaded database (138 entries) from file '/home/pat/git/ts.officestuff/jobber.json'
+Loaded database (138 entries) from file 'jobber.json'
 There ist one warning you have to omit:
 
 WARNING 1) You are about to delete job(s) at the following position(s): 3-6
 Do you still want to add this job? (y/N)
 y
 Deleting job(s) at position(s): 3-6
-DRY RUN: Changes were NOT saved into database file '/home/pat/git/ts.officestuff/jobber.json'!
+DRY RUN: Changes were NOT saved into database file 'jobber.json'!
 ```
 
 This example is the same as above (in section *Deleting Jobs*) but the last message tells you, that `Changes were NOT saved`.
@@ -309,7 +309,7 @@ Let's take a look what we already did today:
 
 ```txt
 ▶ jobber -l                                           
-Loaded database (2 entries) from file '/home/pat/jobber.json'
+Loaded database (2 entries) from file 'jobber.json'
     Pos: 1
   Start: Sat Mar 04 2023, 16:25
     End: Sat Mar 04 2023, 16:34
@@ -343,7 +343,7 @@ Let's display this in a more fancy view with the report option `-r`:
 
 ```txt
 ▶ jobber -r
-Loaded database (2 entries) from file '/home/pat/jobber.json'
+Loaded database (2 entries) from file 'jobber.json'
                                3/2023                               
 Day     Sun     Mon     Tue     Wed     Thu     Fri     Sat    Week
                                   -       -       -       3       3
@@ -441,9 +441,9 @@ To import an old database format from the legacy *Ruby* version of *jobber* you 
 
 ```txt
 ▶ jobber --legacy-import ~/my_old_jobber.dat 
-Loaded database (2 entries) from file '/home/pat/jobber.json'
+Loaded database (2 entries) from file 'jobber.json'
 Imported 125 jobs added new tags  consult ,  meeting ,  my_client ,  training .
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 *Jobber* shows that it has successfully imported `125 jobs` and that four new tags came with this import (again: tag names would be colored but not here in the *Markdown* text).
@@ -454,7 +454,7 @@ By using the option `-E` you can export the database or parts of it into a CSV f
 
 ```txt
 ▶ jobber -E
-Loaded database (3 entries) from file 'git/private/jobber/jobber.json'
+Loaded database (3 entries) from file 'jobber.json'
 "tags","start","hours","message"
 "","03/04/2023 08:15",2.5,"What I did early this morning"
 "","03/04/2023 16:25",0.5,"Did some nice work"
@@ -472,7 +472,7 @@ To change the columns which are exported you can use option `--csv` (possible va
 
 ```txt
 ▶ jobber -E --csv pos,start,end
-Loaded database (3 entries) from file 'git/private/jobber/jobber.json'
+Loaded database (3 entries) from file 'jobber.json'
 "pos","start","end"
 2,"03/04/2023 08:15","03/04/2023 10:45"
 1,"03/04/2023 16:25","03/04/2023 16:34"
@@ -486,7 +486,7 @@ You may also specify a range with option `-E` like when you do a report:
 
 ```txt
 ▶ jobber -E 3/4,0:00..12:00
-Loaded database (3 entries) from file '/home/pat/jobber.json'
+Loaded database (3 entries) from file 'jobber.json'
 "tags","start","hours","message"
 "","03/04/2023 08:15",2.5,"What I did early this morning"
 Database unchanged.
@@ -505,7 +505,7 @@ You are about to add a job that intersects another one in time.
 
 ```txt
 ▶ jobber -s 3/4,9:00 -e 10:00
-Loaded database (3 entries) from file '/home/pat/jobber.json'
+Loaded database (3 entries) from file 'jobber.json'
 There is one warning you have to omit:
 
 WARNING 1) The job you want to add overlaps existing one(s):
@@ -541,7 +541,7 @@ With option `-t` you have given some tag names which are currently unknown and *
 
 ```txt
 ▶ jobber -s -t consulting 
-Loaded database (3 entries) from file '/home/pat/jobber.json'
+Loaded database (3 entries) from file 'jobber.json'
 There is one warning you have to omit:
 
 WARNING 1) You have used some tags ( consulting ) which are unknown so far. Continue if you want to create them.
@@ -603,7 +603,7 @@ At the first start *jobber* creates a configuration file (usually within your ho
 This file has currently only one entry which is:
 
 ```txt
-database = '/home/pat/jobber.json'
+database = 'jobber.json'
 ```
 
 Change the path of the database if you like to have your database elsewhere.
@@ -630,12 +630,12 @@ For example you might change the base resolution to half an hour with:
 
 ```txt
 ▶ jobber -R 0.5       
-Beginning new database file '/home/pat/jobber.json'
+Beginning new database file 'jobber.json'
 Changed the following default configuration values:
 
 Resolution: 0.5 hours
 
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 ##### Hourly Payment Rate
@@ -646,12 +646,12 @@ If you do so *jobber* lists costs when listing.
 
 ```txt
 ▶ jobber -P 100
-Loaded database (0 entries) from file '/home/pat/jobber.json'
+Loaded database (0 entries) from file 'jobber.json'
 Changed the following default configuration values:
 
 Payment per hour: 100
 
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 ##### Maximum Hours Per Day
@@ -663,12 +663,12 @@ So if you want to change the maximum hours for a day to 8 use:
 
 ```txt
 ▶ jobber -H 8  
-Loaded database (0 entries) from file '/home/pat/jobber.json'
+Loaded database (0 entries) from file 'jobber.json'
 Changed the following default configuration values:
 
 Maximum work time: 8 hours
 
-Saved database into file '/home/pat/jobber.json'
+Saved database into file 'jobber.json'
 ```
 
 #### Setup Configuration for Specific Tags
@@ -681,7 +681,7 @@ To show your configuration(s) use the option `-C`:
 
 ```txt
 ▶ jobber -C  
-Loaded database (3 entries) from file '/home/pat/jobber.json'
+Loaded database (3 entries) from file 'jobber.json'
 Base Configuration:
 
 Resolution: 0.5 hours
