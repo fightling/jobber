@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use super::prelude::*;
 use std::collections::HashMap;
 
 /// list of jobs extracted from database

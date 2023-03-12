@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use super::prelude::*;
 
 static mut TAGS: TagSet = TagSet::new();
 

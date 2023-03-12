@@ -1,5 +1,4 @@
-#[cfg(test)]
-use crate::{prelude::*, tests::test_command};
+use crate::{tests::test_command, *};
 
 #[test]
 fn test_add() {

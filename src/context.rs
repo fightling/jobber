@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use super::prelude::*;
 use chrono::Utc;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -12,7 +12,6 @@ impl Context {
             current: Utc::now(),
         }
     }
-    #[cfg(test)]
     pub fn new_test(local: &str) -> Self {
         use chrono::{Local, TimeZone};
 

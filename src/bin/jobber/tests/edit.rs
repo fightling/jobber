@@ -1,5 +1,4 @@
-#[cfg(test)]
-use crate::{prelude::*, run_args};
+use crate::*;
 
 #[test]
 fn test_edit() {

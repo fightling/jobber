@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use super::prelude::*;
 use chrono::{Local, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -36,7 +36,6 @@ impl DateTime {
         let utc: chrono::DateTime<Utc> = chrono::DateTime::from(local);
         Self { date_time: utc }
     }
-    #[cfg(test)]
     pub fn from_local_str(local: &str) -> Self {
         Self {
             date_time: Utc

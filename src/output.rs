@@ -38,11 +38,11 @@ pub fn output() -> String {
 #[macro_export]
 macro_rules! outputln {
     () => {
-        crate::output::write(format!("\n"))
+        write(format!("\n"))
     };
     ($($arg:tt)*) => {{
-        crate::output::write(format!($($arg)*));
-        crate::output::write(format!("\n"))
+        super::output::write(format!($($arg)*));
+        super::output::write(format!("\n"))
     }};
 }
 
@@ -51,6 +51,6 @@ macro_rules! outputln {
 macro_rules! output {
     () => ();
     ($($arg:tt)*) => {{
-        crate::output::write(format!($($arg)*));
+        super::output::write(format!($($arg)*));
     }};
 }

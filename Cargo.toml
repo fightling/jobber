@@ -25,3 +25,9 @@ strum = "0.24.1"
 strum_macros = "0.24.3"
 termion = "2.0.1"
 thiserror = "1.0.38"
+
+[lib]
+name="jobber"
+
+[[bin]]
+name="jobber"

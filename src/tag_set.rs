@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use super::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]

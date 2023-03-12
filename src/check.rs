@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use super::prelude::*;
 use std::collections::HashSet;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -57,7 +57,7 @@ impl Checks {
 
         // check for overlapping
         if self.has(Check::Overlaps) {
-            let mut overlapping = JobList::new_from(&jobs);
+            let mut overlapping = JobList::new_from(jobs);
             for (n, j) in jobs.jobs.iter().enumerate() {
                 if job.overlaps(j, context) {
                     if let Some(pos) = pos {
