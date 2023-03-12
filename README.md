@@ -6,7 +6,6 @@
 [![Codecov](https://codecov.io/github/fightling/jobber/coverage.svg?branch=main)](https://codecov.io/gh/fightling/jobber)
 [![Dependency status](https://deps.rs/repo/github/fightling/jobber/status.svg)](https://deps.rs/repo/github/fightling/jobber)
 
-
 Command line tool for tracking work time.
 
 ## Contents
