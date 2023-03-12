@@ -19,6 +19,7 @@ fn test_edit() {
             "tag",
         ],
         None,
+        Checks::no_confirm(),
         &context,
     )
     .unwrap();
@@ -27,6 +28,7 @@ fn test_edit() {
     let jobs = run_args(
         &["jobber", "--edit", "1", "-s", "9:00"],
         Some(jobs),
+        Checks::all(),
         &context,
     )
     .unwrap();
@@ -40,6 +42,7 @@ fn test_edit() {
     assert!(run_args(
         &["jobber", "--edit", "1", "-s", "11:00"],
         Some(jobs.clone()),
+        Checks::all(),
         &context,
     )
     .is_err());
@@ -48,6 +51,7 @@ fn test_edit() {
     let jobs = run_args(
         &["jobber", "--edit", "1", "-e", "11:00"],
         Some(jobs),
+        Checks::all(),
         &context,
     )
     .unwrap();
@@ -61,6 +65,7 @@ fn test_edit() {
     assert!(run_args(
         &["jobber", "--edit", "1", "-e", "8:00"],
         Some(jobs.clone()),
+        Checks::all(),
         &context,
     )
     .is_err());
@@ -69,6 +74,7 @@ fn test_edit() {
     let jobs = run_args(
         &["jobber", "--edit", "1", "-m", "bigger job"],
         Some(jobs),
+        Checks::all(),
         &context,
     )
     .unwrap();
@@ -79,6 +85,7 @@ fn test_edit() {
     assert!(run_args(
         &["jobber", "--edit", "1", "-m"],
         Some(jobs.clone()),
+        Checks::all(),
         &context
     )
     .is_err());
@@ -87,6 +94,7 @@ fn test_edit() {
     let jobs = run_args(
         &["jobber", "--edit", "1", "-t", "new_tag"],
         Some(jobs),
+        Checks::all_but(Check::UnknownTags),
         &context,
     )
     .unwrap();
@@ -94,7 +102,13 @@ fn test_edit() {
     assert!(jobs.jobs[0].tags == TagSet::from_one(&"new_tag".into()));
 
     // clear tags
-    let jobs = run_args(&["jobber", "--edit", "1", "-t"], Some(jobs), &context).unwrap();
+    let jobs = run_args(
+        &["jobber", "--edit", "1", "-t"],
+        Some(jobs),
+        Checks::all(),
+        &context,
+    )
+    .unwrap();
     assert_eq!(jobs.jobs.len(), 1);
     assert!(jobs.jobs[0].tags.is_empty());
 }

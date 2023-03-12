@@ -31,6 +31,11 @@ impl Jobs {
             tag_configurations: HashMap::new(),
         }
     }
+    fn push(&mut self, job: Job) {
+        tags::update(&job);
+        self.jobs.push(job);
+    }
+
     pub fn modified(&self) -> bool {
         self.modified
     }
@@ -40,7 +45,7 @@ impl Jobs {
     pub fn process(
         &mut self,
         command: &Command,
-        check: bool,
+        check: Checks,
         context: &Context,
     ) -> Result<Change, Error> {
         let change = self.interpret(command)?;
@@ -367,7 +372,7 @@ impl Jobs {
             None
         }
     }
-    fn change(&mut self, change: Change, check: bool, context: &Context) -> Result<(), Error> {
+    fn change(&mut self, change: Change, checks: Checks, context: &Context) -> Result<(), Error> {
         match change {
             Change::Nothing => Ok(()),
             Change::Push(position, job) => {
@@ -375,21 +380,17 @@ impl Jobs {
                 if job.is_open() {
                     self.check_finished()?;
                 }
-                if check {
-                    self.check(None, &job, context)?;
-                }
+                checks.check(self, None, &job, context)?;
                 if job.message.is_none() && !job.is_open() {
                     Err(Error::EnterMessage)
                 } else {
-                    self.jobs.push(job);
+                    self.push(job);
                     self.modified = true;
                     Ok(())
                 }
             }
             Change::Modify(pos, job) => {
-                if check {
-                    self.check(Some(pos), &job, context)?;
-                }
+                checks.check(self, Some(pos), &job, context)?;
                 if job.message.is_none() {
                     Err(Error::EnterMessage)
                 } else {
@@ -399,7 +400,7 @@ impl Jobs {
                 }
             }
             Change::Delete(positions) => {
-                if check {
+                if checks.has(Check::ConfirmDeletion) {
                     Err(Error::Warnings(vec![Warning::ConfirmDeletion(positions)]))
                 } else {
                     for pos in &positions {
@@ -489,7 +490,7 @@ impl Jobs {
         self.modified = true;
         configuration
     }
-    fn get_configuration(&self, tags: &TagSet) -> Result<&Configuration, Error> {
+    pub fn get_configuration(&self, tags: &TagSet) -> Result<&Configuration, Error> {
         let mut found = TagSet::new();
         let mut configuration = None;
         for tag in &tags.0 {
@@ -503,51 +504,6 @@ impl Jobs {
             1 => Ok(configuration.unwrap()),
             _ => Err(Error::TagCollision(found)),
         }
-    }
-    fn check(&self, pos: Option<usize>, job: &Job, context: &Context) -> Result<(), Error> {
-        let mut warnings = Vec::new();
-
-        // check for temporal plausibility
-        if let Some(end) = job.end {
-            if job.start >= end {
-                return Err(Error::EndBeforeStart(job.start, end));
-            }
-        }
-
-        // check for overlapping
-        let mut overlapping = JobList::new_from(&self);
-        for (n, j) in self.jobs.iter().enumerate() {
-            if job.overlaps(j, context) {
-                if let Some(pos) = pos {
-                    if n != pos {
-                        overlapping.push(n, j.clone());
-                    }
-                } else {
-                    overlapping.push(n, j.clone());
-                }
-            }
-        }
-        if !overlapping.is_empty() {
-            warnings.push(Warning::Overlaps {
-                new: job.clone(),
-                existing: overlapping,
-            });
-        }
-
-        // check for unknown tag
-        let unknown_tags: TagSet = job.tags.filter(|tag| tags::is_known(tag));
-        if !unknown_tags.0.is_empty() {
-            warnings.push(Warning::UnknownTags(unknown_tags));
-        }
-
-        // check for colliding tags
-        self.get_configuration(&job.tags)?;
-
-        // react if any warnings
-        if !warnings.is_empty() {
-            return Err(Error::Warnings(warnings));
-        }
-        Ok(())
     }
     fn writeln(
         &self,
@@ -596,7 +552,7 @@ impl Jobs {
                     new_tags.insert_many(tags.clone());
                     Some(tags)
                 };
-                self.jobs.push(Job::new(start, end, message, tags).unwrap());
+                self.push(Job::new(start, end, message, tags).unwrap());
                 self.modified = true;
                 count += 1;
             }

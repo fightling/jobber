@@ -67,12 +67,14 @@ fn test_csv_date() {
             "-m",
             "two hours job at twelve",
         ],
+        Checks::all(),
         &context,
     )
     .unwrap();
     run_args_with(
         &mut jobs,
         &["jobber", "-E", "--csv", "tags,start,hours,message"],
+        Checks::all(),
         &context,
     )
     .unwrap();

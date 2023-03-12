@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct TagSet(pub Vec<String>);
 
 impl TagSet {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(Vec::new())
     }
     pub fn from_one(tag: &String) -> Self {

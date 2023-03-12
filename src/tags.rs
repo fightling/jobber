@@ -1,17 +1,14 @@
 use crate::prelude::*;
 
-static mut TAGS: Vec<String> = Vec::new();
+static mut TAGS: TagSet = TagSet::new();
 
 /// initialize tag index `TAGS` from a list of jobs
 pub fn init(jobs: &Jobs) {
-    unsafe {
-        TAGS.clear();
-        for job in &jobs.jobs {
-            for tag in &job.tags.0 {
-                TAGS.push(tag.clone());
-            }
-        }
-    }
+    unsafe { TAGS = jobs.tags() }
+}
+
+pub fn update(job: &Job) {
+    unsafe { TAGS.insert_many(job.tags.0.clone()) }
 }
 
 /// decorate tag with color
@@ -45,14 +42,10 @@ pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
 /// get the position of a tag within the tag index `TAGS` (to assign a color)
 fn position(tag: &String) -> Option<usize> {
     unsafe {
-        if let Some(position) = TAGS.iter().position(|t| t == tag).into() {
+        if let Some(position) = TAGS.0.iter().position(|t| t == tag).into() {
             Some(position)
         } else {
             None
         }
     }
-}
-
-pub(crate) fn is_known(tag: &str) -> bool {
-    unsafe { TAGS.contains(&tag.to_string()) }
 }

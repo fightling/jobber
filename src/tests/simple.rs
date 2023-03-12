@@ -7,12 +7,14 @@ fn test_partial_start_end() {
     run_args(
         &["jobber", "-s", "12:00", "-e", "13:00", "-m", "simple job"],
         None,
+        Checks::all(),
         &context,
     )
     .unwrap();
     run_args(
         &["jobber", "-b", "23:00", "-e", "1:00", "-m", "simple job"],
         None,
+        Checks::all(),
         &context,
     )
     .unwrap();

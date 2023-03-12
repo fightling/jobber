@@ -3,7 +3,7 @@ use itertools::Itertools;
 pub struct PositionalRanges(Vec<(usize, usize)>);
 
 impl PositionalRanges {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(Vec::new())
     }
     pub fn is_empty(&self) -> bool {

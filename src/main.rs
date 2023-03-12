@@ -12,6 +12,7 @@ mod job_list;
 mod jobs;
 #[macro_use]
 mod output;
+mod check;
 mod format;
 mod partial_date_time;
 mod positions;
@@ -23,9 +24,9 @@ mod tests;
 
 mod prelude {
     pub use super::{
-        change::*, command::*, configuration::*, context::*, date_time::*, duration::*, error::*,
-        export::*, format::*, job::*, job_list::*, jobs::*, output, outputln, partial_date_time::*,
-        positions::*, range::*, reports::*, tag_set::*, tags,
+        change::*, check::*, command::*, configuration::*, context::*, date_time::*, duration::*,
+        error::*, export::*, format::*, job::*, job_list::*, jobs::*, output, outputln,
+        partial_date_time::*, positions::*, range::*, reports::*, tag_set::*, tags,
     };
 }
 
@@ -55,13 +56,13 @@ impl Default for Config {
 fn main() {
     let args = Args::parse();
     let context = Context::new();
-    if let Err(err) = run(args, &context) {
+    if let Err(err) = run(args, Checks::all(), &context) {
         eprintln!("ERROR: {err}");
     }
 }
 
 /// process program arguments to read/write jobber's database and handle warnings
-fn run(args: Args, context: &Context) -> Result<(), Error> {
+fn run(args: Args, checks: Checks, context: &Context) -> Result<(), Error> {
     let dry = args.dry;
 
     // load database from file or create new
@@ -91,7 +92,7 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
 
     // parse and process command
     let mut command = Command::parse(args, jobs.open_start(), context);
-    match jobs.process(&command, true, context) {
+    match jobs.process(&command, checks, context) {
         Err(Error::Warnings(warnings)) => {
             if warnings.len() == 1 {
                 eprintln!("There ist one warning you have to omit:");
@@ -104,7 +105,7 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
                     return Err(Error::Cancel);
                 }
             }
-            match jobs.process(&command, false, context) {
+            match jobs.process(&command, Checks::omit(), context) {
                 Err(Error::EnterMessage) => {
                     edit_message(&mut jobs, &mut command, context)?;
                 }
@@ -120,7 +121,7 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
         Err(Error::OutputFileExists(filename)) => {
             eprintln!("{}", Error::OutputFileExists(filename));
             if ask("Do you want to overwrite the existing file?", false)? {
-                jobs.process(&command, false, context)?;
+                jobs.process(&command, Checks::omit(), context)?;
             } else {
                 eprintln!("No report generated.")
             }
@@ -142,20 +143,30 @@ fn run(args: Args, context: &Context) -> Result<(), Error> {
 }
 
 #[cfg(test)]
-pub fn run_args(args: &[&str], jobs: Option<Jobs>, context: &Context) -> Result<Jobs, Error> {
+pub fn run_args(
+    args: &[&str],
+    jobs: Option<Jobs>,
+    checks: Checks,
+    context: &Context,
+) -> Result<Jobs, Error> {
     let mut jobs = if let Some(jobs) = jobs {
         jobs
     } else {
         Jobs::new()
     };
-    run_args_with(&mut jobs, args, context)?;
+    run_args_with(&mut jobs, args, checks, context)?;
     Ok(jobs)
 }
 
 #[cfg(test)]
-pub fn run_args_with(jobs: &mut Jobs, args: &[&str], context: &Context) -> Result<Change, Error> {
+pub fn run_args_with(
+    jobs: &mut Jobs,
+    args: &[&str],
+    checks: Checks,
+    context: &Context,
+) -> Result<Change, Error> {
     let command = Command::parse(Args::parse_from(args), None, context);
-    jobs.process(&command, true, context)
+    jobs.process(&command, checks, context)
 }
 
 /// Asks user on console a yes-no-question
@@ -209,5 +220,5 @@ fn edit_message(
         Finish input with empty line (or Ctrl+C to cancel):",
     )?;
     command.set_message(message);
-    jobs.process(&command, false, context)
+    jobs.process(&command, Checks::omit(), context)
 }

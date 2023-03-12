@@ -19,23 +19,37 @@ fn test_back_to_work() {
             "tag",
         ],
         None,
+        Checks::all_but(Check::UnknownTags),
         &context,
     )
     .unwrap();
 
     // continue back to work
-    let jobs = run_args(&["jobber", "-b", "11:00"], Some(jobs), &context).unwrap();
+    let jobs = run_args(
+        &["jobber", "-b", "11:00"],
+        Some(jobs),
+        Checks::all(),
+        &context,
+    )
+    .unwrap();
     assert_eq!(jobs.jobs.len(), 2);
     assert_eq!(jobs.jobs[0].message, jobs.jobs[1].message);
     assert_eq!(jobs.jobs[0].tags, jobs.jobs[1].tags);
 
     // end job
-    let jobs = run_args(&["jobber", "-e", "12:30"], Some(jobs), &context).unwrap();
+    let jobs = run_args(
+        &["jobber", "-e", "12:30"],
+        Some(jobs),
+        Checks::all(),
+        &context,
+    )
+    .unwrap();
 
     // add continued job and update tags
     let jobs = run_args(
         &["jobber", "-b", "13:00", "-e", "14:30", "-t", "new_tag"],
         Some(jobs),
+        Checks::all_but(Check::UnknownTags),
         &context,
     )
     .unwrap();
@@ -46,8 +60,9 @@ fn test_back_to_work() {
 
     // add continued job and update message
     let jobs = run_args(
-        &["jobber", "-b", "13:00", "-e", "14:30", "-m", "new message"],
+        &["jobber", "-b", "15:00", "-e", "16:30", "-m", "new message"],
         Some(jobs),
+        Checks::all(),
         &context,
     )
     .unwrap();
