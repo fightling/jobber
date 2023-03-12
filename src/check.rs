@@ -58,8 +58,8 @@ impl Checks {
         // check for overlapping
         if self.has(Check::Overlaps) {
             let mut overlapping = JobList::new_from(jobs);
-            for (n, j) in jobs.jobs.iter().enumerate() {
-                if job.overlaps(j, context) {
+            for (n, j) in jobs.iter().enumerate() {
+                if job.overlaps(&j, context) {
                     if let Some(pos) = pos {
                         if n != pos {
                             overlapping.push(n, j.clone());
@@ -88,7 +88,7 @@ impl Checks {
 
         // check for colliding tags
         if self.has(Check::CollidingTags) {
-            jobs.get_configuration(&job.tags)?;
+            jobs.configuration.get_checked(&job.tags)?;
         }
 
         // react if any warnings

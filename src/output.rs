@@ -22,6 +22,7 @@ macro_rules! output {
 
 static mut OUTPUT: String = String::new();
 
+#[cfg(test)]
 #[allow(dead_code)]
 pub fn write(output: String) {
     unsafe {
@@ -30,7 +31,7 @@ pub fn write(output: String) {
 }
 
 #[allow(dead_code)]
-pub fn output() -> String {
+pub fn inspect() -> String {
     unsafe { OUTPUT.clone() }
 }
 
@@ -38,7 +39,7 @@ pub fn output() -> String {
 #[macro_export]
 macro_rules! outputln {
     () => {
-        write(format!("\n"))
+        super::output::write(format!("\n"))
     };
     ($($arg:tt)*) => {{
         super::output::write(format!($($arg)*));

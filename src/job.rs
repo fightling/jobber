@@ -64,8 +64,8 @@ impl Job {
         };
         (&end - &self.start).num_minutes()
     }
-    pub fn hours(&self, configuration: &Configuration) -> f64 {
-        if let Some(resolution) = configuration.resolution {
+    pub fn hours(&self, properties: &Properties) -> f64 {
+        if let Some(resolution) = properties.resolution {
             (self.minutes() as f64 / 60.0 / resolution).ceil() * resolution
         } else {
             (self.minutes() as f64 / 60.0 / 0.01).round() * 0.01
@@ -133,7 +133,7 @@ impl Job {
     pub fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
-        configuration: &Configuration,
+        configuration: &Properties,
     ) -> std::fmt::Result {
         writeln!(f, "  Start: {}", format_start(&self.start))?;
         writeln!(f, "    End: {}", format_end(&self.end))?;
@@ -154,7 +154,7 @@ impl Job {
 
 impl std::fmt::Display for Job {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.writeln(f, &Configuration::default())
+        self.writeln(f, &Properties::default())
     }
 }
 

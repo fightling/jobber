@@ -31,9 +31,9 @@ fn test_back_to_work() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 2);
-    assert_eq!(jobs.jobs[0].message, jobs.jobs[1].message);
-    assert_eq!(jobs.jobs[0].tags, jobs.jobs[1].tags);
+    assert_eq!(jobs.count(), 2);
+    assert_eq!(jobs[0].message, jobs[1].message);
+    assert_eq!(jobs[0].tags, jobs[1].tags);
 
     // end job
     let jobs = run_args(
@@ -52,10 +52,10 @@ fn test_back_to_work() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 3);
-    assert_eq!(jobs.jobs[1].message, jobs.jobs[2].message);
-    assert!(!jobs.jobs[2].tags.contains(&"tag".into()));
-    assert!(jobs.jobs[2].tags.contains(&"new_tag".into()));
+    assert_eq!(jobs.iter().len(), 3);
+    assert_eq!(jobs[1].message, jobs[2].message);
+    assert!(!jobs[2].tags.contains(&"tag".into()));
+    assert!(jobs[2].tags.contains(&"new_tag".into()));
 
     // add continued job and update message
     let jobs = run_args(
@@ -65,7 +65,7 @@ fn test_back_to_work() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 4);
-    assert_eq!(jobs.jobs[3].message, Some("new message".into()));
-    assert_eq!(jobs.jobs[3].tags, jobs.jobs[2].tags);
+    assert_eq!(jobs.count(), 4);
+    assert_eq!(jobs[3].message, Some("new message".into()));
+    assert_eq!(jobs[3].tags, jobs[2].tags);
 }

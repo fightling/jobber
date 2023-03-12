@@ -1,5 +1,4 @@
 use super::prelude::*;
-use crate::{output, outputln};
 use itertools::Itertools;
 
 pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<(), Error> {
@@ -11,12 +10,12 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
         .collect::<Vec<String>>()
         .join(",");
     outputln!("{}", title);
-    for (pos, job) in jobs.into_iter().sorted_by(|l, r| l.1.cmp(&r.1)) {
+    for (pos, job) in jobs.iter().sorted_by(|l, r| l.1.cmp(&r.1)) {
         for (c, column) in columns.iter().enumerate() {
             if c > 0 {
                 outputln!(",");
             }
-            let configuration = jobs.get_configuration(&job.tags);
+            let properties = jobs.configuration.get_checked(&job.tags)?;
             match *column {
                 "pos" => output!("{}", pos + 1),
                 "start" => output!(r#""{}""#, job.start.format("%m/%d/%Y %H:%M")),
@@ -36,11 +35,11 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
                         "\"\""
                     )
                 ),
-                "hours" => output!("{}", job.hours(&configuration)),
+                "hours" => output!("{}", job.hours(&properties)),
                 "tags" => output!(r#""{}""#, job.tags.0.join(",")),
                 "pay" => {
-                    if let Some(pay) = configuration.pay {
-                        output!("{}", job.hours(&configuration) * pay)
+                    if let Some(pay) = properties.pay {
+                        output!("{}", job.hours(&properties) * pay)
                     }
                 }
                 _ => return Err(Error::UnknownColumn(column.to_string())),

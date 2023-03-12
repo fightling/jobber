@@ -8,8 +8,12 @@ impl TagSet {
     pub const fn new() -> Self {
         Self(Vec::new())
     }
-    pub fn from_one(tag: &String) -> Self {
-        Self(vec![tag.clone()])
+    pub fn from_one(tag: &Option<String>) -> Self {
+        if let Some(tag) = tag {
+            Self(vec![tag.clone()])
+        } else {
+            Self(Vec::new())
+        }
     }
     pub fn from_option_vec(tags: &Option<Vec<String>>) -> Self {
         if let Some(tags) = tags {

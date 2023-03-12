@@ -31,11 +31,8 @@ fn test_edit() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 1);
-    assert_eq!(
-        jobs.jobs[0].start,
-        DateTime::from_local_str("2023-2-1 9:00")
-    );
+    assert_eq!(jobs.count(), 1);
+    assert_eq!(jobs[0].start, DateTime::from_local_str("2023-2-1 9:00"));
 
     // failed edit start (end before start)
     assert!(run_args(
@@ -54,9 +51,9 @@ fn test_edit() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 1);
+    assert_eq!(jobs.count(), 1);
     assert_eq!(
-        jobs.jobs[0].end,
+        jobs[0].end,
         Some(DateTime::from_local_str("2023-2-1 11:00"))
     );
 
@@ -77,8 +74,8 @@ fn test_edit() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 1);
-    assert_eq!(jobs.jobs[0].message, Some("bigger job".into()));
+    assert_eq!(jobs.count(), 1);
+    assert_eq!(jobs[0].message, Some("bigger job".into()));
 
     // edit message
     assert!(run_args(
@@ -97,8 +94,8 @@ fn test_edit() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 1);
-    assert!(jobs.jobs[0].tags == TagSet::from_one(&"new_tag".into()));
+    assert_eq!(jobs.count(), 1);
+    assert!(jobs[0].tags == TagSet::from_one(&Some("new_tag".into())));
 
     // clear tags
     let jobs = run_args(
@@ -108,6 +105,6 @@ fn test_edit() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.jobs.len(), 1);
-    assert!(jobs.jobs[0].tags.is_empty());
+    assert_eq!(jobs.count(), 1);
+    assert!(jobs[0].tags.is_empty());
 }

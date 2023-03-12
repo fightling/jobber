@@ -49,7 +49,7 @@ fn run(args: Args, checks: Checks, context: &Context) -> Result<(), Error> {
         Ok(jobs) => {
             eprintln!(
                 "Loaded database ({} entries) from file '{filename}'",
-                jobs.jobs.len()
+                jobs.count()
             );
             jobs
         }

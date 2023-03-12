@@ -1,9 +1,7 @@
 use super::prelude::*;
-use crate::outputln;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader, BufWriter},
 };
@@ -15,11 +13,26 @@ pub struct Jobs {
     #[serde(skip)]
     modified: bool,
     /// list of jobs
-    pub jobs: Vec<Job>,
-    /// Configuration by tag
-    pub tag_configurations: HashMap<String, Configuration>,
+    jobs: Vec<Job>,
     /// Configuration used when no tag related configuration fit
-    pub base_configuration: Configuration,
+    pub configuration: Configuration,
+}
+
+impl IntoIterator for Jobs {
+    type Item = Job;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.jobs.into_iter()
+    }
+}
+
+impl std::ops::Index<usize> for Jobs {
+    type Output = Job;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.jobs[index]
+    }
 }
 
 impl Jobs {
@@ -28,15 +41,19 @@ impl Jobs {
         Self {
             modified: false,
             jobs: Vec::new(),
-            base_configuration: Default::default(),
-            tag_configurations: HashMap::new(),
+            configuration: Default::default(),
         }
     }
     fn push(&mut self, job: Job) {
         tags::update(&job);
         self.jobs.push(job);
     }
-
+    pub fn iter(&self) -> core::slice::Iter<'_, Job> {
+        self.jobs.iter()
+    }
+    pub fn count(&self) -> usize {
+        self.iter().filter(|job| !job.deleted.is_some()).count()
+    }
     pub fn modified(&self) -> bool {
         self.modified
     }
@@ -266,7 +283,7 @@ impl Jobs {
                 }
                 eprintln!("");
                 report(
-                    self.filter(&range, &&TagSet::from_option_vec(&tags)),
+                    &self.filter(&range, &TagSet::from_option_vec(&tags)),
                     &context,
                 )?;
                 eprintln!("");
@@ -291,13 +308,13 @@ impl Jobs {
             }
             Command::ShowConfiguration => {
                 // print base configurations
-                eprintln!("Base Configuration:\n\n{}", self.base_configuration);
+                eprintln!("Base Configuration:\n\n{}", self.configuration.base);
                 // print tag wise configurations
-                for (tag, configuration) in &self.tag_configurations {
+                for (tag, properties) in &self.configuration.tags {
                     eprintln!(
                         "Configuration for tag {}:\n\n{}",
-                        TagSet::from_one(tag),
-                        configuration
+                        TagSet::from_one(&Some(tag.clone())),
+                        properties
                     );
                 }
                 Change::Nothing
@@ -308,7 +325,8 @@ impl Jobs {
                 tags,
                 max_hours,
             } => {
-                let config = self.set_configuration(&tags, resolution, pay, max_hours);
+                let config = self.configuration.set(&tags, resolution, pay, max_hours);
+                self.modified = true;
                 Change::Configuration(tags, config)
             }
             Command::MessageTags {
@@ -464,48 +482,6 @@ impl Jobs {
         self.modified = false;
         Ok(())
     }
-    pub fn set_configuration(
-        &mut self,
-        tags: &Option<Vec<String>>,
-        resolution: Option<f64>,
-        pay: Option<f64>,
-        max_hours: Option<u32>,
-    ) -> Configuration {
-        let configuration = Configuration {
-            resolution,
-            pay,
-            max_hours,
-        };
-        if let Some(tags) = tags {
-            for tag in tags {
-                if let Some(tag_configuration) = self.tag_configurations.get_mut(tag) {
-                    tag_configuration.update(configuration.clone());
-                } else {
-                    self.tag_configurations
-                        .insert(tag.clone(), configuration.clone());
-                }
-            }
-        } else {
-            self.base_configuration.update(configuration.clone());
-        }
-        self.modified = true;
-        configuration
-    }
-    pub fn get_configuration(&self, tags: &TagSet) -> Result<&Configuration, Error> {
-        let mut found = TagSet::new();
-        let mut configuration = None;
-        for tag in &tags.0 {
-            if let Some(c) = self.tag_configurations.get(tag) {
-                found.insert(tag);
-                configuration = Some(c);
-            }
-        }
-        match found.len() {
-            0 => Ok(&self.base_configuration),
-            1 => Ok(configuration.unwrap()),
-            _ => Err(Error::TagCollision(found)),
-        }
-    }
     fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
@@ -516,7 +492,7 @@ impl Jobs {
                 continue;
             }
             writeln!(f, "\n    Pos: {}", n + 1)?;
-            job.writeln(f, self.get_configuration(&job.tags).unwrap())?;
+            job.writeln(f, self.configuration.get(&job.tags))?;
         }
         Ok(())
     }

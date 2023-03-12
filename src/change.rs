@@ -14,7 +14,7 @@ pub enum Change {
     /// Imported `usize` entries
     Import(usize, TagSet),
     /// Change configuration
-    Configuration(Option<Vec<String>>, Configuration),
+    Configuration(Option<Vec<String>>, Properties),
 }
 
 impl std::fmt::Display for Change {

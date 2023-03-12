@@ -21,10 +21,12 @@
       ]
     }
   ],
-  "tag_configurations": {},
-  "base_configuration": {
-    "resolution": 0.5,
-    "pay": 100.0,
-    "max_hours": 8
+  "configuration": {
+    "base": {
+      "resolution": 0.5,
+      "pay": 100.0,
+      "max_hours": 8
+    },
+    "tags": {}
   }
 }

@@ -14,8 +14,8 @@ pub fn format_end(end: &Option<DateTime>) -> String {
     }
 }
 
-pub fn format_hours(hours: f64, configuration: &Configuration) -> String {
-    if let Some(max_hours) = configuration.max_hours {
+pub fn format_hours(hours: f64, properties: &Properties) -> String {
+    if let Some(max_hours) = properties.max_hours {
         if hours > max_hours as f64 {
             return format!(
                 "{}{}{}{}{}",
@@ -41,7 +41,7 @@ pub fn format_hours_pure(hours: f64) -> String {
     )
 }
 
-pub fn format_pay(hours: f64, configuration: &Configuration) -> String {
+pub fn format_pay(hours: f64, configuration: &Properties) -> String {
     if let Some(pay) = configuration.pay {
         return format_pay_pure(pay * hours);
     }

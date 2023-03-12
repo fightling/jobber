@@ -6,10 +6,11 @@ use separator::Separatable;
 use std::collections::HashMap;
 use termion::{color::*, style};
 
-pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
+pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
     // resort job hours into nested maps of year -> month -> day -> hours
-    let mut years: HashMap<i32, HashMap<u32, HashMap<u32, HashMap<String, f64>>>> = HashMap::new();
-    for (_, job) in &jobs {
+    let mut years: HashMap<i32, HashMap<u32, HashMap<u32, HashMap<Option<String>, f64>>>> =
+        HashMap::new();
+    for (_, job) in jobs.iter() {
         for job in job.split(context) {
             // insert year if not already in map
             let year = job.start.date_time.year();
@@ -35,11 +36,11 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
             // get tagged hours of that day
             let tag_hours = days.get_mut(&day).unwrap();
 
-            // get configuration for the job's tags and the relevant tag
-            let (tag, configuration) = jobs.get_configuration_with_tag(&job.tags);
+            // get configuration for the job's tags and the tag which was relevant
+            let (tag, properties) = jobs.configuration.get_and_why(&job.tags);
 
             // get hours for that tag
-            let job_hours = job.hours(configuration);
+            let job_hours = job.hours(properties);
             if !tag_hours.contains_key(&tag) {
                 tag_hours.insert(tag.clone(), 0.0);
             }
@@ -113,14 +114,17 @@ pub fn report(jobs: JobList, context: &Context) -> Result<(), Error> {
                     let mut day_costs: Option<f64> = None;
                     let mut exceeded = false;
                     for (tag, hours) in tag_hours {
-                        let configuration = jobs.get_configuration(&TagSet::from_one(tag));
-                        if let Some(max_hours) = configuration.max_hours {
+                        let properties = jobs
+                            .configuration
+                            .get_checked(&TagSet::from_one(tag))
+                            .expect("unexpected tag collision");
+                        if let Some(max_hours) = properties.max_hours {
                             if *hours > max_hours as f64 {
                                 exceeded = true;
                             }
                         }
                         day_hours += hours;
-                        if let Some(pay) = configuration.pay {
+                        if let Some(pay) = properties.pay {
                             if day_costs.is_none() {
                                 day_costs = Some(0.0);
                             }
