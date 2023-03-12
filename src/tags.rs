@@ -1,4 +1,4 @@
-use crate::jobs::Jobs;
+use crate::prelude::*;
 
 static mut TAGS: Vec<String> = Vec::new();
 

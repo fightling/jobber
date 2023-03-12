@@ -14,19 +14,24 @@ mod jobs;
 mod output;
 mod format;
 mod partial_date_time;
+mod positions;
 mod range;
 mod reports;
 mod tag_set;
-mod tags;
+pub mod tags;
 mod tests;
 
+mod prelude {
+    pub use super::{
+        change::*, command::*, configuration::*, context::*, date_time::*, duration::*, error::*,
+        export::*, format::*, job::*, job_list::*, jobs::*, output, outputln, partial_date_time::*,
+        positions::*, range::*, reports::*, tag_set::*, tags,
+    };
+}
+
 use args::Args;
-use change::Change;
 use clap::Parser;
-use command::Command;
-use context::Context;
-use error::Error;
-use jobs::Jobs;
+use prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -150,7 +155,7 @@ pub fn run_args(args: &[&str], jobs: Option<Jobs>, context: &Context) -> Result<
 #[cfg(test)]
 pub fn run_args_with(jobs: &mut Jobs, args: &[&str], context: &Context) -> Result<Change, Error> {
     let command = Command::parse(Args::parse_from(args), None, context);
-    jobs.process(&command, false, context)
+    jobs.process(&command, true, context)
 }
 
 /// Asks user on console a yes-no-question

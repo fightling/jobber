@@ -1,6 +1,4 @@
-use crate::{
-    configuration::Configuration, format::*, job::Job, jobs::Jobs, jobs::Positions, tag_set::TagSet,
-};
+use crate::prelude::*;
 use std::collections::HashMap;
 
 /// list of jobs extracted from database

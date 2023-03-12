@@ -1,6 +1,5 @@
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
-
-use crate::tags;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TagSet(pub Vec<String>);
