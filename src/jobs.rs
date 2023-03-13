@@ -35,6 +35,13 @@ impl std::ops::Index<usize> for Jobs {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Versioned<T> {
+    version: String,
+    #[serde(flatten)]
+    jobs: T,
+}
+
 impl Jobs {
     /// Create an empty jobber database
     pub fn new() -> Self {
@@ -426,9 +433,10 @@ impl Jobs {
             .open(filename)
             .map_err(|err| Error::Io(err))?;
         let reader = BufReader::new(file);
-        let jobs = serde_json::from_reader::<_, Self>(reader).map_err(|err| Error::Json(err))?;
-        tags::init(&jobs);
-        Ok(jobs)
+        let versioned = serde_json::from_reader::<_, Versioned<Jobs>>(reader)
+            .map_err(|err| Error::Json(err))?;
+        tags::init(&versioned.jobs);
+        Ok(versioned.jobs)
     }
     pub fn save(&mut self, filename: &str) -> Result<(), Error> {
         let file = File::options()
@@ -438,9 +446,12 @@ impl Jobs {
             .open(filename)
             .unwrap();
         let writer = BufWriter::new(file);
-
+        let versioned_jobs = Versioned {
+            version: clap::crate_version!().to_string(),
+            jobs: &self,
+        };
         // pretty print when running tests
-        serde_json::to_writer_pretty(writer, self).map_err(|err| Error::Json(err))?;
+        serde_json::to_writer_pretty(writer, &versioned_jobs).map_err(|err| Error::Json(err))?;
 
         self.modified = false;
         Ok(())

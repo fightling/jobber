@@ -12,7 +12,7 @@ keywords = ["work","time","accounting","shell"]
 
 [dependencies]
 chrono = { version="^0.4.20", features = ["serde"] }
-clap = { version = "4.1", features = ["derive"] }
+clap = { version = "4.1", features = ["derive","cargo"] }
 confy = "0.5.1"
 days-in-month = "2.0.0"
 directories = "4.0.1"
