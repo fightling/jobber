@@ -1,6 +1,6 @@
 # Jobber
 
-[![Status](https://github.com/fightling/jobber/actions/workflows/rust.yml/badge.svg)
+[![Status](https://github.com/fightling/jobber/actions/workflows/rust.yml/badge.svg)](https://github.com/fightling/jobber/actions)
 [![Crates.io](https://img.shields.io/crates/v/jobber.svg)](https://crates.io/crates/jobber)
 [![Documentation](https://docs.rs/jobber/badge.svg)](https://docs.rs/jobber/)
 [![Codecov](https://codecov.io/github/fightling/jobber/coverage.svg?branch=main)](https://codecov.io/gh/fightling/jobber)
