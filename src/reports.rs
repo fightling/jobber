@@ -116,7 +116,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
                     for (tag, hours) in tag_hours {
                         let properties = jobs
                             .configuration
-                            .get_checked(&TagSet::from_one(tag))
+                            .get_checked(&tag.into())
                             .expect("unexpected tag collision");
                         if let Some(max_hours) = properties.max_hours {
                             if *hours > max_hours as f64 {

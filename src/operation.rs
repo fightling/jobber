@@ -125,7 +125,7 @@ impl std::fmt::Display for Operation {
                     write!(
                         f,
                         "Configuration for tag {}:\n\n{}",
-                        TagSet::from_one(&Some(tag.clone())),
+                        TagSet::from(tag),
                         properties
                     )?;
                 }

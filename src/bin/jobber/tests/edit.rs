@@ -103,7 +103,19 @@ fn test_edit() {
     )
     .unwrap();
     assert_eq!(jobs.count(), 1);
-    assert!(jobs[0].tags == TagSet::from_one(&Some("new_tag".into())));
+    assert!(jobs[0].tags == "new_tag".into());
+
+    // modify tags
+    let jobs = run_args(
+        &mut std::io::stdout(),
+        &["jobber", "--edit", "1", "-t", ",new_tag-,+newer_tag"],
+        Some(jobs),
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+    assert_eq!(jobs.count(), 1);
+    assert!(jobs[0].tags == "newer_tag".into());
 
     // clear tags
     let jobs = run_args(

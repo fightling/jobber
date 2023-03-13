@@ -28,7 +28,7 @@ impl Job {
         start: DateTime,
         end: Option<DateTime>,
         message: Option<String>,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
     ) -> Result<Self, Error> {
         if let Some(end) = end {
             if start >= end {
@@ -40,11 +40,7 @@ impl Job {
             end,
             message,
             tags: if let Some(tags) = tags {
-                let mut set = TagSet::new();
-                for tag in tags {
-                    set.insert(&tag);
-                }
-                set
+                tags
             } else {
                 TagSet::new()
             },

@@ -8,31 +8,21 @@ impl TagSet {
     pub const fn new() -> Self {
         Self(Vec::new())
     }
-    pub fn from_one(tag: &Option<String>) -> Self {
-        if let Some(tag) = tag {
-            Self(vec![tag.clone()])
-        } else {
-            Self(Vec::new())
-        }
-    }
-    pub fn from_option_vec(tags: &Option<Vec<String>>) -> Self {
+    pub fn from_option_vec(tags: Option<Vec<String>>) -> Option<Self> {
         if let Some(tags) = tags {
-            Self(tags.clone())
+            Some(tags.into())
         } else {
-            Self(Vec::new())
+            None
         }
     }
     pub fn filter<P>(&self, pred: P) -> Self
     where
-        P: Fn(&String) -> bool,
+        P: Fn(&&String) -> bool,
     {
-        let mut result = TagSet::new();
-        for tag in &self.0 {
-            if !pred(tag) {
-                result.0.push(tag.clone());
-            }
-        }
-        result
+        TagSet(self.0.iter().filter(pred).map(|t| t.to_string()).collect())
+    }
+    pub fn iter(&self) -> core::slice::Iter<'_, String> {
+        self.0.iter()
     }
     pub fn contains(&self, tag: &String) -> bool {
         self.0.contains(tag)
@@ -42,6 +32,24 @@ impl TagSet {
     }
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+    pub fn modify(&self, modification: &TagSet) -> TagSet {
+        let mut modify = false;
+        let mut tags = TagSet::new();
+        for tag in modification.iter() {
+            if tag.starts_with('+') || tag.ends_with('+') {
+                tags.insert(tag[1..].into());
+                modify = true;
+            } else if tag.starts_with('-') || tag.ends_with('-') {
+                tags.remove(tag[1..].into());
+                modify = true;
+            }
+        }
+        if modify {
+            tags
+        } else {
+            modification.clone()
+        }
     }
 }
 
@@ -59,6 +67,14 @@ impl TagSet {
             self.insert(&tag);
         }
     }
+    pub fn remove(&mut self, tag: &str) {
+        self.0 = self
+            .0
+            .iter()
+            .filter(|t| *t != tag)
+            .map(|t| t.to_string())
+            .collect();
+    }
 }
 impl std::fmt::Display for TagSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -69,5 +85,42 @@ impl std::fmt::Display for TagSet {
             }
         }
         Ok(())
+    }
+}
+impl From<Vec<String>> for TagSet {
+    fn from(tags: Vec<String>) -> Self {
+        let mut tags = tags.clone();
+        tags.dedup();
+        Self(tags)
+    }
+}
+impl From<Option<Vec<String>>> for TagSet {
+    fn from(tags: Option<Vec<String>>) -> Self {
+        if let Some(tags) = tags {
+            let mut tags = tags.clone();
+            tags.dedup();
+            Self(tags)
+        } else {
+            Self(Vec::new())
+        }
+    }
+}
+impl From<&Option<String>> for TagSet {
+    fn from(tag: &Option<String>) -> Self {
+        if let Some(tag) = tag {
+            Self(tag.split('*').map(|t| t.to_string()).collect())
+        } else {
+            Self(Vec::new())
+        }
+    }
+}
+impl From<&String> for TagSet {
+    fn from(tag: &String) -> Self {
+        Self(tag.split('*').map(|t| t.to_string()).collect())
+    }
+}
+impl From<&str> for TagSet {
+    fn from(tag: &str) -> Self {
+        Self(tag.split('*').map(|t| t.to_string()).collect())
     }
 }

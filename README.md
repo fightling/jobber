@@ -22,6 +22,7 @@ Command line tool for tracking work time.
       - [Back to Work](#back-to-work)
       - [Duration](#duration)
       - [Tagging your Jobs](#tagging-your-jobs)
+      - [Modifying Tags](#modifying-tags)
     - [Editing Jobs](#editing-jobs)
     - [Deleting Jobs](#deleting-jobs)
     - [Dry Run](#dry-run)
@@ -194,6 +195,7 @@ And this time we give all the data in the command line by using `-s` and `-e` wi
 Loaded database (1 entries) from file 'jobber.json'
 Added new job:
 
+    Pos: 2
   Start: Sat Mar 04 2023, 08:15
     End: Sat Mar 04 2023, 10:45
   Hours: 2.5
@@ -231,6 +233,7 @@ Do you still want to add this job? (y/N)
 y
 Added new job:
 
+    Pos: 3
   Start: Sun Mar 05 2023, 21:24
     End: Sun Mar 05 2023, 23:24
   Hours: 2
@@ -247,6 +250,33 @@ Tags are colored differently after they were added so that you can easily differ
 You can add multiple tags by listing them separated by comma (e.g. `meeting,design`).
 
 You also can use tags to differ between clients and give every client a different configuration (see section *Configuration*).
+
+#### Modifying Tags
+
+When you use `-b` oder `--edit` you can use `-` and `+` with the tag names to modify tags instead of replacing all of them at once.
+
+```txt
+▶ jobber -b -d 1:00 -t +phone
+Loaded database (3 entries) from file 'jobber.json'
+There is one warning you have to omit:
+
+WARNING 1) You have used some tags ( phone ) which are unknown so far. Continue if you want to create them.
+Do you still want to add this job? (y/N)
+y
+Added new job:
+
+    Pos: 4
+  Start: Sun Mar 05 2023, 21:24
+    End: Sun Mar 05 2023, 23:24
+  Hours: 2
+   Tags:  meeting  ,  phone
+Message: meeting about new design
+
+Saved database into file 'jobber.json'
+```
+
+You can use `+` and `-` as prefix or suffix.
+Using a suffix is mandatory if you start the tag list with a `-` because *jobber* would read this as an optional argument!.
 
 ### Editing Jobs
 

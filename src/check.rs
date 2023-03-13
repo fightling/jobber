@@ -80,7 +80,7 @@ impl Checks {
         // check for unknown tag
         if self.has(Check::UnknownTags) {
             let tags = jobs.tags();
-            let unknown_tags: TagSet = job.tags.filter(|tag| tags.contains(tag));
+            let unknown_tags: TagSet = job.tags.filter(|tag| !tags.contains(tag));
             if !unknown_tags.0.is_empty() {
                 warnings.push(Warning::UnknownTags(unknown_tags));
             }
