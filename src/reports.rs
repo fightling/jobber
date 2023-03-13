@@ -60,7 +60,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
         for (month, days) in months.iter().sorted_by_key(|x| x.0) {
             // print year/month title centered
             let month_year = format!("{}/{}", month, year);
-            write!(w, "{:^68}", month_year)?;
+            writeln!(w, "{:^68}", month_year)?;
 
             // insert day of month column
             write!(w, "{:>3}", "Day")?;
