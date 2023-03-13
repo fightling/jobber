@@ -6,6 +6,7 @@ fn test_back_to_work() {
 
     // add first job
     let jobs = run_args(
+        &mut std::io::stdout(),
         &[
             "jobber",
             "-s",
@@ -25,6 +26,7 @@ fn test_back_to_work() {
 
     // continue back to work
     let jobs = run_args(
+        &mut std::io::stdout(),
         &["jobber", "-b", "11:00"],
         Some(jobs),
         Checks::all(),
@@ -37,6 +39,7 @@ fn test_back_to_work() {
 
     // end job
     let jobs = run_args(
+        &mut std::io::stdout(),
         &["jobber", "-e", "12:30"],
         Some(jobs),
         Checks::all(),
@@ -46,6 +49,7 @@ fn test_back_to_work() {
 
     // add continued job and update tags
     let jobs = run_args(
+        &mut std::io::stdout(),
         &["jobber", "-b", "13:00", "-e", "14:30", "-t", "new_tag"],
         Some(jobs),
         Checks::all_but(Check::UnknownTags),
@@ -59,6 +63,7 @@ fn test_back_to_work() {
 
     // add continued job and update message
     let jobs = run_args(
+        &mut std::io::stdout(),
         &["jobber", "-b", "15:00", "-e", "16:30", "-m", "new message"],
         Some(jobs),
         Checks::all(),

@@ -60,15 +60,16 @@ impl Jobs {
     /// Processes the given `command` and may return a change on this database.
     /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
     /// Fix warnings to continue and call again or turn any check on warnings off by using parameter `check`
-    pub fn process(
+    pub fn process<W: std::io::Write>(
         &mut self,
+        w: &mut W,
         command: &Command,
         check: Checks,
         context: &Context,
     ) -> Result<Operation, Error> {
         let mut change = self.interpret(command)?;
         eprintln!("");
-        self.operate(&mut change, check, context)?;
+        self.operate(w, &mut change, check, context)?;
         eprintln!("");
         if let Some(job) = self.get_open_with_pos() {
             eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
@@ -331,8 +332,9 @@ impl Jobs {
             None
         }
     }
-    fn operate(
+    fn operate<W: std::io::Write>(
         &mut self,
+        w: &mut W,
         operation: &mut Operation,
         checks: Checks,
         context: &Context,
@@ -386,11 +388,11 @@ impl Jobs {
                 Ok(())
             }
             Operation::List(jobs, _, _) => {
-                outputln!("{}", jobs);
+                write!(w, "{}", jobs)?;
                 Ok(())
             }
-            Operation::Report(jobs, _, _) => report(&jobs, &context),
-            Operation::ExportCSV(jobs, _, _, columns) => export_csv(jobs, columns, &context),
+            Operation::Report(jobs, _, _) => report(w, &jobs, &context),
+            Operation::ExportCSV(jobs, _, _, columns) => export_csv(w, jobs, columns, &context),
             _ => Ok(()),
         }
     }

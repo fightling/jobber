@@ -6,7 +6,7 @@ use separator::Separatable;
 use std::collections::HashMap;
 use termion::{color::*, style};
 
-pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
+pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) -> Result<(), Error> {
     // resort job hours into nested maps of year -> month -> day -> hours
     let mut years: HashMap<i32, HashMap<u32, HashMap<u32, HashMap<Option<String>, f64>>>> =
         HashMap::new();
@@ -60,21 +60,21 @@ pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
         for (month, days) in months.iter().sorted_by_key(|x| x.0) {
             // print year/month title centered
             let month_year = format!("{}/{}", month, year);
-            outputln!("{:^68}", month_year);
+            write!(w, "{:^68}", month_year)?;
 
             // insert day of month column
-            output!("{:>3}", "Day");
+            write!(w, "{:>3}", "Day")?;
 
             // print weekdays as table header
             const WEEKDAYS: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             for weekday in WEEKDAYS {
-                output!("{:>8}", weekday);
+                write!(w, "{:>8}", weekday)?;
             }
             // add weekly sum to table header
-            outputln!("{:>8}", "Week");
+            writeln!(w, "{:>8}", "Week")?;
 
             // indent day of month column
-            output!("{:>3}", "");
+            write!(w, "{:>3}", "")?;
 
             // indent to first weekday in this month
             let first_weekday = NaiveDate::from_ymd_opt(*year, *month, 1)
@@ -83,7 +83,7 @@ pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
                 .num_days_from_sunday()
                 + 1;
             for _ in 1..first_weekday {
-                output!("{:>8}", " ");
+                write!(w, "{:>8}", " ")?;
             }
 
             // print all days in this month week per week
@@ -97,14 +97,14 @@ pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
                     == Weekday::Sun
                 {
                     // print weekly sum and restart a new week row
-                    outputln!("{:>8}", week_hours);
+                    writeln!(w, "{:>8}", week_hours)?;
 
                     // re-initialize weekly hours sum
                     week_hours = 0.0;
                     week_day_number = 0;
 
                     // indent day of month column
-                    output!("{:>3}", day);
+                    write!(w, "{:>3}", day)?;
                 }
 
                 // print hours of that day if any or '-'
@@ -132,15 +132,15 @@ pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
                         }
                     }
                     // print hours at this day and mark yellow if exceeded and red if >24h/day
-                    output!("{}", style::Bold);
+                    write!(w, "{}", style::Bold)?;
                     if day_hours > 24.0 {
-                        output!("{}{:>8}{}", Fg(LightRed), day_hours, Fg(Reset),);
+                        write!(w, "{}{:>8}{}", Fg(LightRed), day_hours, Fg(Reset),)?;
                     } else if exceeded {
-                        output!("{}{:>8}{}", Fg(Yellow), day_hours, Fg(Reset),);
+                        write!(w, "{}{:>8}{}", Fg(Yellow), day_hours, Fg(Reset),)?;
                     } else {
-                        output!("{}{:>8}{}", Fg(LightWhite), day_hours, Fg(Reset),);
+                        write!(w, "{}{:>8}{}", Fg(LightWhite), day_hours, Fg(Reset),)?;
                     }
-                    output!("{}", style::Reset);
+                    write!(w, "{}", style::Reset)?;
 
                     // sum up weekly and monthly hours
                     week_hours += day_hours;
@@ -152,16 +152,16 @@ pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
                         month_costs = Some(month_costs.unwrap() + day_costs);
                     }
                 } else {
-                    output!("{:>8}", "-");
+                    write!(w, "{:>8}", "-")?;
                 }
                 week_day_number += 1;
             }
             for _ in 0..(7 - week_day_number) {
-                output!("{:>8}", "");
+                write!(w, "{:>8}", "")?;
             }
 
             // print weekly sum and restart a new week row
-            outputln!("{:>8}", week_hours);
+            writeln!(w, "{:>8}", week_hours)?;
 
             const MONTHS: [&str; 12] = [
                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -182,10 +182,10 @@ pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
                 month_hours,
                 month_pay
             );
-            outputln!("{:>67}", monthly_hours);
+            writeln!(w, "{:>67}", monthly_hours)?;
             month_hours = 0.0;
             month_costs = None;
-            outputln!("");
+            writeln!(w, "")?;
         }
     }
 
@@ -196,12 +196,13 @@ pub fn report(jobs: &JobList, context: &Context) -> Result<(), Error> {
             String::new()
         }
     };
-    outputln!(
+    writeln!(
+        w,
         "Total: {} job(s), {} hours{}",
         jobs.len(),
         format_hours_pure(jobs.hours_overall()),
         pay,
-    );
+    )?;
 
     Ok(())
 }

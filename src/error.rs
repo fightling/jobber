@@ -11,6 +11,8 @@ pub enum Error {
     Confy(confy::ConfyError),
     #[error("I/O error: {0}")]
     Io(std::io::Error),
+    #[error("Formatting error: {0}")]
+    Fmt(std::fmt::Error),
     #[error("JSON error: {0}")]
     Json(serde_json::Error),
     #[error("There still is an open job:\n\n    Pos: {0}\n{1}")]
@@ -37,6 +39,18 @@ pub enum Error {
     JobNotFound(usize),
     #[error("a value is required for '--tags <TAGS>' but none was supplied")]
     MissingTags,
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::Io(err)
+    }
+}
+
+impl From<std::fmt::Error> for Error {
+    fn from(err: std::fmt::Error) -> Self {
+        Error::Fmt(err)
+    }
 }
 
 #[derive(Error, Debug)]

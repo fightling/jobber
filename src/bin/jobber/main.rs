@@ -28,13 +28,18 @@ impl Default for Config {
 fn main() {
     let args = Args::parse();
     let context = Context::new();
-    if let Err(err) = run(args, Checks::all(), &context) {
+    if let Err(err) = run(&mut std::io::stdout(), args, Checks::all(), &context) {
         eprintln!("ERROR: {err}");
     }
 }
 
 /// process program arguments to read/write jobber's database and handle warnings
-fn run(args: Args, checks: Checks, context: &Context) -> Result<(), Error> {
+fn run<W: std::io::Write>(
+    w: &mut W,
+    args: Args,
+    checks: Checks,
+    context: &Context,
+) -> Result<(), Error> {
     let dry = args.dry;
 
     // load database from file or create new
@@ -64,7 +69,7 @@ fn run(args: Args, checks: Checks, context: &Context) -> Result<(), Error> {
 
     // parse and process command
     let mut command = parse(args, jobs.open_start(), context);
-    match jobs.process(&command, checks, context) {
+    match jobs.process(w, &command, checks, context) {
         Err(Error::Warnings(warnings)) => {
             if warnings.len() == 1 {
                 eprintln!("There ist one warning you have to omit:");
@@ -77,9 +82,9 @@ fn run(args: Args, checks: Checks, context: &Context) -> Result<(), Error> {
                     return Err(Error::Cancel);
                 }
             }
-            match jobs.process(&command, Checks::omit(), context) {
+            match jobs.process(w, &command, Checks::omit(), context) {
                 Err(Error::EnterMessage) => {
-                    edit_message(&mut jobs, &mut command, context)?;
+                    edit_message(w, &mut jobs, &mut command, context)?;
                 }
                 Err(err) => return Err(err),
                 Ok(change) => {
@@ -88,12 +93,12 @@ fn run(args: Args, checks: Checks, context: &Context) -> Result<(), Error> {
             }
         }
         Err(Error::EnterMessage) => {
-            eprintln!("{}", edit_message(&mut jobs, &mut command, context)?);
+            eprintln!("{}", edit_message(w, &mut jobs, &mut command, context)?);
         }
         Err(Error::OutputFileExists(filename)) => {
             eprintln!("{}", Error::OutputFileExists(filename));
             if ask("Do you want to overwrite the existing file?", false)? {
-                jobs.process(&command, Checks::omit(), context)?;
+                jobs.process(w, &command, Checks::omit(), context)?;
             } else {
                 eprintln!("No report generated.")
             }
@@ -115,7 +120,8 @@ fn run(args: Args, checks: Checks, context: &Context) -> Result<(), Error> {
 }
 
 #[cfg(test)]
-pub fn run_args(
+pub fn run_args<W: std::io::Write>(
+    w: &mut W,
     args: &[&str],
     jobs: Option<Jobs>,
     checks: Checks,
@@ -126,19 +132,20 @@ pub fn run_args(
     } else {
         Jobs::new()
     };
-    run_args_with(&mut jobs, args, checks, context)?;
+    run_args_with(w, &mut jobs, args, checks, context)?;
     Ok(jobs)
 }
 
 #[cfg(test)]
-pub fn run_args_with(
+pub fn run_args_with<W: std::io::Write>(
+    w: &mut W,
     jobs: &mut Jobs,
     args: &[&str],
     checks: Checks,
     context: &Context,
 ) -> Result<Operation, Error> {
     let command = parse(Args::parse_from(args), None, context);
-    jobs.process(&command, checks, context)
+    jobs.process(w, &command, checks, context)
 }
 
 /// Asks user on console a yes-no-question
@@ -182,7 +189,8 @@ fn enter(question: &str) -> Result<String, Error> {
 }
 
 /// Ask user for a multi line message and enrich a command with it
-fn edit_message(
+fn edit_message<W: std::io::Write>(
+    w: &mut W,
     jobs: &mut Jobs,
     command: &mut Command,
     context: &Context,
@@ -192,7 +200,7 @@ fn edit_message(
         Finish input with empty line (or Ctrl+C to cancel):",
     )?;
     command.set_message(message);
-    jobs.process(&command, Checks::omit(), context)
+    jobs.process(w, &command, Checks::omit(), context)
 }
 
 /// parse arguments into a command

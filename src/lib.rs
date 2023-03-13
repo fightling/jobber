@@ -17,13 +17,11 @@ pub mod range;
 pub mod reports;
 pub mod tag_set;
 pub mod tags;
-#[macro_use]
-pub mod output;
 
 pub mod prelude {
     pub use super::{
         check::*, command::*, configuration::*, context::*, date_time::*, duration::*, error::*,
-        export::*, format::*, job::*, job_list::*, jobs::*, operation::*, output, outputln,
-        partial_date_time::*, positions::*, range::*, reports::*, tag_set::*, tags,
+        export::*, format::*, job::*, job_list::*, jobs::*, operation::*, partial_date_time::*,
+        positions::*, range::*, reports::*, tag_set::*, tags,
     };
 }
