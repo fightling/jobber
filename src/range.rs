@@ -137,9 +137,14 @@ impl std::fmt::Display for Range {
             Self::None => write!(f, "none"),
             Self::All => write!(f, "all job(s)"),
             Self::Count(count) => write!(f, "last {count} job(s)"),
-            Self::At(pos) => write!(f, "job at position {pos}"),
-            Self::PositionRange(from, to) => write!(f, "job(s) from position {from} to {to}"),
-            Self::FromPosition(from) => write!(f, "job(s) from position {from}"),
+            Self::At(pos) => write!(f, "job at position {pos}", pos = pos + 1),
+            Self::PositionRange(from, to) => write!(
+                f,
+                "job(s) from position {from} to {to}",
+                from = from + 1,
+                to = to + 1
+            ),
+            Self::FromPosition(from) => write!(f, "job(s) from position {from}", from = from + 1),
             Self::Day(day) => write!(f, "job(s) at {day}"),
             Self::TimeRange(since, until) => write!(f, "job(s) since {since} until {until}"),
             Self::Since(since) => write!(f, "job(s) since {since}"),

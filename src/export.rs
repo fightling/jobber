@@ -1,8 +1,7 @@
 use super::prelude::*;
 use itertools::Itertools;
 
-pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<(), Error> {
-    let columns: Vec<&str> = columns.split(',').collect();
+pub fn export_csv(jobs: &JobList, columns: &Vec<String>, context: &Context) -> Result<(), Error> {
     let title = columns
         .clone()
         .iter()
@@ -16,7 +15,7 @@ pub fn export_csv(jobs: JobList, context: &Context, columns: &String) -> Result<
                 outputln!(",");
             }
             let properties = jobs.configuration.get_checked(&job.tags)?;
-            match *column {
+            match column.as_str() {
                 "pos" => output!("{}", pos + 1),
                 "start" => output!(r#""{}""#, job.start.format("%m/%d/%Y %H:%M")),
                 "end" => output!(

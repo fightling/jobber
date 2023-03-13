@@ -56,6 +56,9 @@ impl Positions {
         }
         ranges
     }
+    pub fn iter(&self) -> core::slice::Iter<'_, usize> {
+        self.0.iter()
+    }
 }
 
 pub struct PositionsIterator<'a> {

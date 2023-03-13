@@ -136,7 +136,7 @@ pub fn run_args_with(
     args: &[&str],
     checks: Checks,
     context: &Context,
-) -> Result<Change, Error> {
+) -> Result<Operation, Error> {
     let command = parse(Args::parse_from(args), None, context);
     jobs.process(&command, checks, context)
 }
@@ -186,7 +186,7 @@ fn edit_message(
     jobs: &mut Jobs,
     command: &mut Command,
     context: &Context,
-) -> Result<Change, Error> {
+) -> Result<Operation, Error> {
     let message = enter(
         "You need to enter a message about what you did to finish the job.\n\
         Finish input with empty line (or Ctrl+C to cancel):",
@@ -445,23 +445,20 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         Command::ExportCSV {
             range,
             tags,
-            context: context.clone(),
             columns: csv,
         }
     } else if let Some(range) = report {
-        Command::Report {
-            range,
-            tags,
-            context: context.clone(),
-        }
+        Command::Report { range, tags }
     } else if configuration {
         Command::ShowConfiguration
     } else if resolution.is_some() || pay.is_some() || max_hours.is_some() {
         Command::SetConfiguration {
-            resolution,
-            pay,
             tags,
-            max_hours,
+            update: Properties {
+                resolution,
+                pay,
+                max_hours,
+            },
         }
     } else if let Some(filename) = legacy_import {
         Command::LegacyImport { filename }

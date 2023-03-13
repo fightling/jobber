@@ -3,7 +3,7 @@ use super::prelude::*;
 type IndexedJob = (usize, Job);
 
 /// list of jobs extracted from database
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JobList {
     /// list of jobs (including original index in database)
     jobs: Vec<IndexedJob>,

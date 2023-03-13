@@ -56,23 +56,19 @@ pub enum Command {
     Report {
         range: Range,
         tags: Option<Vec<String>>,
-        context: Context,
     },
     /// Report jobs as CSV
     ExportCSV {
         range: Range,
         tags: Option<Vec<String>>,
-        context: Context,
         columns: String,
     },
     /// Display whole configuration
     ShowConfiguration,
     /// change configuration
     SetConfiguration {
-        resolution: Option<f64>,
-        pay: Option<f64>,
         tags: Option<Vec<String>>,
-        max_hours: Option<u32>,
+        update: Properties,
     },
     LegacyImport {
         filename: String,
@@ -179,21 +175,21 @@ impl std::fmt::Debug for Command {
                 f,
                 "Command::List{{ range: {range:?}, tags: {tags:?} }}"
             ),
-            Command::Report { range, tags, context } => write!(
+            Command::Report { range, tags } => write!(
                 f,
-                "Command::Report{{ range: {range:?}, tags: {tags:?}, context: {context:?} }}"
+                "Command::Report{{ range: {range:?}, tags: {tags:?} }}"
             ),
-            Command::ExportCSV { range, tags, context, columns } => write!(
+            Command::ExportCSV { range, tags,  columns } => write!(
                 f,
-                "Command::ReportCSV{{ range: {range:?}, tags: {tags:?}, context: {context:?}, columns: {columns:?} }}"
+                "Command::ReportCSV{{ range: {range:?}, tags: {tags:?}, columns: {columns:?} }}"
             ),
             Command::ShowConfiguration => write!(
                 f,
                 "Command::ShowConfiguration"
             ),
-            Command::SetConfiguration { resolution, pay, tags, max_hours } => write!(
+            Command::SetConfiguration { tags, update } => write!(
                 f,
-                "Command::SetConfiguration{{ resolution: {resolution:?}, pay: {pay:?}, tags: {tags:?}, max_hours: {max_hours:?} }}"
+                "Command::SetConfiguration{{ tags: {tags:?}, update: {update:?} }}"
             ),
             Command::LegacyImport { filename } => write!(
                 f,

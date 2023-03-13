@@ -65,9 +65,15 @@ impl Jobs {
         command: &Command,
         check: Checks,
         context: &Context,
-    ) -> Result<Change, Error> {
-        let change = self.interpret(command)?;
-        self.change(change.clone(), check, context)?;
+    ) -> Result<Operation, Error> {
+        let mut change = self.interpret(command)?;
+        eprintln!("");
+        self.operate(&mut change, check, context)?;
+        eprintln!("");
+        if let Some(job) = self.get_open_with_pos() {
+            eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
+        }
+
         Ok(change)
     }
     pub fn all(&self) -> JobList {
@@ -178,7 +184,7 @@ impl Jobs {
         }
         Ok(tags)
     }
-    fn interpret(&mut self, command: &Command) -> Result<Change, Error> {
+    fn interpret(&mut self, command: &Command) -> Result<Operation, Error> {
         // debug
         // eprintln!("{command:?}");
 
@@ -188,7 +194,7 @@ impl Jobs {
                 start,
                 message,
                 tags,
-            } => Change::Push(
+            } => Operation::Push(
                 self.jobs.len(),
                 Job::new(start, None, Self::check_force_enter_message(message)?, tags)?,
             ),
@@ -197,7 +203,7 @@ impl Jobs {
                 end,
                 message,
                 tags,
-            } => Change::Push(
+            } => Operation::Push(
                 self.jobs.len(),
                 Job::new(
                     start,
@@ -210,7 +216,7 @@ impl Jobs {
                 start,
                 message,
                 tags,
-            } => Change::Push(
+            } => Operation::Push(
                 self.jobs.len(),
                 Job::new(
                     start,
@@ -224,7 +230,7 @@ impl Jobs {
                 end,
                 message,
                 tags,
-            } => Change::Push(
+            } => Operation::Push(
                 self.jobs.len(),
                 Job::new(
                     start,
@@ -245,106 +251,40 @@ impl Jobs {
                     if let Some(tags) = tags {
                         new_job.tags.0 = tags;
                     }
-                    Change::Modify(pos, new_job)
+                    Operation::Modify(pos, new_job)
                 } else {
                     return Err(Error::NoOpenJob);
                 }
             }
-            Command::List { range, tags } => {
-                eprintln!("");
-                if tags.is_some() {
-                    eprintln!(
-                        "Listing {range} with tags {tags}:",
-                        tags = TagSet::from_option_vec(&tags)
-                    );
-                } else {
-                    eprintln!("Listing {range}:");
-                }
-                eprintln!("");
-                outputln!("{}", self.filter(&range, &&TagSet::from_option_vec(&tags)));
-                if let Some(job) = self.get_open_with_pos() {
-                    eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
-                }
-                Change::Nothing
-            }
-            Command::Report {
+            Command::List { range, tags } => Operation::List(
+                self.filter(&range, &&TagSet::from_option_vec(&tags)),
                 range,
-                tags,
-                context,
-            } => {
-                eprintln!("");
-                if tags.is_some() {
-                    eprintln!(
-                        "Reporting {range} with tags {tags}:",
-                        tags = TagSet::from_option_vec(&tags)
-                    );
-                } else {
-                    eprintln!("Reporting {range}:");
-                }
-                eprintln!("");
-                report(
-                    &self.filter(&range, &TagSet::from_option_vec(&tags)),
-                    &context,
-                )?;
-                eprintln!("");
-                if let Some(job) = self.get_open_with_pos() {
-                    eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
-                }
-                Change::Nothing
-            }
+                Some(TagSet::from_option_vec(&tags)),
+            ),
+            Command::Report { range, tags } => Operation::Report(
+                self.filter(&range, &&TagSet::from_option_vec(&tags)),
+                range,
+                Some(TagSet::from_option_vec(&tags)),
+            ),
             Command::ExportCSV {
                 range,
                 tags,
-                context,
                 columns,
-            } => {
-                export_csv(
-                    self.filter(&range, &&TagSet::from_option_vec(&tags)),
-                    &context,
-                    &columns,
-                )?;
-                //todo!("reporting not implemented")
-                Change::Nothing
-            }
-            Command::ShowConfiguration => {
-                // print base configurations
-                eprintln!("Base Configuration:\n\n{}", self.configuration.base);
-                // print tag wise configurations
-                for (tag, properties) in &self.configuration.tags {
-                    eprintln!(
-                        "Configuration for tag {}:\n\n{}",
-                        TagSet::from_one(&Some(tag.clone())),
-                        properties
-                    );
-                }
-                Change::Nothing
-            }
-            Command::SetConfiguration {
-                resolution,
-                pay,
-                tags,
-                max_hours,
-            } => {
-                let config = self.configuration.set(&tags, resolution, pay, max_hours);
-                self.modified = true;
-                Change::Configuration(tags, config)
-            }
+            } => Operation::ExportCSV(
+                self.filter(&range, &&TagSet::from_option_vec(&tags)),
+                range,
+                Some(TagSet::from_option_vec(&tags)),
+                columns.split(',').map(|c| c.into()).collect(),
+            ),
+            Command::ShowConfiguration => Operation::ShowConfiguration(self.configuration.clone()),
+            Command::SetConfiguration { tags, update } => Operation::Configure(tags, update),
             Command::MessageTags {
                 message: _,
                 tags: _,
             } => todo!(),
-            Command::LegacyImport { filename } => {
-                let (count, new_tags) = self.legacy_import(&filename)?;
-                Change::Import(count, new_tags)
-            }
+            Command::LegacyImport { filename } => Operation::Import(filename, 0, TagSet::new()),
             Command::ListTags { range, tags } => {
-                let tags = self.filter(&range, &TagSet::from_option_vec(&tags)).tags();
-                if tags.is_empty() {
-                    outputln!("Currently no tags are used.");
-                } else {
-                    outputln!("Known tags: {}", tags);
-                }
-                Change::Nothing
+                Operation::ListTags(self.filter(&range, &TagSet::from_option_vec(&tags)).tags())
             }
             Command::Edit {
                 pos,
@@ -373,14 +313,14 @@ impl Jobs {
                     if let Some(tags) = tags {
                         job.tags = TagSet::from_option_vec(&Some(tags));
                     }
-                    Change::Modify(pos, job.clone())
+                    Operation::Modify(pos, job.clone())
                 } else {
                     return Err(Error::JobNotFound(pos));
                 }
             }
             Command::Delete { range, tags } => {
                 let jobs = self.filter(&range, &TagSet::from_option_vec(&tags));
-                Change::Delete(jobs.positions())
+                Operation::Delete(jobs.positions())
             }
         })
     }
@@ -391,11 +331,16 @@ impl Jobs {
             None
         }
     }
-    fn change(&mut self, change: Change, checks: Checks, context: &Context) -> Result<(), Error> {
-        match change {
-            Change::Nothing => Ok(()),
-            Change::Push(position, job) => {
-                assert!(position == self.jobs.len());
+    fn operate(
+        &mut self,
+        operation: &mut Operation,
+        checks: Checks,
+        context: &Context,
+    ) -> Result<(), Error> {
+        match operation {
+            Operation::Nothing => Ok(()),
+            Operation::Push(position, job) => {
+                assert!(*position == self.jobs.len());
                 if job.is_open() {
                     self.check_finished()?;
                 }
@@ -403,34 +348,50 @@ impl Jobs {
                 if job.message.is_none() && !job.is_open() {
                     Err(Error::EnterMessage)
                 } else {
-                    self.push(job);
+                    self.push(job.clone());
                     self.modified = true;
                     Ok(())
                 }
             }
-            Change::Modify(pos, job) => {
-                checks.check(self, Some(pos), &job, context)?;
+            Operation::Modify(pos, job) => {
+                checks.check(self, Some(*pos), &job, context)?;
                 if job.message.is_none() {
                     Err(Error::EnterMessage)
                 } else {
-                    self.jobs[pos] = job;
+                    self.jobs[*pos] = job.clone();
                     self.modified = true;
                     Ok(())
                 }
             }
-            Change::Delete(positions) => {
+            Operation::Delete(positions) => {
                 if checks.has(Check::ConfirmDeletion) {
-                    Err(Error::Warnings(vec![Warning::ConfirmDeletion(positions)]))
+                    Err(Error::Warnings(vec![Warning::ConfirmDeletion(
+                        positions.clone(),
+                    )]))
                 } else {
-                    for pos in &positions {
-                        self.jobs[pos].deleted = Some(context.current());
+                    for pos in positions.iter() {
+                        self.jobs[*pos].deleted = Some(context.current());
                         self.modified = true;
                     }
                     Ok(())
                 }
             }
-            Change::Import(_, _) => Ok(()),
-            Change::Configuration(_, _) => Ok(()),
+            Operation::Import(filename, count, new_tags) => {
+                (*count, *new_tags) = self.legacy_import(&filename)?;
+                self.modified = *count > 0;
+                Ok(())
+            }
+            Operation::Configure(tags, update) => {
+                self.modified = self.configuration.set(&tags, update);
+                Ok(())
+            }
+            Operation::List(jobs, _, _) => {
+                outputln!("{}", jobs);
+                Ok(())
+            }
+            Operation::Report(jobs, _, _) => report(&jobs, &context),
+            Operation::ExportCSV(jobs, _, _, columns) => export_csv(jobs, columns, &context),
+            _ => Ok(()),
         }
     }
     fn check_finished(&self) -> Result<(), Error> {

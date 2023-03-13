@@ -13,30 +13,25 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    pub fn set(
-        &mut self,
-        tags: &Option<Vec<String>>,
-        resolution: Option<f64>,
-        pay: Option<f64>,
-        max_hours: Option<u32>,
-    ) -> Properties {
-        let update = Properties {
-            resolution,
-            pay,
-            max_hours,
-        };
+    pub fn set(&mut self, tags: &Option<Vec<String>>, update: &Properties) -> bool {
+        let mut modified = false;
         if let Some(tags) = tags {
             for tag in tags {
                 if let Some(tag_configuration) = self.tags.get_mut(tag) {
-                    tag_configuration.update(update.clone());
+                    if tag_configuration.update(update.clone()) {
+                        modified = true;
+                    }
                 } else {
                     self.tags.insert(tag.clone(), update.clone());
+                    modified = true;
                 }
             }
         } else {
-            self.base.update(update.clone());
+            if self.base.update(update.clone()) {
+                modified = true;
+            }
         }
-        update
+        modified
     }
     /// provides configurations for display trait implementation
     pub fn get_and_why(&self, tags: &TagSet) -> (Option<String>, &Properties) {
@@ -70,7 +65,7 @@ impl Configuration {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Properties {
     /// Time resolution in fractional hours
     pub resolution: Option<f64>,
@@ -81,16 +76,21 @@ pub struct Properties {
 }
 
 impl Properties {
-    pub fn update(&mut self, properties: Properties) {
+    pub fn update(&mut self, properties: Properties) -> bool {
+        let mut modified = false;
         if let Some(resolution) = properties.resolution {
             self.resolution = Some(resolution);
+            modified = true;
         }
         if let Some(pay) = properties.pay {
             self.pay = Some(pay);
+            modified = true;
         }
         if let Some(max_hours) = properties.max_hours {
             self.max_hours = Some(max_hours);
+            modified = true;
         }
+        modified
     }
 }
 
