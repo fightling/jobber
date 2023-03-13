@@ -1,12 +1,13 @@
+//! Date and time.
+
 use super::prelude::*;
-use chrono::{Local, NaiveDateTime, TimeZone, Utc};
+use chrono::{Datelike, Local, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 
+/// Date and time.
 #[derive(Clone, Copy, PartialOrd, PartialEq, Serialize, Deserialize, Ord, Eq)]
 #[serde(transparent)]
-pub struct DateTime {
-    pub date_time: chrono::DateTime<Utc>,
-}
+pub struct DateTime(chrono::DateTime<Utc>);
 
 impl std::fmt::Display for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -21,42 +22,72 @@ impl std::fmt::Debug for DateTime {
 }
 
 impl DateTime {
+    /// Create with current date and time.
     pub fn now() -> Self {
-        DateTime {
-            date_time: Utc::now(),
-        }
+        DateTime(Utc::now())
     }
+    pub fn year(&self) -> i32 {
+        self.0.year()
+    }
+    pub fn month(&self) -> u32 {
+        self.0.month()
+    }
+    pub fn day(&self) -> u32 {
+        self.0.day()
+    }
+    pub fn date(&self) -> Date {
+        Date(self.into_local().date())
+    }
+    /// Convert into naive local date and time.
     pub fn into_local(&self) -> NaiveDateTime {
-        Local
-            .from_utc_datetime(&self.date_time.naive_local())
-            .naive_local()
+        Local.from_utc_datetime(&self.0.naive_local()).naive_local()
     }
+    /// Convert from naive local date and time.
     pub fn from_local(local: &NaiveDateTime) -> Self {
         let local = Local.from_local_datetime(local).unwrap();
-        let utc: chrono::DateTime<Utc> = chrono::DateTime::from(local);
-        Self { date_time: utc }
+        Self(chrono::DateTime::from(local))
     }
+    /// Convert from naive local date and time string.
     pub fn from_local_str(local: &str) -> Self {
-        Self {
-            date_time: Utc
-                .from_local_datetime(
-                    &Local
-                        .datetime_from_str(local, "%Y-%m-%d %H:%M")
-                        .unwrap()
-                        .naive_utc(),
-                )
-                .unwrap(),
-        }
+        Self(
+            Utc.from_local_datetime(
+                &Local
+                    .datetime_from_str(local, "%Y-%m-%d %H:%M")
+                    .unwrap()
+                    .naive_utc(),
+            )
+            .unwrap(),
+        )
     }
+    /// Convert from naive RFC3339 date and time.
     pub fn from_rfc3339(rfc3339: &str) -> Result<Self, Error> {
-        Ok(Self {
-            date_time: chrono::DateTime::parse_from_rfc3339(rfc3339)
+        Ok(Self(
+            chrono::DateTime::parse_from_rfc3339(rfc3339)
                 .map_err(|e| Error::DateTimeParse(e))?
                 .into(),
-        })
+        ))
     }
+    /// Format with the given format string (see `format::strftime()` for available formats)
     pub fn format(&self, format: &str) -> String {
         self.into_local().format(format).to_string()
+    }
+}
+
+impl From<chrono::DateTime<Utc>> for DateTime {
+    fn from(value: chrono::DateTime<Utc>) -> Self {
+        Self(value)
+    }
+}
+
+impl Into<chrono::DateTime<Utc>> for DateTime {
+    fn into(self) -> chrono::DateTime<Utc> {
+        self.0
+    }
+}
+
+impl Into<chrono::DateTime<Local>> for DateTime {
+    fn into(self) -> chrono::DateTime<Local> {
+        self.0.into()
     }
 }
 
@@ -65,8 +96,7 @@ impl std::ops::SubAssign<Duration> for DateTime {
         match other {
             Duration::Zero => (),
             Duration::HM { hours, minutes } => {
-                self.date_time -=
-                    chrono::Duration::hours(hours) + chrono::Duration::minutes(minutes)
+                self.0 -= chrono::Duration::hours(hours) + chrono::Duration::minutes(minutes)
             }
         }
     }
@@ -77,8 +107,7 @@ impl std::ops::AddAssign<Duration> for DateTime {
         match other {
             Duration::Zero => (),
             Duration::HM { hours, minutes } => {
-                self.date_time +=
-                    chrono::Duration::hours(hours) + chrono::Duration::minutes(minutes)
+                self.0 += chrono::Duration::hours(hours) + chrono::Duration::minutes(minutes)
             }
         }
     }
@@ -89,11 +118,9 @@ impl std::ops::Add<Duration> for DateTime {
     fn add(self, other: Duration) -> Self::Output {
         match other {
             Duration::Zero => self,
-            Duration::HM { hours, minutes } => Self {
-                date_time: self.date_time
-                    + chrono::Duration::hours(hours)
-                    + chrono::Duration::minutes(minutes),
-            },
+            Duration::HM { hours, minutes } => {
+                Self(self.0 + chrono::Duration::hours(hours) + chrono::Duration::minutes(minutes))
+            }
         }
     }
 }
@@ -103,11 +130,9 @@ impl std::ops::Sub<Duration> for DateTime {
     fn sub(self, other: Duration) -> Self::Output {
         match other {
             Duration::Zero => self,
-            Duration::HM { hours, minutes } => Self {
-                date_time: self.date_time
-                    - chrono::Duration::hours(hours)
-                    - chrono::Duration::minutes(minutes),
-            },
+            Duration::HM { hours, minutes } => {
+                Self(self.0 - chrono::Duration::hours(hours) - chrono::Duration::minutes(minutes))
+            }
         }
     }
 }
@@ -115,28 +140,39 @@ impl std::ops::Sub<Duration> for DateTime {
 impl std::ops::Add<chrono::Duration> for DateTime {
     type Output = DateTime;
     fn add(self, other: chrono::Duration) -> Self::Output {
-        Self {
-            date_time: self.date_time + other,
-        }
+        Self(self.0 + other)
     }
 }
 
 impl std::ops::Sub<chrono::Duration> for DateTime {
     type Output = DateTime;
     fn sub(self, other: chrono::Duration) -> Self::Output {
-        Self {
-            date_time: self.date_time - other,
-        }
+        Self(self.0 - other)
     }
 }
 
 impl std::ops::Sub for &DateTime {
     type Output = Duration;
     fn sub(self, other: &DateTime) -> Self::Output {
-        let minutes = (self.date_time - other.date_time).num_minutes();
+        let minutes = (self.0 - other.0).num_minutes();
         Duration::HM {
             hours: minutes / 60,
             minutes: minutes % 60,
         }
+    }
+}
+#[derive(Debug, PartialEq, Clone, PartialOrd, Ord, Eq)]
+pub struct Date(chrono::NaiveDate);
+
+impl From<DateTime> for Date {
+    fn from(value: DateTime) -> Self {
+        let datetime: chrono::DateTime<Utc> = value.clone().into();
+        Date(datetime.date_naive())
+    }
+}
+
+impl std::fmt::Display for Date {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

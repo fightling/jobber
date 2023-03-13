@@ -1,4 +1,3 @@
-use chrono::{NaiveDate, TimeZone, Utc};
 use regex::Regex;
 
 use super::prelude::*;
@@ -11,7 +10,7 @@ pub enum Range {
     At(usize),
     PositionRange(usize, usize),
     FromPosition(usize),
-    Day(NaiveDate),
+    Day(Date),
     TimeRange(DateTime, DateTime),
     Since(DateTime),
 }
@@ -78,7 +77,7 @@ impl Range {
         let pt = PartialDateTime::parse(Some(list.to_string()));
         match pt {
             PartialDateTime::None => Self::None,
-            _ => Range::Day(pt.into(context.current()).date_time.date_naive()),
+            _ => Range::Day(Date::from(pt.into(context.time()))),
         }
     }
 
@@ -100,16 +99,17 @@ impl Range {
             match (from, to) {
                 (PartialDateTime::None, PartialDateTime::None) => Self::None,
                 (from, PartialDateTime::None) => {
-                    Self::TimeRange(from.into(context.current()), context.current())
+                    Self::TimeRange(from.into(context.time()), context.time())
                 }
-                (PartialDateTime::None, to) => Self::TimeRange(
-                    DateTime {
-                        date_time: Utc.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap(),
-                    },
-                    to.into(context.current()),
-                ),
+                (PartialDateTime::None, to) => {
+                    use chrono::{TimeZone, Utc};
+                    Self::TimeRange(
+                        Utc.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap().into(),
+                        to.into(context.time()),
+                    )
+                }
                 (from, to) => {
-                    let from = from.into(context.current());
+                    let from = from.into(context.time());
                     Self::TimeRange(from, to.into(from))
                 }
             }
@@ -124,7 +124,7 @@ impl Range {
             let pt = PartialDateTime::parse(Some(cap[1].to_string()));
             return match pt {
                 PartialDateTime::None => Self::None,
-                _ => Range::Since(pt.into(context.current())),
+                _ => Range::Since(pt.into(context.time())),
             };
         }
         Self::None

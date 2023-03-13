@@ -1,50 +1,51 @@
+//! Commands that *jobber* can process.
+
 use super::prelude::*;
 
+/// Encapsulates a duration or an end time.
 #[derive(PartialEq, Clone, Debug)]
 pub enum EndOrDuration {
+    /// None of both
     None,
+    /// End time
     End(DateTime),
+    /// Duration
     Duration(Duration),
 }
 
-/// Commands which can be applied to jobber's database
-#[derive(PartialEq, Clone)]
+/// Commands which can be applied to jobber's database.
+#[derive(PartialEq, Clone, Debug)]
 pub enum Command {
-    /// start a new job by specifying start time if there is no open job
+    /// Start a new job by specifying start time if there is no open job-
     Start {
         start: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
-    /// add a new job by specifying start and end time if there is no open job
+    /// Add a new job by specifying start and end time if there is no open job.
     Add {
         start: DateTime,
         end: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
-    /// like `Start` but re-use message an tags of previous job
+    /// Like `Start` but re-use message an tags of previous job.
     Back {
         start: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
-    /// like `Add` but re-use message an tags of previous job
+    /// Like `Add` but re-use message an tags of previous job.
     BackAdd {
         start: DateTime,
         end: DateTime,
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
-    /// end existing job by giving time
+    /// End existing job by giving time.
     End {
         end: DateTime,
         message: Option<Option<String>>,
-        tags: Option<Vec<String>>,
-    },
-    /// add message or tags to an open job
-    MessageTags {
-        message: Option<String>,
         tags: Option<Vec<String>>,
     },
     /// List jobs
@@ -70,13 +71,14 @@ pub enum Command {
         tags: Option<Vec<String>>,
         update: Properties,
     },
-    LegacyImport {
-        filename: String,
-    },
+    /// Import CSV database of legacy Ruby *jobber* version
+    LegacyImport { filename: String },
+    /// List all known tags
     ListTags {
         range: Range,
         tags: Option<Vec<String>>,
     },
+    /// Edit an existing job.
     Edit {
         pos: usize,
         start: Option<DateTime>,
@@ -84,6 +86,7 @@ pub enum Command {
         message: Option<Option<String>>,
         tags: Option<Vec<String>>,
     },
+    /// Delete an existing job.
     Delete {
         range: Range,
         tags: Option<Vec<String>>,
@@ -122,91 +125,6 @@ impl Command {
                 tags: _,
             } => *message = Some(Some(new_message)),
             _ => panic!("try to set message of command which has no message"),
-        }
-    }
-}
-
-impl std::fmt::Debug for Command {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Command::Start {
-                start,
-                message,
-                tags,
-            } => write!(
-                f,
-                "Command::Start{{ start: {start:?}, message: {message:?}, tags: {tags:?} }}"
-            ),
-            Command::Add {
-                start,
-                end,
-                message,
-                tags,
-            } => write!(
-                f,
-                "Command::Add{{ start: {start:?}, end: {end:?}, message: {message:?}, tags: {tags:?} }}"
-            ),
-            Command::Back {
-                start,
-                message,
-                tags,
-            } => write!(
-                f,
-                "Command::Back{{ start: {start:?}, message: {message:?}, tags: {tags:?} }}"
-            ),
-            Command::BackAdd {
-                start,
-                end,
-                message,
-                tags,
-            } => write!(
-                f,
-                "Command::BackAdd{{ start: {start:?}, end: {end:?}, message: {message:?}, tags: {tags:?} }}"
-            ),
-            Command::End { end, message, tags } => write!(
-                f,
-                "Command::End{{ end: {end:?}, message: {message:?}, tags: {tags:?} }}"                
-            ),
-            Command::MessageTags { message, tags } =>  write!(
-                f,
-                "Command::MessageTags{{ message: {message:?}, tags: {tags:?} }}"
-            ),
-            Command::List { range, tags } => write!(
-                f,
-                "Command::List{{ range: {range:?}, tags: {tags:?} }}"
-            ),
-            Command::Report { range, tags } => write!(
-                f,
-                "Command::Report{{ range: {range:?}, tags: {tags:?} }}"
-            ),
-            Command::ExportCSV { range, tags,  columns } => write!(
-                f,
-                "Command::ReportCSV{{ range: {range:?}, tags: {tags:?}, columns: {columns:?} }}"
-            ),
-            Command::ShowConfiguration => write!(
-                f,
-                "Command::ShowConfiguration"
-            ),
-            Command::SetConfiguration { tags, update } => write!(
-                f,
-                "Command::SetConfiguration{{ tags: {tags:?}, update: {update:?} }}"
-            ),
-            Command::LegacyImport { filename } => write!(
-                f,
-                "Command::LegacyImport{{ filename: {filename} }}"
-            ),
-            Command::ListTags{tags, range }  => write!(
-                f,
-                "Command::ListTags{{ range: {range:?}, tags: {tags:?} }}"
-            ),
-            Command::Edit { pos, start, end, message, tags } => write!(
-                f,
-                "Command::Edit{{ pos: {pos:?}, {start:?}, {end:?}, {message:?}, {tags:?} }}"
-            ),
-            Command::Delete { range, tags } => write!(
-                f,
-                "Command::Delete{{ range: {range:?}, tags {tags:?} }}"
-            ),
         }
     }
 }

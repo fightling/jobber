@@ -262,7 +262,6 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
     let pay = args.pay;
     let max_hours = args.max_hours;
     // true if any of the configuration items is available
-    let set_configuration = resolution.is_some() || pay.is_some() || max_hours.is_some();
     let configuration = args.configuration;
 
     // import old jobber CSV
@@ -288,10 +287,10 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
     // create command depending on what arguments were given...
     if let Some(pos) = edit {
         if let Some(start) = start {
-            let mut start = start.into(context.current());
+            let mut start = start.into(context.time());
             if let Some(end) = end {
                 if end == PartialDateTime::None {
-                    let end = end.into(context.current());
+                    let end = end.into(context.time());
                     if end < start {
                         start -= Duration::days(1);
                     }
@@ -330,7 +329,7 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
             }
         } else {
             if let Some(end) = end {
-                let end = end.into(context.current());
+                let end = end.into(context.time());
                 Command::Edit {
                     pos,
                     start: None,
@@ -359,10 +358,10 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
     } else if let Some(range) = delete {
         Command::Delete { range, tags }
     } else if let Some(start) = start {
-        let mut start = start.into(context.current());
+        let mut start = start.into(context.time());
         if let Some(end) = end {
             if end == PartialDateTime::None {
-                let end = end.into(context.current());
+                let end = end.into(context.time());
                 if end < start {
                     start -= Duration::days(1);
                 }
@@ -385,7 +384,7 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
                 }
             }
         } else if let Some(duration) = duration {
-            let end = start + duration.into_chrono();
+            let end = start + duration;
             Command::Add {
                 start,
                 end,
@@ -400,10 +399,10 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
             }
         }
     } else if let Some(start) = back {
-        let mut start = start.into(context.current());
+        let mut start = start.into(context.time());
         if let Some(end) = end {
             if end == PartialDateTime::None {
-                let end = end.into(context.current());
+                let end = end.into(context.time());
                 if end < start {
                     start -= Duration::days(1);
                 }
@@ -426,7 +425,7 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
                 }
             }
         } else if let Some(duration) = duration {
-            let end = start + duration.into_chrono();
+            let end = start + duration;
             Command::BackAdd {
                 start,
                 end,
@@ -444,7 +443,7 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         let end = end.into(if let Some(open_start) = open_start {
             open_start
         } else {
-            context.current()
+            context.time()
         });
         Command::End { end, message, tags }
     } else if let Some(range) = list {
@@ -472,11 +471,6 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         Command::LegacyImport { filename }
     } else if let Some(range) = list_tags {
         Command::ListTags { range, tags }
-    } else if !set_configuration && (message.is_some() || tags.is_some()) {
-        Command::MessageTags {
-            message: message.flatten(),
-            tags,
-        }
     } else {
         panic!("unknown command")
     }

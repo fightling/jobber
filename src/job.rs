@@ -76,7 +76,7 @@ impl Job {
             }
         } else {
             if let Some(other_end) = other.end {
-                self.start < other_end && context.current() > other.start
+                self.start < other_end && context.time() > other.start
             } else {
                 panic!("checking intersection of two open jobs!")
             }
@@ -89,7 +89,7 @@ impl Job {
         if let Some(end) = self.end {
             end.into_local()
         } else {
-            context.current().into_local()
+            context.time().into_local()
         }
     }
     /// splits job day-wise

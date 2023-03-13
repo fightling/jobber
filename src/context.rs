@@ -1,33 +1,25 @@
-use super::prelude::*;
-use chrono::Utc;
+//! Temporal context of a jobber run.
+//!
+//! Having this is necessary for testing.
 
+use super::prelude::*;
+
+/// Temporal context of a jobber run.
 #[derive(PartialEq, Clone, Debug)]
-pub struct Context {
-    current: chrono::DateTime<Utc>,
-}
+pub struct Context(DateTime);
 
 impl Context {
+    /// Create new context with current time.
     pub fn new() -> Self {
-        Self {
-            current: Utc::now(),
-        }
+        Self(DateTime::now())
     }
+    /// Create new context with given time.
+    /// Only use in tests!
     pub fn new_test(local: &str) -> Self {
-        use chrono::{Local, TimeZone};
-
-        let current = Utc
-            .from_local_datetime(
-                &Local
-                    .datetime_from_str(local, "%Y-%m-%d %H:%M")
-                    .unwrap()
-                    .naive_utc(),
-            )
-            .unwrap();
-        Self { current }
+        Self(DateTime::from_local_str(local))
     }
-    pub fn current(&self) -> DateTime {
-        DateTime {
-            date_time: self.current,
-        }
+    /// Return time in context
+    pub fn time(&self) -> DateTime {
+        DateTime::from(self.0)
     }
 }

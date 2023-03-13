@@ -13,7 +13,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
     for (_, job) in jobs.iter() {
         for job in job.split(context) {
             // insert year if not already in map
-            let year = job.start.date_time.year();
+            let year = job.start.year();
             if !years.contains_key(&year) {
                 years.insert(year, HashMap::new());
             }
@@ -21,7 +21,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
             let months = years.get_mut(&year).unwrap();
 
             // insert month if not already in year
-            let month = job.start.date_time.month();
+            let month = job.start.month();
             if !months.contains_key(&month) {
                 months.insert(month, HashMap::new());
             }
@@ -29,7 +29,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
             let days = months.get_mut(&month).unwrap();
 
             // insert day if not already in month
-            let day = job.start.date_time.day();
+            let day = job.start.day();
             if !days.contains_key(&day) {
                 days.insert(day, HashMap::new());
             }

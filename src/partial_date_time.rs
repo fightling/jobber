@@ -187,50 +187,49 @@ impl PartialDateTime {
     }
 
     pub fn into(self, base: DateTime) -> DateTime {
-        let base: chrono::DateTime<Local> = chrono::DateTime::from(base.date_time);
-        DateTime {
-            date_time: chrono::DateTime::with_timezone(
-                &match self {
-                    Self::HM { hour, minute } => Local
-                        .with_ymd_and_hms(base.year(), base.month(), base.day(), hour, minute, 0)
-                        .unwrap(),
-                    Self::YMDHM {
-                        year,
-                        month,
-                        day,
-                        hour,
-                        minute,
-                    } => Local
-                        .with_ymd_and_hms(year, month, day, hour, minute, 0)
-                        .unwrap(),
-                    Self::MDHM {
-                        month,
-                        day,
-                        hour,
-                        minute,
-                    } => Local
-                        .with_ymd_and_hms(base.year(), month, day, hour, minute, 0)
-                        .unwrap(),
-                    Self::YMD { year, month, day } => {
-                        Local.with_ymd_and_hms(year, month, day, 0, 0, 0).unwrap()
-                    }
-                    Self::MD { month, day } => Local
-                        .with_ymd_and_hms(base.year(), month, day, 0, 0, 0)
-                        .unwrap(),
-                    Self::None => Local
-                        .with_ymd_and_hms(
-                            base.year(),
-                            base.month(),
-                            base.day(),
-                            base.hour(),
-                            base.minute(),
-                            0,
-                        )
-                        .unwrap(),
-                },
-                &Utc,
-            ),
-        }
+        let base: chrono::DateTime<Local> = base.into();
+        chrono::DateTime::with_timezone(
+            &match self {
+                Self::HM { hour, minute } => Local
+                    .with_ymd_and_hms(base.year(), base.month(), base.day(), hour, minute, 0)
+                    .unwrap(),
+                Self::YMDHM {
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                } => Local
+                    .with_ymd_and_hms(year, month, day, hour, minute, 0)
+                    .unwrap(),
+                Self::MDHM {
+                    month,
+                    day,
+                    hour,
+                    minute,
+                } => Local
+                    .with_ymd_and_hms(base.year(), month, day, hour, minute, 0)
+                    .unwrap(),
+                Self::YMD { year, month, day } => {
+                    Local.with_ymd_and_hms(year, month, day, 0, 0, 0).unwrap()
+                }
+                Self::MD { month, day } => Local
+                    .with_ymd_and_hms(base.year(), month, day, 0, 0, 0)
+                    .unwrap(),
+                Self::None => Local
+                    .with_ymd_and_hms(
+                        base.year(),
+                        base.month(),
+                        base.day(),
+                        base.hour(),
+                        base.minute(),
+                        0,
+                    )
+                    .unwrap(),
+            },
+            &Utc,
+        )
+        .into()
     }
 }
 

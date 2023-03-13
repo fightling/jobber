@@ -121,9 +121,9 @@ impl Jobs {
                 Range::PositionRange(f, t) => n >= *f && n <= *t,
                 Range::FromPosition(p) => n >= *p,
                 Range::Day(d) => {
-                    job.start.into_local().date() <= *d
+                    job.start.date() <= *d
                         && if let Some(end) = job.end {
-                            end.into_local().date() >= *d
+                            end.date() >= *d
                         } else {
                             true
                         }
@@ -290,10 +290,6 @@ impl Jobs {
             }
             Command::ShowConfiguration => Operation::ShowConfiguration(self.configuration.clone()),
             Command::SetConfiguration { tags, update } => Operation::Configure(tags, update),
-            Command::MessageTags {
-                message: _,
-                tags: _,
-            } => todo!(),
             Command::LegacyImport { filename } => Operation::Import(filename, 0, TagSet::new()),
             Command::ListTags { range, tags } => {
                 Operation::ListTags(self.filter(&range, &tags.into()).tags())
@@ -383,7 +379,7 @@ impl Jobs {
                     )]))
                 } else {
                     for pos in positions.iter() {
-                        self.jobs[*pos].deleted = Some(context.current());
+                        self.jobs[*pos].deleted = Some(context.time());
                         self.modified = true;
                     }
                     Ok(())

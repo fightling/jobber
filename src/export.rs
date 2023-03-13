@@ -29,7 +29,7 @@ pub fn export_csv<W: std::io::Write>(
                     if let Some(end) = job.end {
                         end.format("%m/%d/%Y %H:%M")
                     } else {
-                        context.current().format("%m/%d/%Y %H:%M")
+                        context.time().format("%m/%d/%Y %H:%M")
                     }
                 )?,
                 "message" => write!(

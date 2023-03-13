@@ -19,7 +19,7 @@ fn test_edit() {
             "tag",
         ],
         None,
-        Checks::no_confirm(),
+        Checks::omit(),
         &context,
     )
     .unwrap();

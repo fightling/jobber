@@ -1,9 +1,10 @@
-use std::collections::HashMap;
-
-use serde::{Deserialize, Serialize};
+//! Configuration of a *jobber* database.
 
 use crate::prelude::*;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
+/// Configuration of a *jobber* database.
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Configuration {
     /// Configuration used when no tag related configuration fit
@@ -13,6 +14,7 @@ pub struct Configuration {
 }
 
 impl Configuration {
+    ///
     pub fn set(&mut self, tags: &Option<Vec<String>>, update: &Properties) -> bool {
         let mut modified = false;
         if let Some(tags) = tags {
@@ -65,6 +67,7 @@ impl Configuration {
     }
 }
 
+/// Properties within the database configuration.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Properties {
     /// Time resolution in fractional hours
@@ -76,6 +79,11 @@ pub struct Properties {
 }
 
 impl Properties {
+    /// Update properties.
+    /// # Arguments
+    /// - `properties`: Properties to overwrite (empty properties will be ignored)
+    /// # Return Value
+    /// Returns `true` if any modification was made.
     pub fn update(&mut self, properties: Properties) -> bool {
         let mut modified = false;
         if let Some(resolution) = properties.resolution {
