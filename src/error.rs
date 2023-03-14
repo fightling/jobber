@@ -60,11 +60,42 @@ impl From<std::fmt::Error> for Error {
 #[derive(Error, Debug)]
 pub enum Warning {
     #[error("The job you want to add overlaps existing one(s):\n\nJob you want to add:\n\n{new}\nExisting overlapping jobs:\n\n{existing}")]
-    Overlaps { new: Job, existing: JobList },
+    Overlaps { new: Job, existing: JobListOwned },
     #[error(
         "You have used some tags ({0}) which are unknown so far. Continue if you want to create them."
     )]
     UnknownTags(TagSet),
     #[error("You are about to delete job(s) at the following position(s): {0}")]
     ConfirmDeletion(Positions),
+}
+
+/// List of jobs extracted from database list.
+#[derive(Debug)]
+pub struct JobListOwned {
+    /// List of jobs (including original index within database).
+    jobs: Vec<(usize, Job)>,
+    /// Copy of the configuration of the original [Jobs] database.
+    pub configuration: Configuration,
+}
+
+impl JobListOwned {
+    /// Get read-only iterator over included jobs.
+    pub fn iter(&self) -> core::slice::Iter<'_, (usize, Job)> {
+        self.jobs.iter()
+    }
+}
+
+impl From<JobList<'_>> for JobListOwned {
+    fn from(list: JobList) -> Self {
+        Self {
+            configuration: list.configuration.clone(),
+            jobs: list.into_iter().map(|(n, j)| (n, j.clone())).collect(),
+        }
+    }
+}
+
+impl std::fmt::Display for JobListOwned {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        JobList::from(self).fmt(f)
+    }
 }

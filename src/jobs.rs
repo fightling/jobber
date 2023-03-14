@@ -64,30 +64,37 @@ impl Jobs {
     pub fn modified(&self) -> bool {
         self.modified
     }
+    pub fn list<'a>(&'a self, positions: &Positions) -> JobList<'a> {
+        let result: Vec<IndexedJob<'a>> = self
+            .iter()
+            .enumerate()
+            .filter(|(p, _)| positions.contains(p))
+            .collect();
+        JobList::new(result.into(), &self.configuration)
+    }
     /// Processes the given `command` and may return a change on this database.
     /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
     /// Fix warnings to continue and call again or turn any check on warnings off by using parameter `check`
-    pub fn process<W: std::io::Write>(
-        &mut self,
+    pub fn process<'a, W: std::io::Write>(
+        &'a mut self,
         w: &mut W,
         command: &Command,
         check: Checks,
         context: &Context,
     ) -> Result<Operation, Error> {
-        let mut change = self.interpret(command)?;
+        let mut operation = self.interpret(command)?;
         eprintln!("");
-        self.operate(w, &mut change, check, context)?;
+        self.operate(w, &mut operation, check, context)?;
         eprintln!("");
         if let Some(job) = self.get_open_with_pos() {
             eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
         }
-
-        Ok(change)
+        Ok(operation)
     }
     pub fn all(&self) -> JobList {
         let mut result = JobList::new_from(self);
         for (n, j) in self.jobs.iter().enumerate() {
-            result.push(n, j.clone());
+            result.push(n, j);
         }
         result
     }
@@ -147,7 +154,7 @@ impl Jobs {
             };
 
             if tag_ok && range_ok {
-                jobs.push(n, job.clone());
+                jobs.push(n, job);
             }
         }
         if let Range::Count(c) = range {
@@ -190,7 +197,7 @@ impl Jobs {
         }
         Ok(tags)
     }
-    fn interpret(&mut self, command: &Command) -> Result<Operation, Error> {
+    fn interpret<'a>(&'a self, command: &Command) -> Result<Operation, Error> {
         // debug
         // eprintln!("{command:?}");
 
@@ -262,12 +269,18 @@ impl Jobs {
                     return Err(Error::NoOpenJob);
                 }
             }
-            Command::List { range, tags } => {
-                Operation::List(self.filter(&range, &tags.clone().into())?, range, tags)
-            }
+            Command::List { range, tags } => Operation::List(
+                self.filter(&range, &tags.clone().into())?.positions(),
+                range,
+                tags,
+            ),
             Command::Report { range, tags } => {
                 let tags = tags.clone();
-                Operation::Report(self.filter(&range, &tags.clone().into())?, range, tags)
+                Operation::Report(
+                    self.filter(&range, &tags.clone().into())?.positions(),
+                    range,
+                    tags,
+                )
             }
             Command::ExportCSV {
                 range,
@@ -276,7 +289,7 @@ impl Jobs {
             } => {
                 let tags = tags.clone().into();
                 Operation::ExportCSV(
-                    self.filter(&range, &tags)?,
+                    self.filter(&range, &tags)?.positions(),
                     range,
                     Some(tags),
                     Columns::from(columns),
@@ -332,15 +345,14 @@ impl Jobs {
             None
         }
     }
-    fn operate<W: std::io::Write>(
+    fn operate<'a, W: std::io::Write>(
         &mut self,
         w: &mut W,
-        operation: &mut Operation,
+        operation: &'a mut Operation,
         checks: Checks,
         context: &Context,
     ) -> Result<(), Error> {
         match operation {
-            Operation::Nothing => Ok(()),
             Operation::Push(position, job) => {
                 assert!(*position == self.jobs.len());
                 if job.is_open() {
@@ -348,53 +360,50 @@ impl Jobs {
                 }
                 checks.check(self, None, &job, context)?;
                 if job.message.is_none() && !job.is_open() {
-                    Err(Error::EnterMessage)
+                    return Err(Error::EnterMessage);
                 } else {
                     self.push(job.clone());
                     self.modified = true;
-                    Ok(())
                 }
             }
             Operation::Modify(pos, job) => {
                 checks.check(self, Some(*pos), &job, context)?;
                 if job.message.is_none() {
-                    Err(Error::EnterMessage)
+                    return Err(Error::EnterMessage);
                 } else {
                     self.jobs[*pos] = job.clone();
                     self.modified = true;
-                    Ok(())
                 }
             }
             Operation::Delete(positions) => {
                 if checks.has(Check::ConfirmDeletion) {
-                    Err(Error::Warnings(vec![Warning::ConfirmDeletion(
+                    return Err(Error::Warnings(vec![Warning::ConfirmDeletion(
                         positions.clone(),
-                    )]))
+                    )]));
                 } else {
                     for pos in positions.iter() {
                         self.jobs[*pos].deleted = Some(context.time());
                         self.modified = true;
                     }
-                    Ok(())
                 }
             }
             Operation::Import(filename, count, new_tags) => {
                 (*count, *new_tags) = self.legacy_import(&filename)?;
                 self.modified = *count > 0;
-                Ok(())
             }
             Operation::Configure(tags, update) => {
                 self.modified = self.configuration.set(&tags, update);
-                Ok(())
             }
-            Operation::List(jobs, _, _) => {
-                write!(w, "{}", jobs)?;
-                Ok(())
+            Operation::List(positions, _, _) => {
+                write!(w, "{}", self.list(positions))?;
             }
-            Operation::Report(jobs, _, _) => report(w, &jobs, &context),
-            Operation::ExportCSV(jobs, _, _, columns) => export_csv(w, jobs, columns, &context),
-            _ => Ok(()),
+            Operation::Report(positions, _, _) => report(w, &self.list(positions), &context)?,
+            Operation::ExportCSV(positions, _, _, columns) => {
+                export_csv(w, &self.list(positions), columns, &context)?
+            }
+            _ => (),
         }
+        Ok(())
     }
     fn check_finished(&self) -> Result<(), Error> {
         if let Some((pos, job)) = self.get_open_with_pos() {

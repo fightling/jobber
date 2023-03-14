@@ -16,11 +16,11 @@ pub enum Operation {
     /// Change configuration
     Configure(Option<TagSet>, Properties),
     /// List jobs
-    List(JobList, Range, Option<TagSet>),
+    List(Positions, Range, Option<TagSet>),
     /// Report jobs
-    Report(JobList, Range, Option<TagSet>),
+    Report(Positions, Range, Option<TagSet>),
     /// Export jobs
-    ExportCSV(JobList, Range, Option<TagSet>, Columns),
+    ExportCSV(Positions, Range, Option<TagSet>, Columns),
     ListTags(TagSet),
     ShowConfiguration(Configuration),
 }

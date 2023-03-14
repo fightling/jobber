@@ -71,17 +71,17 @@ impl Checks {
                 if job.overlaps(&j, context) {
                     if let Some(pos) = pos {
                         if n != pos {
-                            overlapping.push(n, j.clone());
+                            overlapping.push(n, j);
                         }
                     } else {
-                        overlapping.push(n, j.clone());
+                        overlapping.push(n, j);
                     }
                 }
             }
             if !overlapping.is_empty() {
                 warnings.push(Warning::Overlaps {
                     new: job.clone(),
-                    existing: overlapping,
+                    existing: overlapping.into(),
                 });
             }
         }

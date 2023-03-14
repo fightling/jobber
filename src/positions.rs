@@ -59,6 +59,9 @@ impl Positions {
     pub fn iter(&self) -> core::slice::Iter<'_, usize> {
         self.0.iter()
     }
+    pub fn contains(&self, position: &usize) -> bool {
+        self.0.contains(&position)
+    }
 }
 
 pub struct PositionsIterator<'a> {

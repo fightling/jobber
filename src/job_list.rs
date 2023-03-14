@@ -2,20 +2,20 @@
 
 use super::prelude::*;
 
-/// Adds an index to a [Job] which stores the original position within the database.
-type IndexedJob = (usize, Job);
+/// Adds an index to a [Job] reference which stores the original position within the database.
+pub type IndexedJob<'a> = (usize, &'a Job);
 
-/// List of jobs extracted from database.
+/// Selection of jobs from a database.
 #[derive(Debug, Clone)]
-pub struct JobList {
-    /// List of jobs (including original index within database).
-    jobs: Vec<IndexedJob>,
+pub struct JobList<'a> {
+    /// References to jobs within a database (including original indexes).
+    jobs: Vec<IndexedJob<'a>>,
     /// Copy of the configuration of the original [Jobs] database.
-    pub configuration: Configuration,
+    pub configuration: &'a Configuration,
 }
 
-impl IntoIterator for JobList {
-    type Item = IndexedJob;
+impl<'a> IntoIterator for JobList<'a> {
+    type Item = IndexedJob<'a>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -23,7 +23,16 @@ impl IntoIterator for JobList {
     }
 }
 
-impl std::fmt::Display for JobList {
+impl<'a> From<&'a JobListOwned> for JobList<'a> {
+    fn from(list: &'a JobListOwned) -> Self {
+        Self {
+            configuration: &list.configuration,
+            jobs: list.iter().map(|(n, j)| (*n, j)).collect(),
+        }
+    }
+}
+
+impl<'a> std::fmt::Display for JobList<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (pos, job) in self.iter() {
             writeln!(f, "    Pos: {}", pos + 1)?;
@@ -48,23 +57,30 @@ impl std::fmt::Display for JobList {
     }
 }
 
-impl JobList {
+impl<'a> JobList<'a> {
     /// Create job list on base of the given database but does not copy the jobs themselves (but it's configuration).
-    pub fn new_from(jobs: &Jobs) -> Self {
+    pub fn new(jobs: Vec<(usize, &'a Job)>, configuration: &'a Configuration) -> Self {
         Self {
-            jobs: Vec::new(),
-            configuration: jobs.configuration.clone(),
+            jobs,
+            configuration,
         }
     }
-    /// Add new job.
-    pub fn push(&mut self, pos: usize, job: Job) {
+    /// Create job list on base of the given database but does not copy the jobs themselves (but it's configuration).
+    pub fn new_from(jobs: &'a Jobs) -> Self {
+        Self {
+            jobs: Vec::new(),
+            configuration: &jobs.configuration,
+        }
+    }
+    /// Add a new job.
+    pub fn push(&mut self, pos: usize, job: &'a Job) {
         self.jobs.push((pos, job))
     }
-    /// Get iterator over included jobs.
+    /// Get read-only iterator over included jobs.
     pub fn iter(&self) -> core::slice::Iter<'_, IndexedJob> {
         self.jobs.iter()
     }
-    /// Return true if list is empty.
+    /// Return `true` if list is empty.
     pub fn is_empty(&self) -> bool {
         self.jobs.is_empty()
     }
@@ -72,7 +88,7 @@ impl JobList {
     pub fn len(&self) -> usize {
         self.jobs.len()
     }
-    /// Take
+    /// Drain all but the last `count` jobs from the list.
     pub fn drain(&mut self, count: usize) -> Result<(), Error> {
         if count > self.jobs.len() {
             return Err(Error::ToFewJobs(count, self.jobs.len()));
@@ -80,6 +96,7 @@ impl JobList {
         self.jobs.drain(0..(self.jobs.len() - count));
         Ok(())
     }
+    /// Collect all tags which are in use in this list.
     pub fn tags(&self) -> TagSet {
         let mut tags = TagSet::new();
         for (_, job) in &self.jobs {
@@ -87,22 +104,20 @@ impl JobList {
         }
         tags
     }
+    /// Return a list of all positions (indexes) of the jobs in this list.
     pub fn positions(&self) -> Positions {
         Positions::from_iter(self.jobs.iter().map(|(n, _)| *n))
     }
-    /// provides configurations for display trait implementation
+    /// Get the configuration that belong to the given list of tags or the base configuration.
     pub fn get_configuration(&self, tags: &TagSet) -> &Properties {
-        self.get_configuration_with_tag(tags).1
-    }
-    /// provides configurations for display trait implementation
-    pub fn get_configuration_with_tag(&self, tags: &TagSet) -> (String, &Properties) {
         for tag in &tags.0 {
             if let Some(properties) = self.configuration.tags.get(tag) {
-                return (tag.clone(), properties);
+                return properties;
             }
         }
-        (String::new(), &self.configuration.base)
+        &self.configuration.base
     }
+    /// Calculate the overall hours that were spent within this job list (considers resolutions).
     pub fn hours_overall(&self) -> f64 {
         let mut hours = 0.0;
         for (_, job) in &self.jobs {
@@ -110,6 +125,7 @@ impl JobList {
         }
         hours
     }
+    /// Calculate the overall costs of the jobs in this list.
     pub fn pay_overall(&self) -> Option<f64> {
         let mut pay_sum = 0.0;
         let mut has_payment = false;
