@@ -1,7 +1,10 @@
+//! A portion of work called job.
+
 use super::prelude::*;
 use chrono::{Days, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 
+/// default for `deleted` in `Job`
 fn none<T>() -> Option<T> {
     Option::None
 }
@@ -19,11 +22,11 @@ pub struct Job {
     pub tags: TagSet,
     /// Deletion Mark
     #[serde(default = "none")]
-    pub deleted: Option<DateTime>,
+    deleted: Option<DateTime>,
 }
 
 impl Job {
-    /// create new job
+    /// Create new job from several properties.
     pub fn new(
         start: DateTime,
         end: Option<DateTime>,
@@ -47,11 +50,17 @@ impl Job {
             deleted: None,
         })
     }
-    /// returns true if latest job has no ending
+    /// Return `true` if latest job has no ending.
     pub fn is_open(&self) -> bool {
         self.end.is_none() && self.deleted.is_none()
     }
-    /// get hours without rounding to resolution
+    pub fn delete(&mut self, context: &Context) {
+        self.deleted = Some(context.time());
+    }
+    pub fn is_deleted(&self) -> bool {
+        self.deleted.is_some()
+    }
+    /// Get minutes worked without rounding to resolution.
     fn minutes(&self) -> i64 {
         let end = if let Some(end) = self.end {
             end
@@ -60,6 +69,7 @@ impl Job {
         };
         (&end - &self.start).num_minutes()
     }
+    /// Get hours worked considering resolution.
     pub fn hours(&self, properties: &Properties) -> f64 {
         if let Some(resolution) = properties.resolution {
             (self.minutes() as f64 / 60.0 / resolution).ceil() * resolution
@@ -67,6 +77,7 @@ impl Job {
             (self.minutes() as f64 / 60.0 / 0.01).round() * 0.01
         }
     }
+    /// Return `true` if the given job overlaps another job in the database in time.
     pub fn overlaps(&self, other: &Job, context: &Context) -> bool {
         if let Some(self_end) = self.end {
             if let Some(other_end) = other.end {
@@ -82,9 +93,11 @@ impl Job {
             }
         }
     }
+    /// Get start time as local time.
     fn start_local(&self) -> NaiveDateTime {
         self.start.into_local()
     }
+    /// Get end time as local time.
     fn end_local(&self, context: &Context) -> NaiveDateTime {
         if let Some(end) = self.end {
             end.into_local()
@@ -92,7 +105,7 @@ impl Job {
             context.time().into_local()
         }
     }
-    /// splits job day-wise
+    /// Split job into multiple so that the resulting jobs do not pass over midnight.
     pub fn split(&self, context: &Context) -> Vec<Job> {
         let mut result = Vec::new();
         let mut start = self.start_local();
@@ -126,6 +139,7 @@ impl Job {
         }
         result
     }
+    /// Print a job in human readable format using colors.
     pub fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
@@ -166,6 +180,7 @@ impl Ord for Job {
     }
 }
 
+/// Test job splitting.
 #[test]
 fn test_split() {
     let context = Context::new();
@@ -204,6 +219,7 @@ fn test_split() {
     );
 }
 
+/// Helper for [test_overlaps]
 #[cfg(test)]
 fn test_overlap(
     left_start: &str,
@@ -239,6 +255,7 @@ fn test_overlap(
     )
 }
 
+/// Test job overlapping check.
 #[test]
 fn test_overlaps() {
     assert!(test_overlap(

@@ -140,7 +140,7 @@ pub fn run_args<W: std::io::Write>(
     } else {
         Jobs::new()
     };
-    run_args_mut(w, &mut jobs, args, checks, context)?;
+    run_args_mut(w, args, &mut jobs, checks, context)?;
     Ok(jobs)
 }
 
@@ -148,8 +148,8 @@ pub fn run_args<W: std::io::Write>(
 #[cfg(test)]
 pub fn run_args_mut<W: std::io::Write>(
     w: &mut W,
-    jobs: &mut Jobs,
     args: &[&str],
+    jobs: &mut Jobs,
     checks: Checks,
     context: &Context,
 ) -> Result<Operation, Error> {

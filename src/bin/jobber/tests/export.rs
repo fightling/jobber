@@ -1,5 +1,6 @@
 //! Testing option `-E`.
 
+use super::clean;
 use crate::*;
 
 /// Export database to CSV.
@@ -14,7 +15,6 @@ fn test_csv_date() {
     let mut jobs = Jobs::new();
     run_args_mut(
         &mut output,
-        &mut jobs,
         &[
             "jobber",
             "-s",
@@ -23,21 +23,22 @@ fn test_csv_date() {
             "-m",
             "two hours job at twelve",
         ],
+        &mut jobs,
         Checks::all(),
         &context,
     )
     .unwrap();
     run_args_mut(
         &mut output,
-        &mut jobs,
         &["jobber", "-E", "--csv", "tags,start,hours,message"],
+        &mut jobs,
         Checks::all(),
         &context,
     )
     .unwrap();
 
     assert_eq!(
-        std::str::from_utf8(output.as_slice()).unwrap(),
+        clean(&output),
         r#""Tags","Start","Hours","Message"
 "","02/01/2023 12:00",2,"two hours job at twelve"
 "#

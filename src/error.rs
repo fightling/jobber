@@ -3,6 +3,7 @@
 use super::prelude::*;
 use thiserror::Error;
 
+/// Errors that occur in *jobber*.
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("No database found")]
@@ -57,6 +58,7 @@ impl From<std::fmt::Error> for Error {
     }
 }
 
+/// Warnings that occur in *jobber* which the user might want to ignore.
 #[derive(Error, Debug)]
 pub enum Warning {
     #[error("The job you want to add overlaps existing one(s):\n\nJob you want to add:\n\n{new}\nExisting overlapping jobs:\n\n{existing}")]
@@ -69,7 +71,9 @@ pub enum Warning {
     ConfirmDeletion(Positions),
 }
 
-/// List of jobs extracted from database list.
+/// List of jobs with index extracted from database list.
+///
+/// This is needed to let `Error` contain job lists even if the database is gone already.
 #[derive(Debug)]
 pub struct JobListOwned {
     /// List of jobs (including original index within database).

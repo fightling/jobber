@@ -1,3 +1,5 @@
+//! *Jobber*'s database.
+
 use super::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -9,12 +11,12 @@ use std::{
 /// serializable instance of the *jobber* database
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Jobs {
-    // flag if database was modified in memory
+    /// Flag that is `true` if database was modified in memory.
     #[serde(skip)]
     modified: bool,
-    /// list of jobs
+    /// List of jobs.
     jobs: Vec<Job>,
-    /// Configuration used when no tag related configuration fit
+    /// Database configuration.
     pub configuration: Configuration,
 }
 
@@ -35,6 +37,7 @@ impl std::ops::Index<usize> for Jobs {
     }
 }
 
+/// Adds a version number to the database when serializing.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Versioned<T> {
     version: String,
@@ -51,32 +54,28 @@ impl Jobs {
             configuration: Default::default(),
         }
     }
+    /// Append a new job into the database.
     fn push(&mut self, job: Job) {
         tags::update(&job);
         self.jobs.push(job);
     }
+    /// Get read-only iterator over all jobs (even the deleted ones).
     pub fn iter(&self) -> core::slice::Iter<'_, Job> {
         self.jobs.iter()
     }
+    /// Count jobs (which are not marked as deleted).
     pub fn count(&self) -> usize {
-        self.iter().filter(|job| !job.deleted.is_some()).count()
+        self.iter().filter(|j| !j.is_deleted()).count()
     }
+    /// Return `true` if the database was modified sind last load.
     pub fn modified(&self) -> bool {
         self.modified
-    }
-    pub fn list<'a>(&'a self, positions: &Positions) -> JobList<'a> {
-        let result: Vec<IndexedJob<'a>> = self
-            .iter()
-            .enumerate()
-            .filter(|(p, _)| positions.contains(p))
-            .collect();
-        JobList::new(result.into(), &self.configuration)
     }
     /// Processes the given `command` and may return a change on this database.
     /// Throws errors and warnings (packet into `Error::Warnings(Vec<Warning>)`).
     /// Fix warnings to continue and call again or turn any check on warnings off by using parameter `check`
-    pub fn process<'a, W: std::io::Write>(
-        &'a mut self,
+    pub fn process<W: std::io::Write>(
+        &mut self,
         w: &mut W,
         command: &Command,
         check: Checks,
@@ -91,12 +90,19 @@ impl Jobs {
         }
         Ok(operation)
     }
+    /// Get a list of all jobs in database
     pub fn all(&self) -> JobList {
-        let mut result = JobList::new_from(self);
-        for (n, j) in self.jobs.iter().enumerate() {
-            result.push(n, j);
-        }
-        result
+        let result: Vec<IndexedJob> = self.iter().enumerate().collect();
+        JobList::new(result.into(), &self.configuration)
+    }
+    /// Generate a list of some jobs.
+    pub fn list(&self, positions: &Positions) -> JobList {
+        let result: Vec<IndexedJob> = self
+            .iter()
+            .enumerate()
+            .filter(|(p, _)| positions.contains(p))
+            .collect();
+        JobList::new(result.into(), &self.configuration)
     }
     pub fn tags(&self) -> TagSet {
         let mut tags = TagSet::new();
@@ -109,7 +115,7 @@ impl Jobs {
         let mut jobs = JobList::new_from(&self);
         for (n, job) in self.jobs.iter().enumerate() {
             // sort out any deleted jobs
-            if job.deleted.is_some() {
+            if job.is_deleted() {
                 continue;
             }
             let mut tag_ok = true;
@@ -197,7 +203,7 @@ impl Jobs {
         }
         Ok(tags)
     }
-    fn interpret<'a>(&'a self, command: &Command) -> Result<Operation, Error> {
+    fn interpret(&self, command: &Command) -> Result<Operation, Error> {
         // debug
         // eprintln!("{command:?}");
 
@@ -382,7 +388,7 @@ impl Jobs {
                     )]));
                 } else {
                     for pos in positions.iter() {
-                        self.jobs[*pos].deleted = Some(context.time());
+                        self.jobs[*pos].delete(context);
                         self.modified = true;
                     }
                 }

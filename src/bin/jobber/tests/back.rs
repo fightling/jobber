@@ -63,7 +63,7 @@ fn test_back_to_work() {
         &context,
     )
     .unwrap();
-    assert_eq!(jobs.iter().len(), 3);
+    assert_eq!(jobs.count(), 3);
     assert_eq!(jobs[1].message, jobs[2].message);
     assert!(!jobs[2].tags.contains(&"tag".into()));
     assert!(jobs[2].tags.contains(&"new_tag".into()));
