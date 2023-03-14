@@ -1,18 +1,19 @@
+//! Partial date and time like it is entered by the user.
+
 use super::prelude::*;
 use chrono::{Datelike, Local, TimeZone, Timelike, Utc};
 use regex::Regex;
 
+/// Partial date and time in different flavors.
 #[derive(PartialEq, Debug)]
 pub enum PartialDateTime {
+    /// None
     None,
-    HM {
-        hour: u32,
-        minute: u32,
-    },
-    MD {
-        month: u32,
-        day: u32,
-    },
+    /// Hour and minute without date
+    HM { hour: u32, minute: u32 },
+    /// Month and day without year and time
+    MD { month: u32, day: u32 },
+    /// Complete date and time.
     YMDHM {
         year: i32,
         month: u32,
@@ -20,20 +21,19 @@ pub enum PartialDateTime {
         hour: u32,
         minute: u32,
     },
+    /// Date and time without year.
     MDHM {
         month: u32,
         day: u32,
         hour: u32,
         minute: u32,
     },
-    YMD {
-        year: i32,
-        month: u32,
-        day: u32,
-    },
+    /// Complete date without time.
+    YMD { year: i32, month: u32, day: u32 },
 }
 
 impl PartialDateTime {
+    /// Parse a partial date from optional string.
     pub fn parse(dt: Option<String>) -> Self {
         if let Some(dt) = dt {
             Self::parse_date_time(dt)
@@ -41,14 +41,14 @@ impl PartialDateTime {
             Self::None
         }
     }
-
-    pub fn or(self, pdt: Self) -> Self {
+    /// Take `self` and if this is `None` return `other`.
+    pub fn or(self, other: Self) -> Self {
         match self {
-            Self::None => pdt,
+            Self::None => other,
             _ => self,
         }
     }
-
+    /// Enrich `left` partial date with available data from the `right`.
     fn merge(left: Self, right: Self) -> Self {
         if let Self::HM { hour, minute } = left {
             if let Self::YMD { year, month, day } = right {
@@ -87,7 +87,7 @@ impl PartialDateTime {
         }
         Self::None
     }
-
+    /// Parse date and time from `String`.
     fn parse_date_time(dt: String) -> Self {
         let dt: Vec<&str> = dt.split(",").collect();
         match dt.len() {
@@ -111,7 +111,7 @@ impl PartialDateTime {
         }
     }
 
-    /// parse time "HH:MM"
+    /// Parse time from "HH:MM" format.
     fn parse_hm(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2}):(\d{1,2})$").unwrap();
         for cap in re.captures_iter(dt) {
@@ -123,7 +123,7 @@ impl PartialDateTime {
         Self::None
     }
 
-    /// parse german date without year and time "dd.mm."
+    /// Parse German date without year and time from "dd.mm." format.
     fn parse_dm(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})\.(\d{1,2})\.$").unwrap();
         for cap in re.captures_iter(dt) {
@@ -135,7 +135,7 @@ impl PartialDateTime {
         Self::None
     }
 
-    /// parse english  date without year and time "mm/dd"
+    /// Parse English date without year and month from "mm/dd" format.
     fn parse_md(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})/(\d{1,2})$").unwrap();
         for cap in re.captures_iter(dt) {
@@ -146,8 +146,7 @@ impl PartialDateTime {
         }
         Self::None
     }
-
-    /// parse german date without year and time "dd.mm.yyyy"
+    /// Parse German date without year and time from "dd.mm.yyyy" format.
     fn parse_dmy(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})$").unwrap();
         for cap in re.captures_iter(dt) {
@@ -159,8 +158,7 @@ impl PartialDateTime {
         }
         Self::None
     }
-
-    /// parse german date without year and time "yyy-mm-dd"
+    /// Parse German date without year and time from "yyy-mm-dd" format.
     fn parse_ymd(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{4})-(\d{1,2})-(\d{1,2})$").unwrap();
         for cap in re.captures_iter(dt) {
@@ -172,8 +170,7 @@ impl PartialDateTime {
         }
         Self::None
     }
-
-    /// parse german date without year and time "mm/dd/yyyy"
+    /// Parse German date without year and time from "mm/dd/yyyy" format.
     fn parse_mdy(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})/(\d{1,2})/(\d{4})$").unwrap();
         for cap in re.captures_iter(dt) {
@@ -185,7 +182,7 @@ impl PartialDateTime {
         }
         Self::None
     }
-
+    /// Convert partial date and time into date and time by enriching it with data from `base`.
     pub fn into(self, base: DateTime) -> DateTime {
         let base: chrono::DateTime<Local> = base.into();
         chrono::DateTime::with_timezone(
@@ -233,11 +230,13 @@ impl PartialDateTime {
     }
 }
 
+/// Test date and time parsing.
 #[test]
 fn test_parse_date_time() {
     PartialDateTime::parse_date_time("1.1.,12:00".into());
 }
 
+/// Test time parsing.
 #[test]
 fn test_parse_hm() {
     assert_eq!(
@@ -254,6 +253,7 @@ fn test_parse_hm() {
     );
 }
 
+/// Test several date parsings.
 #[test]
 fn test_parse_ymd() {
     assert_eq!(
@@ -282,6 +282,7 @@ fn test_parse_ymd() {
     );
 }
 
+/// Test several date parsings.
 #[test]
 fn test_parse_mdy() {
     assert_eq!(
@@ -310,6 +311,7 @@ fn test_parse_mdy() {
     );
 }
 
+/// Test several date parsings.
 #[test]
 fn test_parse_dmy() {
     assert_eq!(
@@ -338,6 +340,7 @@ fn test_parse_dmy() {
     );
 }
 
+/// Test several date without year parsings.
 #[test]
 fn test_parse_dm() {
     assert_eq!(
@@ -358,6 +361,7 @@ fn test_parse_dm() {
     );
 }
 
+/// Test several date without year parsings.
 #[test]
 fn test_parse_md() {
     assert_eq!(

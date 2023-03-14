@@ -59,6 +59,10 @@ impl Jobs {
         tags::update(&job);
         self.jobs.push(job);
     }
+    /// get job at specific position.
+    fn get(&self, pos: usize) -> Option<&Job> {
+        self.jobs.get(pos)
+    }
     /// Get read-only iterator over all jobs (even the deleted ones).
     pub fn iter(&self) -> core::slice::Iter<'_, Job> {
         self.jobs.iter()
@@ -104,6 +108,7 @@ impl Jobs {
             .collect();
         JobList::new(result.into(), &self.configuration)
     }
+    /// Collect all tags within the database
     pub fn tags(&self) -> TagSet {
         let mut tags = TagSet::new();
         for job in &self.jobs {
@@ -111,6 +116,8 @@ impl Jobs {
         }
         tags
     }
+    /// Filter jobs by range and tags and return a job list with the result.
+    /// Deleted jobs will be omitted.
     fn filter(&self, range: &Range, tags: &TagSet) -> Result<JobList, Error> {
         let mut jobs = JobList::new_from(&self);
         for (n, job) in self.jobs.iter().enumerate() {
@@ -168,6 +175,7 @@ impl Jobs {
         }
         Ok(jobs)
     }
+    /// copy message from last jobs or ask user to enter one.
     fn copy_last_or_enter_message(
         &self,
         message: Option<Option<String>>,
@@ -188,12 +196,14 @@ impl Jobs {
             Self::check_force_enter_message(message)
         }
     }
+    /// take given message or ask user to tenter one.
     fn check_force_enter_message(message: Option<Option<String>>) -> Result<Option<String>, Error> {
         if message.is_some() && message.clone().flatten().is_none() {
             return Err(Error::EnterMessage);
         }
         Ok(message.flatten())
     }
+    /// Modify tags of the last job.
     fn modify_last_tags_or_given(&self, tags: Option<TagSet>) -> Result<Option<TagSet>, Error> {
         if let Some(last) = self.jobs.last() {
             if let Some(tags) = &tags {
@@ -203,10 +213,8 @@ impl Jobs {
         }
         Ok(tags)
     }
+    /// Interpret command into an operation.
     fn interpret(&self, command: &Command) -> Result<Operation, Error> {
-        // debug
-        // eprintln!("{command:?}");
-
         // process command and potentially get `Some(job)` change
         Ok(match command.clone() {
             Command::Start {
@@ -344,13 +352,7 @@ impl Jobs {
             }
         })
     }
-    fn get(&self, pos: usize) -> Option<&Job> {
-        if let Some((_, job)) = &self.jobs.iter().enumerate().find(|(p, _)| *p == pos) {
-            Some(job)
-        } else {
-            None
-        }
-    }
+    /// Process an operation with the database.
     fn operate<'a, W: std::io::Write>(
         &mut self,
         w: &mut W,
@@ -411,30 +413,36 @@ impl Jobs {
         }
         Ok(())
     }
+    /// Check if there is an open job in the database.
     fn check_finished(&self) -> Result<(), Error> {
         if let Some((pos, job)) = self.get_open_with_pos() {
             return Err(Error::OpenJob(pos, job.clone()));
         }
         Ok(())
     }
+    /// Get open job if there is any.
     fn get_open(&self) -> Option<&Job> {
         self.jobs.iter().find(|j| j.is_open())
     }
+    /// Get open job and it's position if there is any.
     fn get_open_with_pos(&self) -> Option<(usize, &Job)> {
         self.jobs.iter().enumerate().find(|(_, j)| j.is_open())
     }
+    /// Return [Error::NoOpenJob] if there is none.
     fn check_open(&self) -> Result<(), Error> {
         if self.get_open().is_some() {
             return Ok(());
         }
         Err(Error::NoOpenJob)
     }
+    /// Return start time of open job in database if there is any.
     pub fn open_start(&self) -> Option<DateTime> {
         if let Some(job) = self.get_open() {
-            return job.end;
+            return Some(job.start);
         }
         None
     }
+    /// Load database from file
     pub fn load(filename: &str) -> Result<Jobs, Error> {
         let file = File::options()
             .read(true)
@@ -446,6 +454,7 @@ impl Jobs {
         tags::init(&versioned.jobs);
         Ok(versioned.jobs)
     }
+    /// Save database into file.
     pub fn save(&mut self, filename: &str) -> Result<(), Error> {
         let file = File::options()
             .write(true)
@@ -464,6 +473,7 @@ impl Jobs {
         self.modified = false;
         Ok(())
     }
+    /// Write all jobs into formatter.
     fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
@@ -478,6 +488,7 @@ impl Jobs {
         }
         Ok(())
     }
+    /// Import legacy jobber database from CSV.
     fn legacy_import(&mut self, filename: &str) -> Result<(usize, TagSet), Error> {
         let file = File::options()
             .read(true)

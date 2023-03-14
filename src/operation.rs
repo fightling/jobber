@@ -1,13 +1,15 @@
+//! Operations that can be processed at a jobber database.
+
 use super::prelude::*;
 
-/// catches what to change the jobs within the database
+/// Catches what to change the jobs within the database.
 #[derive(Clone, Debug)]
 pub enum Operation {
     /// No change
     Nothing,
-    /// Push a new `Job` into database
+    /// Push a new `Job` into database.
     Push(usize, Job),
-    /// Change an existing `Job` at index `usize` into database but return error if message is missing
+    /// Change an existing `Job` at index `usize` into database but return error if message is missing.
     Modify(usize, Job),
     /// Remove jobs from
     Delete(Positions),
@@ -21,7 +23,9 @@ pub enum Operation {
     Report(Positions, Range, Option<TagSet>),
     /// Export jobs
     ExportCSV(Positions, Range, Option<TagSet>, Columns),
+    /// List all available tags.
     ListTags(TagSet),
+    /// Show the database configuration.
     ShowConfiguration(Configuration),
 }
 
