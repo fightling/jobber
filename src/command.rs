@@ -20,77 +20,65 @@ pub enum Command {
     Start {
         start: DateTime,
         message: Option<Option<String>>,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
     },
     /// Add a new job by specifying start and end time if there is no open job.
     Add {
         start: DateTime,
         end: DateTime,
         message: Option<Option<String>>,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
     },
     /// Like `Start` but re-use message an tags of previous job.
     Back {
         start: DateTime,
         message: Option<Option<String>>,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
     },
     /// Like `Add` but re-use message an tags of previous job.
     BackAdd {
         start: DateTime,
         end: DateTime,
         message: Option<Option<String>>,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
     },
     /// End existing job by giving time.
     End {
         end: DateTime,
         message: Option<Option<String>>,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
     },
     /// List jobs
-    List {
-        range: Range,
-        tags: Option<Vec<String>>,
-    },
+    List { range: Range, tags: Option<TagSet> },
     /// Report jobs
-    Report {
-        range: Range,
-        tags: Option<Vec<String>>,
-    },
+    Report { range: Range, tags: Option<TagSet> },
     /// Report jobs as CSV
     ExportCSV {
         range: Range,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
         columns: String,
     },
     /// Display whole configuration
     ShowConfiguration,
     /// change configuration
     SetConfiguration {
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
         update: Properties,
     },
     /// Import CSV database of legacy Ruby *jobber* version
     LegacyImport { filename: String },
     /// List all known tags
-    ListTags {
-        range: Range,
-        tags: Option<Vec<String>>,
-    },
+    ListTags { range: Range, tags: Option<TagSet> },
     /// Edit an existing job.
     Edit {
         pos: usize,
         start: Option<DateTime>,
         end: EndOrDuration,
         message: Option<Option<String>>,
-        tags: Option<Vec<String>>,
+        tags: Option<TagSet>,
     },
     /// Delete an existing job.
-    Delete {
-        range: Range,
-        tags: Option<Vec<String>>,
-    },
+    Delete { range: Range, tags: Option<TagSet> },
 }
 
 impl Command {

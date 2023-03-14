@@ -5,7 +5,7 @@ fn test_csv_date() {
     let context = Context::new_test("2023-2-1 12:00");
     let mut output = Vec::new();
     let mut jobs = Jobs::new();
-    run_args_with(
+    run_args_mut(
         &mut output,
         &mut jobs,
         &[
@@ -20,7 +20,7 @@ fn test_csv_date() {
         &context,
     )
     .unwrap();
-    run_args_with(
+    run_args_mut(
         &mut output,
         &mut jobs,
         &["jobber", "-E", "--csv", "tags,start,hours,message"],
@@ -31,7 +31,7 @@ fn test_csv_date() {
 
     assert_eq!(
         std::str::from_utf8(output.as_slice()).unwrap(),
-        r#""tags","start","hours","message"
+        r#""Tags","Start","Hours","Message"
 "","02/01/2023 12:00",2,"two hours job at twelve"
 "#
         .to_string()

@@ -87,6 +87,15 @@ impl std::fmt::Display for TagSet {
         Ok(())
     }
 }
+impl From<Option<TagSet>> for TagSet {
+    fn from(tags: Option<TagSet>) -> Self {
+        if let Some(tags) = tags {
+            tags
+        } else {
+            TagSet::new()
+        }
+    }
+}
 impl From<Vec<String>> for TagSet {
     fn from(tags: Vec<String>) -> Self {
         let mut tags = tags.clone();
@@ -108,7 +117,7 @@ impl From<Option<Vec<String>>> for TagSet {
 impl From<&Option<String>> for TagSet {
     fn from(tag: &Option<String>) -> Self {
         if let Some(tag) = tag {
-            Self(tag.split('*').map(|t| t.to_string()).collect())
+            Self(tag.split(',').map(|t| t.to_string()).collect())
         } else {
             Self(Vec::new())
         }

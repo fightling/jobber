@@ -202,12 +202,7 @@ impl Jobs {
                 tags,
             } => Operation::Push(
                 self.jobs.len(),
-                Job::new(
-                    start,
-                    None,
-                    Self::check_force_enter_message(message)?,
-                    TagSet::from_option_vec(tags),
-                )?,
+                Job::new(start, None, Self::check_force_enter_message(message)?, tags)?,
             ),
             Command::Add {
                 start,
@@ -220,7 +215,7 @@ impl Jobs {
                     start,
                     Some(end),
                     Self::check_force_enter_message(message)?,
-                    TagSet::from_option_vec(tags),
+                    tags,
                 )?,
             ),
             Command::Back {
@@ -233,7 +228,7 @@ impl Jobs {
                     start,
                     None,
                     self.copy_last_or_enter_message(message)?,
-                    self.modify_last_tags_or_given(TagSet::from_option_vec(tags))?,
+                    self.modify_last_tags_or_given(tags)?,
                 )?,
             ),
             Command::BackAdd {
@@ -247,7 +242,7 @@ impl Jobs {
                     start,
                     Some(end),
                     self.copy_last_or_enter_message(message)?,
-                    self.modify_last_tags_or_given(TagSet::from_option_vec(tags))?,
+                    self.modify_last_tags_or_given(tags)?,
                 )?,
             ),
             Command::End { end, message, tags } => {
@@ -260,7 +255,7 @@ impl Jobs {
                         new_job.message = message;
                     }
                     if let Some(tags) = tags {
-                        new_job.tags.0 = tags;
+                        new_job.tags = tags;
                     }
                     Operation::Modify(pos, new_job)
                 } else {
@@ -268,12 +263,11 @@ impl Jobs {
                 }
             }
             Command::List { range, tags } => {
-                let tags = tags.clone().into();
-                Operation::List(self.filter(&range, &tags), range, Some(tags))
+                Operation::List(self.filter(&range, &tags.clone().into()), range, tags)
             }
             Command::Report { range, tags } => {
-                let tags = tags.clone().into();
-                Operation::Report(self.filter(&range, &tags), range, Some(tags))
+                let tags = tags.clone();
+                Operation::Report(self.filter(&range, &tags.clone().into()), range, tags)
             }
             Command::ExportCSV {
                 range,
@@ -285,7 +279,7 @@ impl Jobs {
                     self.filter(&range, &tags),
                     range,
                     Some(tags),
-                    columns.split(',').map(|c| c.into()).collect(),
+                    Columns::from(columns),
                 )
             }
             Command::ShowConfiguration => Operation::ShowConfiguration(self.configuration.clone()),

@@ -27,7 +27,7 @@ termion = "2.0.1"
 thiserror = "1.0.38"
 
 [lib]
-name="jobber"
+name="jobberdb"
 
 [[bin]]
 name="jobber"

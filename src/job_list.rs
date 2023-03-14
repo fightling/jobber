@@ -106,8 +106,8 @@ impl JobList {
         let mut has_payment = false;
         for (_, job) in &self.jobs {
             let properties = self.get_configuration(&job.tags);
-            if let Some(pay) = properties.pay {
-                pay_sum += pay * job.hours(properties);
+            if let Some(rate) = properties.rate {
+                pay_sum += rate * job.hours(properties);
                 has_payment = true;
             }
         }

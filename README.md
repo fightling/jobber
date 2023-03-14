@@ -6,7 +6,7 @@
 [![Codecov](https://codecov.io/github/fightling/jobber/coverage.svg?branch=main)](https://codecov.io/gh/fightling/jobber)
 [![Dependency status](https://deps.rs/repo/github/fightling/jobber/status.svg)](https://deps.rs/repo/github/fightling/jobber)
 
-Command line tool for tracking work time.
+The command line tool to track your personal work time.
 
 ## Contents
 
@@ -491,7 +491,7 @@ By using the option `-E` you can export the database or parts of it into a CSV f
 ```txt
 ▶ jobber -E
 Loaded database (3 entries) from file 'jobber.json'
-"tags","start","hours","message"
+"Tags","Start","Hours","Message"
 "","03/04/2023 08:15",2.5,"What I did early this morning"
 "","03/04/2023 16:25",0.5,"Did some nice work"
 "meeting","03/05/2023 21:24",2,"meeting about new design"
@@ -504,7 +504,20 @@ Items in export are automatically sorted by start date and time for your conveni
 
 To write output into a file use the pipe feature of your shell (e.g. `jobber -E > out.csv`)
 
-To change the columns which are exported you can use option `--csv` (possible values are: `pos`, `tags`, `start`, `end`, `hours`, `pay` and `message`):
+To change the columns which are exported you can use option `--csv` (possible values are:
+
+| Short | Name         | Description |
+| ----- | ------------ | ----------- |
+| `#`   | `pos`        | Position    |
+| `s`   | `start`      | Start       |
+| `e`   | `end`        | End         |
+| `h`   | `hours`      | Hours       |
+| `m`   | `message`    | Message     |
+| `t`   | `tags`       | Tags        |
+| `p`   | `pay`        | Payment     |
+| -     | `max_hours`  | Max.Hours   |
+| -     | `rate`       | Rate        |
+| -     | `resolution` | Resolution  |
 
 ```txt
 ▶ jobber -E --csv pos,start,end

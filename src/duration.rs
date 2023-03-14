@@ -1,4 +1,4 @@
-//! Duration in time.
+//! Duration in time
 
 use regex::Regex;
 

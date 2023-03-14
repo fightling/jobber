@@ -14,13 +14,13 @@ pub enum Operation {
     /// Import file
     Import(String, usize, TagSet),
     /// Change configuration
-    Configure(Option<Vec<String>>, Properties),
+    Configure(Option<TagSet>, Properties),
     /// List jobs
     List(JobList, Range, Option<TagSet>),
     /// Report jobs
     Report(JobList, Range, Option<TagSet>),
     /// Export jobs
-    ExportCSV(JobList, Range, Option<TagSet>, Vec<String>),
+    ExportCSV(JobList, Range, Option<TagSet>, Columns),
     ListTags(TagSet),
     ShowConfiguration(Configuration),
 }
@@ -67,8 +67,7 @@ impl std::fmt::Display for Operation {
                     write!(
                         f,
                         "Changed the following configuration values for tag(s) {}:\n\n{}",
-                        TagSet { 0: tags.clone() },
-                        config
+                        tags, config
                     )
                 } else {
                     write!(
@@ -96,17 +95,9 @@ impl std::fmt::Display for Operation {
             }
             Operation::ExportCSV(_, range, tags, columns) => {
                 if let Some(tags) = tags {
-                    write!(
-                        f,
-                        "Exported {columns} from {range} with tags {tags}.",
-                        columns = columns.join(",")
-                    )?;
+                    write!(f, "Exported {columns} from {range} with tags {tags}.")?;
                 } else {
-                    write!(
-                        f,
-                        "Exported {columns} from {range}:",
-                        columns = columns.join(",")
-                    )?;
+                    write!(f, "Exported {columns} from {range}:")?;
                 }
                 Ok(())
             }

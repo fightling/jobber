@@ -124,11 +124,11 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
                             }
                         }
                         day_hours += hours;
-                        if let Some(pay) = properties.pay {
+                        if let Some(rate) = properties.rate {
                             if day_costs.is_none() {
                                 day_costs = Some(0.0);
                             }
-                            day_costs = Some(day_costs.unwrap() + hours * pay);
+                            day_costs = Some(day_costs.unwrap() + hours * rate);
                         }
                     }
                     // print hours at this day and mark yellow if exceeded and red if >24h/day

@@ -1,3 +1,5 @@
+//! Errors & Warnings
+
 use super::prelude::*;
 use thiserror::Error;
 

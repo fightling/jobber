@@ -1,3 +1,5 @@
+//! Command line arguments & help
+//!
 use clap::Parser;
 
 /// Command line tool for tracking work time
@@ -55,8 +57,7 @@ Arguments:
 
   <CSV>
         List of comma separated column names (omit spaces)
-        Available columns: tags, start, end, hours, pay or message
-
+        Available columns: start, end, duration, hours, message, tags, pay, rate, resolution
   <RESOLUTION>
         Work time resolution in fractional hours
 
@@ -102,7 +103,7 @@ pub struct Args {
         required_unless_present("export"),
         required_unless_present("configuration"),
         required_unless_present("resolution"),
-        required_unless_present("pay"),
+        required_unless_present("rate"),
         required_unless_present("max_hours"),
         required_unless_present("legacy_import"),
         required_unless_present("list_tags"),
@@ -157,15 +158,15 @@ pub struct Args {
     pub configuration: bool,
 
     /// Set the resolution for counting of hours (can be combined with --tags)
-    #[arg(short='R', long, conflicts_with_all(["start","end","back","message","list","report","edit"]))]
+    #[arg(long="resolution", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub resolution: Option<f64>,
 
     /// Set the payment for one hour (can be combined with --tags)
-    #[arg(short='P', long, conflicts_with_all(["start","end","back","message","list","report","edit"]))]
-    pub pay: Option<f64>,
+    #[arg(long, conflicts_with_all(["start","end","back","message","list","report","edit"]))]
+    pub rate: Option<f64>,
 
     /// Set maximum hours per day above you will get a warning (can be combined with --tags)
-    #[arg(short='H', long="max-hours-day", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
+    #[arg(long="max-hours", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub max_hours: Option<u32>,
 
     /// Import jobs from legacy jobber (ruby version)

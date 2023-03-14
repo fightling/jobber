@@ -1,4 +1,4 @@
-//! Date and time.
+//! Date and time
 
 use super::prelude::*;
 use chrono::{Datelike, Local, NaiveDateTime, TimeZone, Utc};

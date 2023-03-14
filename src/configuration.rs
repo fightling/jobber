@@ -15,10 +15,10 @@ pub struct Configuration {
 
 impl Configuration {
     ///
-    pub fn set(&mut self, tags: &Option<Vec<String>>, update: &Properties) -> bool {
+    pub fn set(&mut self, tags: &Option<TagSet>, update: &Properties) -> bool {
         let mut modified = false;
         if let Some(tags) = tags {
-            for tag in tags {
+            for tag in tags.iter() {
                 if let Some(tag_configuration) = self.tags.get_mut(tag) {
                     if tag_configuration.update(update.clone()) {
                         modified = true;
@@ -72,8 +72,8 @@ impl Configuration {
 pub struct Properties {
     /// Time resolution in fractional hours
     pub resolution: Option<f64>,
-    /// Pay for an hour
-    pub pay: Option<f64>,
+    /// Rate for an hour
+    pub rate: Option<f64>,
     /// Maximum work hours per day
     pub max_hours: Option<u32>,
 }
@@ -90,8 +90,8 @@ impl Properties {
             self.resolution = Some(resolution);
             modified = true;
         }
-        if let Some(pay) = properties.pay {
-            self.pay = Some(pay);
+        if let Some(rate) = properties.rate {
+            self.rate = Some(rate);
             modified = true;
         }
         if let Some(max_hours) = properties.max_hours {
@@ -106,7 +106,7 @@ impl Default for Properties {
     fn default() -> Self {
         Self {
             resolution: Some(0.25),
-            pay: None,
+            rate: None,
             max_hours: None,
         }
     }
@@ -117,8 +117,8 @@ impl std::fmt::Display for Properties {
         if let Some(resolution) = self.resolution {
             writeln!(f, "Resolution: {} hours", resolution)?;
         }
-        if let Some(pay) = self.pay {
-            writeln!(f, "Payment per hour: {}", pay)?
+        if let Some(rate) = self.rate {
+            writeln!(f, "Payment per hour: {}", rate)?
         };
         if let Some(max_hours) = self.max_hours {
             writeln!(f, "Maximum work time: {} hours", max_hours)?

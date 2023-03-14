@@ -1,12 +1,19 @@
+//! Jobber command line application.
+//!
+//! Jobber - The command line tool to track your personal work time.
+//!
+//! See module [jobberdb] for the beef..
+
 mod args;
 #[cfg(test)]
 mod tests;
 
 use args::Args;
 use clap::Parser;
-use jobber::prelude::*;
+use jobberdb::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// System side configuration.
 #[derive(Debug, Serialize, Deserialize)]
 struct Config {
     database: String,
@@ -24,7 +31,7 @@ impl Default for Config {
     }
 }
 
-/// main which just catches errors
+/// Main which just catches errors.
 fn main() {
     let args = Args::parse();
     let context = Context::new();
@@ -33,7 +40,7 @@ fn main() {
     }
 }
 
-/// process program arguments to read/write jobber's database and handle warnings
+/// process program arguments to read/write jobber's database and handle warnings.
 fn run<W: std::io::Write>(
     w: &mut W,
     args: Args,
@@ -119,6 +126,7 @@ fn run<W: std::io::Write>(
     Ok(())
 }
 
+/// Run arguments on given database (or create one) and return the resulting database it.
 #[cfg(test)]
 pub fn run_args<W: std::io::Write>(
     w: &mut W,
@@ -132,12 +140,13 @@ pub fn run_args<W: std::io::Write>(
     } else {
         Jobs::new()
     };
-    run_args_with(w, &mut jobs, args, checks, context)?;
+    run_args_mut(w, &mut jobs, args, checks, context)?;
     Ok(jobs)
 }
 
+/// Run arguments on given mutable database and return the processed operation.
 #[cfg(test)]
-pub fn run_args_with<W: std::io::Write>(
+pub fn run_args_mut<W: std::io::Write>(
     w: &mut W,
     jobs: &mut Jobs,
     args: &[&str],
@@ -148,7 +157,7 @@ pub fn run_args_with<W: std::io::Write>(
     jobs.process(w, &command, checks, context)
 }
 
-/// Asks user on console a yes-no-question
+/// Ask user on console a yes-no-question.
 fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
     eprintln!("{} ({})", question, if default_yes { "Y/n" } else { "y/N" });
 
@@ -164,7 +173,7 @@ fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
     })
 }
 
-// Ask user for a multi line input
+/// Ask user for a multi line input.
 fn enter(question: &str) -> Result<String, Error> {
     eprintln!("{}", question);
 
@@ -188,7 +197,7 @@ fn enter(question: &str) -> Result<String, Error> {
     }
 }
 
-/// Ask user for a multi line message and enrich a command with it
+/// Ask user for a multi line message and enrich a command with it.
 fn edit_message<W: std::io::Write>(
     w: &mut W,
     jobs: &mut Jobs,
@@ -203,12 +212,18 @@ fn edit_message<W: std::io::Write>(
     jobs.process(w, &command, Checks::omit(), context)
 }
 
-/// parse arguments into a command
+/// Parse arguments into a command.
+///
+/// First a list of data will be extracted from the given arguments (1) and
+/// then create the right command.
+///
+/// This method is about how the program arguments are interpreted - the feel of the "look & feel".
+///
 /// # Arguments
 /// * `args` - arguments to parse
 /// * `open_start` - if data base has an open job this shall give its starting time
 pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Command {
-    // parse everything from arguments...
+    // 1) parse everything from arguments...
 
     let start = if let Some(start) = args.start {
         Some(PartialDateTime::parse(start))
@@ -232,11 +247,7 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
     };
     let message = args.message;
     let tags = if let Some(tags) = args.tags {
-        if let Some(tags) = tags {
-            Some(tags.split(",").map(|t| t.to_string()).collect())
-        } else {
-            Some(vec![])
-        }
+        Some(TagSet::from(&tags))
     } else {
         None
     };
@@ -259,7 +270,7 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
 
     // configuration items
     let resolution = args.resolution;
-    let pay = args.pay;
+    let rate = args.rate;
     let max_hours = args.max_hours;
     // true if any of the configuration items is available
     let configuration = args.configuration;
@@ -284,7 +295,8 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         None
     };
 
-    // create command depending on what arguments were given...
+    // 2) create command depending on what arguments were given...
+
     if let Some(pos) = edit {
         if let Some(start) = start {
             let mut start = start.into(context.time());
@@ -458,12 +470,12 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         Command::Report { range, tags }
     } else if configuration {
         Command::ShowConfiguration
-    } else if resolution.is_some() || pay.is_some() || max_hours.is_some() {
+    } else if resolution.is_some() || rate.is_some() || max_hours.is_some() {
         Command::SetConfiguration {
             tags,
             update: Properties {
                 resolution,
-                pay,
+                rate,
                 max_hours,
             },
         }

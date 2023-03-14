@@ -135,7 +135,7 @@ impl Job {
         writeln!(f, "    End: {}", format_end(&self.end))?;
         let hours = self.hours(configuration);
         writeln!(f, "  Hours: {}", format_hours(hours, configuration),)?;
-        if configuration.pay.is_some() {
+        if configuration.rate.is_some() {
             writeln!(f, "  Costs: {}", format_pay(hours, configuration))?;
         }
         if !self.tags.is_empty() {
