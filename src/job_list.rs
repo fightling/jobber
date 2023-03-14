@@ -1,12 +1,16 @@
+//! An indexed list of jobs which have been extracted from the [Jobs] database
+
 use super::prelude::*;
 
+/// Adds an index to a [Job] which stores the original position within the database.
 type IndexedJob = (usize, Job);
 
-/// list of jobs extracted from database
+/// List of jobs extracted from database.
 #[derive(Debug, Clone)]
 pub struct JobList {
-    /// list of jobs (including original index in database)
+    /// List of jobs (including original index within database).
     jobs: Vec<IndexedJob>,
+    /// Copy of the configuration of the original [Jobs] database.
     pub configuration: Configuration,
 }
 
@@ -45,31 +49,36 @@ impl std::fmt::Display for JobList {
 }
 
 impl JobList {
-    /// create job list on base of the given database
+    /// Create job list on base of the given database but does not copy the jobs themselves (but it's configuration).
     pub fn new_from(jobs: &Jobs) -> Self {
         Self {
             jobs: Vec::new(),
             configuration: jobs.configuration.clone(),
         }
     }
-    /// add new job
+    /// Add new job.
     pub fn push(&mut self, pos: usize, job: Job) {
         self.jobs.push((pos, job))
     }
+    /// Get iterator over included jobs.
     pub fn iter(&self) -> core::slice::Iter<'_, IndexedJob> {
         self.jobs.iter()
     }
-    /// returns true if list is empty
+    /// Return true if list is empty.
     pub fn is_empty(&self) -> bool {
         self.jobs.is_empty()
     }
+    /// Return the length of the list.
     pub fn len(&self) -> usize {
         self.jobs.len()
     }
-    pub fn limit(&mut self, count: usize) {
-        while self.jobs.len() > count {
-            self.jobs.remove(0);
+    /// Take
+    pub fn drain(&mut self, count: usize) -> Result<(), Error> {
+        if count > self.jobs.len() {
+            return Err(Error::ToFewJobs(count, self.jobs.len()));
         }
+        self.jobs.drain(0..(self.jobs.len() - count));
+        Ok(())
     }
     pub fn tags(&self) -> TagSet {
         let mut tags = TagSet::new();

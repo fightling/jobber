@@ -1,5 +1,12 @@
+//! Testing option `-b`.
+
 use crate::*;
 
+/// Create a new job and continue it using different options.
+///
+/// - [x] check argument parsing
+/// - [x] check database modification
+///
 #[test]
 fn test_back_to_work() {
     let context = Context::new_test("2023-2-1 12:00");

@@ -1,5 +1,12 @@
+//! Testing option `-E`.
+
 use crate::*;
 
+/// Export database to CSV.
+///
+/// - [x] checks argument parsing
+/// - [x] check output
+///
 #[test]
 fn test_csv_date() {
     let context = Context::new_test("2023-2-1 12:00");

@@ -98,7 +98,7 @@ impl Jobs {
         }
         tags
     }
-    fn filter(&self, range: &Range, tags: &TagSet) -> JobList {
+    fn filter(&self, range: &Range, tags: &TagSet) -> Result<JobList, Error> {
         let mut jobs = JobList::new_from(&self);
         for (n, job) in self.jobs.iter().enumerate() {
             // sort out any deleted jobs
@@ -151,9 +151,9 @@ impl Jobs {
             }
         }
         if let Range::Count(c) = range {
-            jobs.limit(*c);
+            jobs.drain(*c)?;
         }
-        jobs
+        Ok(jobs)
     }
     fn copy_last_or_enter_message(
         &self,
@@ -263,11 +263,11 @@ impl Jobs {
                 }
             }
             Command::List { range, tags } => {
-                Operation::List(self.filter(&range, &tags.clone().into()), range, tags)
+                Operation::List(self.filter(&range, &tags.clone().into())?, range, tags)
             }
             Command::Report { range, tags } => {
                 let tags = tags.clone();
-                Operation::Report(self.filter(&range, &tags.clone().into()), range, tags)
+                Operation::Report(self.filter(&range, &tags.clone().into())?, range, tags)
             }
             Command::ExportCSV {
                 range,
@@ -276,7 +276,7 @@ impl Jobs {
             } => {
                 let tags = tags.clone().into();
                 Operation::ExportCSV(
-                    self.filter(&range, &tags),
+                    self.filter(&range, &tags)?,
                     range,
                     Some(tags),
                     Columns::from(columns),
@@ -286,7 +286,7 @@ impl Jobs {
             Command::SetConfiguration { tags, update } => Operation::Configure(tags, update),
             Command::LegacyImport { filename } => Operation::Import(filename, 0, TagSet::new()),
             Command::ListTags { range, tags } => {
-                Operation::ListTags(self.filter(&range, &tags.into()).tags())
+                Operation::ListTags(self.filter(&range, &tags.into())?.tags())
             }
             Command::Edit {
                 pos,
@@ -321,8 +321,7 @@ impl Jobs {
                 }
             }
             Command::Delete { range, tags } => {
-                let jobs = self.filter(&range, &tags.into());
-                Operation::Delete(jobs.positions())
+                Operation::Delete(self.filter(&range, &tags.into())?.positions())
             }
         })
     }

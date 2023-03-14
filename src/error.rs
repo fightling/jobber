@@ -41,6 +41,8 @@ pub enum Error {
     JobNotFound(usize),
     #[error("a value is required for '--tags <TAGS>' but none was supplied")]
     MissingTags,
+    #[error("a value is required for '--tags <TAGS>' but none was supplied")]
+    ToFewJobs(usize, usize),
 }
 
 impl From<std::io::Error> for Error {

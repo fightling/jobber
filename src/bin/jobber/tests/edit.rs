@@ -1,5 +1,12 @@
+//! Testing option `--edit`.
+
 use crate::*;
 
+/// Edit several items of jobs in a database.
+///
+/// - [x] checks argument parsing
+/// - [x] check database modification
+///
 #[test]
 fn test_edit() {
     let context = Context::new_test("2023-2-1 12:00");
