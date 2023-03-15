@@ -1,5 +1,8 @@
+//! Static global tag register :/ to manage colorization of tags.
+
 use super::prelude::*;
 
+/// Tag register.
 static mut TAGS: TagSet = TagSet::new();
 
 /// initialize tag index `TAGS` from a list of jobs
@@ -7,11 +10,12 @@ pub fn init(jobs: &Jobs) {
     unsafe { TAGS = jobs.tags() }
 }
 
+/// Update register with job's tags.
 pub fn update(job: &Job) {
     unsafe { TAGS.insert_many(job.tags.0.clone()) }
 }
 
-/// decorate tag with color
+/// Decorate tag with color.
 pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
     use termion::{
         color::{Bg, Fg, *},

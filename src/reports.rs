@@ -1,3 +1,5 @@
+//! Calendar report
+
 use super::prelude::*;
 use chrono::{Datelike, NaiveDate, Weekday};
 use days_in_month::days_in_month;
@@ -6,6 +8,7 @@ use separator::Separatable;
 use std::collections::HashMap;
 use termion::{color::*, style};
 
+/// Report in calendar form.
 pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) -> Result<(), Error> {
     // resort job hours into nested maps of year -> month -> day -> hours
     let mut years: HashMap<i32, HashMap<u32, HashMap<u32, HashMap<Option<String>, f64>>>> =

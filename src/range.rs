@@ -1,21 +1,31 @@
+use super::prelude::*;
 use regex::Regex;
 
-use super::prelude::*;
-
+/// Descriptor of temporal or positional range of jobs within the database.
 #[derive(Debug, PartialEq, Clone)]
 pub enum Range {
+    /// None.
     None,
+    /// All.
     All,
+    /// Last N jobs .
     Count(usize),
+    /// One at position
     At(usize),
+    /// From position to position
     PositionRange(usize, usize),
+    /// From position to the end.
     FromPosition(usize),
+    /// All at a specified day
     Day(Date),
+    /// All jobs overlapping the given time range.
     TimeRange(DateTime, DateTime),
+    /// All jobs which overlap the time since a specified time.
     Since(DateTime),
 }
 
 impl Range {
+    /// Parse a range from a string like told in the manual.
     pub fn parse(list: Option<String>, context: &Context) -> Self {
         if let Some(list) = list {
             Self::parse_count(&list).or(Self::parse_at(&list).or(Self::parse_position_range(&list)
@@ -30,14 +40,14 @@ impl Range {
             Self::All
         }
     }
-
-    fn or(self, list: Self) -> Self {
+    /// Return self or another.
+    fn or(self, other: Self) -> Self {
         match self {
-            Self::None => list,
+            Self::None => other,
             _ => self,
         }
     }
-
+    /// Parse `Count`.
     fn parse_count(list: &str) -> Range {
         let re = Regex::new(r"^~(\d+)$").unwrap();
         for cap in re.captures_iter(list) {
@@ -45,7 +55,7 @@ impl Range {
         }
         Self::None
     }
-
+    /// Parse `At`.
     fn parse_at(list: &str) -> Range {
         let re = Regex::new(r"^(\d+)$").unwrap();
         for cap in re.captures_iter(list) {
@@ -53,7 +63,7 @@ impl Range {
         }
         Self::None
     }
-
+    /// Parse `PositionRange`.
     fn parse_position_range(list: &str) -> Range {
         let re = Regex::new(r"^(\d+)-(\d+)$").unwrap();
         for cap in re.captures_iter(list) {
@@ -64,7 +74,7 @@ impl Range {
         }
         Self::None
     }
-
+    /// Parse `FromPosition`.
     fn parse_from_position(list: &str) -> Range {
         let re = Regex::new(r"^(\d+)-$").unwrap();
         for cap in re.captures_iter(list) {
@@ -72,7 +82,7 @@ impl Range {
         }
         Self::None
     }
-
+    /// Parse `Day`.
     fn parse_day(list: &str, context: &Context) -> Range {
         let pt = PartialDateTime::parse(Some(list.to_string()));
         match pt {
@@ -80,7 +90,7 @@ impl Range {
             _ => Range::Day(Date::from(pt.into(context.time()))),
         }
     }
-
+    /// Parse `TimeRange`.
     fn parse_time_range(list: &str, context: &Context) -> Range {
         let list: Vec<String> = if list.contains("...") {
             let list: Vec<&str> = list.split("...").collect();
@@ -117,7 +127,7 @@ impl Range {
             Self::None
         }
     }
-
+    /// Parse `Since`.
     fn parse_since(list: &str, context: &Context) -> Range {
         let re = Regex::new(r"^(.+)\.\.$").unwrap();
         for cap in re.captures_iter(list) {
