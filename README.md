@@ -130,10 +130,10 @@ Started new job:
 Saved database into file 'jobber.json'
 ```
 
-As you can see *jobber* tells you that it began with a new database in a file called `jobber.json` in my home directory and has started a new job which end is still left open.
+As you can see *jobber* tells you that it began with a new database in a file called `jobber.json` in the current directory and has started a new job which end is still left open.
 It also assures you that changes were written into that file.
 
-If you use a shell which provides color, start time will be green and end time will be purple for better reading but in this README which is written in *Markdown* format sadly this can not be visualized.
+If you use a shell which provides color, start time will be green and end time will be purple for better reading but in this `README.md` which is written in *Markdown* format sadly this can not be visualized.
 
 We can check what we have done by using the list option `-l` (see also later in section *List View*):
 
@@ -400,7 +400,7 @@ Let me explain how this is to read: In the first line of the report you see the 
 After that a table follows in which the first column shows the day of month for each line (except the first which would always be `1`).
 
 The next seven columns show the work time for each day.
-Because I write this README at Saturday under `sat` you see that I worked `3` hours at Saturday and `2` at Sunday.
+Because I write this `README.md` at Saturday under `sat` you see that I worked `3` hours at Saturday and `2` at Sunday.
 
 In the last column the weekly work time is summed up and at the end of the table it says that we work the same amount in all of March and - as useless as it seems in our case - at the end it sums up all work time for all displayed jobs.
 
