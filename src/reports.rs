@@ -194,7 +194,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
 
     let pay = {
         if let Some(pay) = jobs.pay_overall() {
-            format!(" = ${}", format_pay_pure(pay),)
+            format!(" = ${}", format::pay_pure(pay),)
         } else {
             String::new()
         }
@@ -203,7 +203,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
         w,
         "Total: {} job(s), {} hours{}",
         jobs.len(),
-        format_hours_pure(jobs.hours_overall()),
+        format::hours_pure(jobs.hours_overall()),
         pay,
     )?;
 

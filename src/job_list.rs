@@ -41,7 +41,7 @@ impl<'a> std::fmt::Display for JobList<'a> {
         }
         let pay = {
             if let Some(pay) = self.pay_overall() {
-                format!(" = ${}", format_pay_pure(pay))
+                format!(" = ${}", format::pay_pure(pay))
             } else {
                 String::new()
             }
@@ -50,7 +50,7 @@ impl<'a> std::fmt::Display for JobList<'a> {
             f,
             "Total: {} job(s), {} hours{}",
             self.len(),
-            format_hours_pure(self.hours_overall()),
+            format::hours_pure(self.hours_overall()),
             pay,
         )?;
         Ok(())

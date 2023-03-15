@@ -6,42 +6,61 @@ use thiserror::Error;
 /// Errors that occur in *jobber*.
 #[derive(Error, Debug)]
 pub enum Error {
+    /// No database found
     #[error("No database found")]
     NoDatabase,
+    /// Database is empty
     #[error("Database is empty")]
     DatabaseEmpty,
+    /// Global configuration error
     #[error("Global configuration error")]
     Confy(confy::ConfyError),
+    /// I/O error
     #[error("I/O error: {0}")]
     Io(std::io::Error),
+    /// Formatting error
     #[error("Formatting error: {0}")]
     Fmt(std::fmt::Error),
+    /// JSON error
     #[error("JSON error: {0}")]
     Json(serde_json::Error),
+    /// There still is an open job.
     #[error("There still is an open job:\n\n    Pos: {0}\n{1}")]
     OpenJob(usize, Job),
+    /// There is no open job.
     #[error("There is no open job")]
     NoOpenJob,
+    /// End of the job is before it's start
     #[error("End {0} of the job is before it's start {1}")]
     EndBeforeStart(DateTime, DateTime),
+    /// Found warming(s).
     #[error("Found warming(s).")]
     Warnings(Vec<Warning>),
+    /// You canceled.
     #[error("You canceled.")]
     Cancel,
+    /// Can not use tags within same job because they have different configurations.
     #[error("Can not use tags {0} within same job because they have different configurations.")]
     TagCollision(TagSet),
+    /// User needs to enter message
     #[error("User needs to enter message")]
     EnterMessage,
+    /// Unknown column name
     #[error("Unknown column name '{0}'")]
     UnknownColumn(String),
+    /// Output file already exists.
     #[error("Output file '{0}' already exists.")]
     OutputFileExists(String),
+    /// Date/Time parse error: {0}
     #[error("Date/Time parse error: {0}")]
     DateTimeParse(chrono::ParseError),
+    /// No job found at position {0}
     #[error("No job found at position {0}")]
     JobNotFound(usize),
+    /// A value is required for '--tags <TAGS>' but none was supplied
     #[error("a value is required for '--tags <TAGS>' but none was supplied")]
     MissingTags,
+    /// A value is required for '--tags <TAGS>' but none was supplied
     #[error("a value is required for '--tags <TAGS>' but none was supplied")]
     ToFewJobs(usize, usize),
 }
@@ -61,12 +80,14 @@ impl From<std::fmt::Error> for Error {
 /// Warnings that occur in *jobber* which the user might want to ignore.
 #[derive(Error, Debug)]
 pub enum Warning {
+    /// The job you want to add overlaps existing one(s)
     #[error("The job you want to add overlaps existing one(s):\n\nJob you want to add:\n\n{new}\nExisting overlapping jobs:\n\n{existing}")]
     Overlaps { new: Job, existing: JobListOwned },
     #[error(
         "You have used some tags ({0}) which are unknown so far. Continue if you want to create them."
     )]
     UnknownTags(TagSet),
+    /// You are about to delete job(s) at the following position(s).
     #[error("You are about to delete job(s) at the following position(s): {0}")]
     ConfirmDeletion(Positions),
 }

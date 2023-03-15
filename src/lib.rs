@@ -1,3 +1,7 @@
+//! Library bundle `jobberdb`.
+//!
+//! See module [jobber] for the application which uses it.
+
 pub mod check;
 pub mod command;
 pub mod configuration;
@@ -18,10 +22,11 @@ pub mod reports;
 pub mod tag_set;
 pub mod tags;
 
+/// What *jobber* needs.
 pub mod prelude {
     pub use super::{
         check::*, command::*, configuration::*, context::*, date_time::*, duration::*, error::*,
-        export::*, format::*, job::*, job_list::*, jobs::*, operation::*, partial_date_time::*,
+        export::*, format, job::*, job_list::*, jobs::*, operation::*, partial_date_time::*,
         positions::*, range::*, reports::*, tag_set::*, tags,
     };
 }

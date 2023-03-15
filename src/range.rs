@@ -1,3 +1,5 @@
+//! Temporal or positional range of jobs within the database.
+
 use super::prelude::*;
 use regex::Regex;
 

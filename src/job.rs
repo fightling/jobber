@@ -145,18 +145,18 @@ impl Job {
         f: &mut std::fmt::Formatter<'_>,
         configuration: &Properties,
     ) -> std::fmt::Result {
-        writeln!(f, "  Start: {}", format_start(&self.start))?;
-        writeln!(f, "    End: {}", format_end(&self.end))?;
+        writeln!(f, "  Start: {}", format::start(&self.start))?;
+        writeln!(f, "    End: {}", format::end(&self.end))?;
         let hours = self.hours(configuration);
-        writeln!(f, "  Hours: {}", format_hours(hours, configuration),)?;
+        writeln!(f, "  Hours: {}", format::hours(hours, configuration),)?;
         if configuration.rate.is_some() {
-            writeln!(f, "  Costs: {}", format_pay(hours, configuration))?;
+            writeln!(f, "  Costs: {}", format::pay(hours, configuration))?;
         }
         if !self.tags.is_empty() {
             writeln!(f, "   Tags: {}", self.tags)?;
         }
         if let Some(message) = &self.message {
-            writeln!(f, "Message: {}", format_message(&message, 9))?;
+            writeln!(f, "Message: {}", format::message(&message, 9))?;
         }
         Ok(())
     }

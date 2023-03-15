@@ -1,3 +1,5 @@
+//! Positions within the database.
+
 use itertools::Itertools;
 
 pub struct PositionalRanges(Vec<(usize, usize)>);
@@ -64,6 +66,7 @@ impl Positions {
     }
 }
 
+/// Iterator over positions.
 pub struct PositionsIterator<'a> {
     positions: &'a Positions,
     index: usize,
