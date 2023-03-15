@@ -12,8 +12,8 @@ pub enum Range {
     All,
     /// Last N jobs .
     Count(usize),
-    /// One at position
-    At(usize),
+    /// At given positions.
+    At(Vec<usize>),
     /// From position to position
     PositionRange(usize, usize),
     /// From position to the end.
@@ -59,9 +59,14 @@ impl Range {
     }
     /// Parse `At`.
     fn parse_at(list: &str) -> Range {
-        let re = Regex::new(r"^(\d+)$").unwrap();
+        let re = Regex::new(r"^([\d,]+)$").unwrap();
         for cap in re.captures_iter(list) {
-            return Self::At(cap[1].parse::<usize>().unwrap() - 1);
+            return Self::At(
+                cap[1]
+                    .split(",")
+                    .map(|c| c.parse::<usize>().unwrap() - 1)
+                    .collect(),
+            );
         }
         Self::None
     }
@@ -149,7 +154,14 @@ impl std::fmt::Display for Range {
             Self::None => write!(f, "none"),
             Self::All => write!(f, "all job(s)"),
             Self::Count(count) => write!(f, "last {count} job(s)"),
-            Self::At(pos) => write!(f, "job at position {pos}", pos = pos + 1),
+            Self::At(pos) => write!(
+                f,
+                "job at position(s) {pos}",
+                pos = {
+                    let v: Vec<String> = pos.iter().map(|p| p.to_string()).collect();
+                    v.join(",")
+                }
+            ),
             Self::PositionRange(from, to) => write!(
                 f,
                 "job(s) from position {from} to {to}",

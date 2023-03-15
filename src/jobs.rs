@@ -137,7 +137,7 @@ impl Jobs {
                 Range::None => false,
                 Range::All => true,
                 Range::Count(_) => true,
-                Range::At(pos) => n == *pos,
+                Range::At(pos) => pos.contains(&n),
                 Range::PositionRange(f, t) => n >= *f && n <= *t,
                 Range::FromPosition(p) => n >= *p,
                 Range::Day(d) => {
