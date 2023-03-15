@@ -100,7 +100,7 @@ impl<'a> JobList<'a> {
     pub fn tags(&self) -> TagSet {
         let mut tags = TagSet::new();
         for (_, job) in &self.jobs {
-            tags.insert_many(job.tags.0.clone());
+            tags.insert_many(job.tags.clone());
         }
         tags
     }

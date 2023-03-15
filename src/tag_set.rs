@@ -12,14 +12,6 @@ impl TagSet {
     pub const fn new() -> Self {
         Self(Vec::new())
     }
-    /// Create from `Option<Vec>`
-    pub fn from_option_vec(tags: Option<Vec<String>>) -> Option<Self> {
-        if let Some(tags) = tags {
-            Some(tags.into())
-        } else {
-            None
-        }
-    }
     /// Filter tags.
     pub fn filter<P>(&self, pred: P) -> Self
     where
@@ -75,8 +67,8 @@ impl TagSet {
         }
     }
     /// Insert a lot of tags.
-    pub fn insert_many(&mut self, tags: Vec<String>) {
-        for tag in tags {
+    pub fn insert_many(&mut self, tags: TagSet) {
+        for tag in tags.iter() {
             self.insert(&tag);
         }
     }
@@ -101,34 +93,20 @@ impl std::fmt::Display for TagSet {
         Ok(())
     }
 }
+
 impl From<Option<TagSet>> for TagSet {
+    /// Flatten optional [TagSet] (empty if option was `None`).
     fn from(tags: Option<TagSet>) -> Self {
         if let Some(tags) = tags {
-            tags
+            tags.clone()
         } else {
             TagSet::new()
         }
     }
 }
-impl From<Vec<String>> for TagSet {
-    fn from(tags: Vec<String>) -> Self {
-        let mut tags = tags.clone();
-        tags.dedup();
-        Self(tags)
-    }
-}
-impl From<Option<Vec<String>>> for TagSet {
-    fn from(tags: Option<Vec<String>>) -> Self {
-        if let Some(tags) = tags {
-            let mut tags = tags.clone();
-            tags.dedup();
-            Self(tags)
-        } else {
-            Self(Vec::new())
-        }
-    }
-}
+
 impl From<&Option<String>> for TagSet {
+    /// Convert from optional comma separated string of tag names without spaces.
     fn from(tag: &Option<String>) -> Self {
         if let Some(tag) = tag {
             Self(tag.split(',').map(|t| t.to_string()).collect())
@@ -137,13 +115,10 @@ impl From<&Option<String>> for TagSet {
         }
     }
 }
-impl From<&String> for TagSet {
-    fn from(tag: &String) -> Self {
-        Self(tag.split('*').map(|t| t.to_string()).collect())
-    }
-}
 impl From<&str> for TagSet {
+    /// convert from comma separated string of tag names without spaces
     fn from(tag: &str) -> Self {
-        Self(tag.split('*').map(|t| t.to_string()).collect())
+        assert!(!tag.contains(" "));
+        Self(tag.split(',').map(|t| t.to_string()).collect())
     }
 }

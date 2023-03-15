@@ -6,6 +6,7 @@
         "datetime",
         "dmhm",
         "dmyhm",
+        "fract",
         "hmdm",
         "hmdmy",
         "hmmd",

@@ -143,14 +143,19 @@ impl Job {
     pub fn writeln(
         &self,
         f: &mut std::fmt::Formatter<'_>,
-        configuration: &Properties,
+        properties: &Properties,
     ) -> std::fmt::Result {
         writeln!(f, "  Start: {}", format::start(&self.start))?;
         writeln!(f, "    End: {}", format::end(&self.end))?;
-        let hours = self.hours(configuration);
-        writeln!(f, "  Hours: {}", format::hours(hours, configuration),)?;
-        if configuration.rate.is_some() {
-            writeln!(f, "  Costs: {}", format::pay(hours, configuration))?;
+        let hours = self.hours(properties);
+        writeln!(
+            f,
+            "  Hours: {}{}",
+            format::hours(hours, properties),
+            format::hours_bar(hours, properties)
+        )?;
+        if properties.rate.is_some() {
+            writeln!(f, "  Costs: {}", format::pay(hours, properties))?;
         }
         if !self.tags.is_empty() {
             writeln!(f, "   Tags: {}", self.tags)?;

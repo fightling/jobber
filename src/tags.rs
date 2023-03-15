@@ -12,7 +12,7 @@ pub fn init(jobs: &Jobs) {
 
 /// Update register with job's tags.
 pub fn update(job: &Job) {
-    unsafe { TAGS.insert_many(job.tags.0.clone()) }
+    unsafe { TAGS.insert_many(job.tags.clone()) }
 }
 
 /// Decorate tag with color.

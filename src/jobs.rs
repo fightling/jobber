@@ -112,7 +112,7 @@ impl Jobs {
     pub fn tags(&self) -> TagSet {
         let mut tags = TagSet::new();
         for job in &self.jobs {
-            tags.insert_many(job.tags.0.clone());
+            tags.insert_many(job.tags.clone());
         }
         tags
     }
@@ -288,20 +288,17 @@ impl Jobs {
                 range,
                 tags,
             ),
-            Command::Report { range, tags } => {
-                let tags = tags.clone();
-                Operation::Report(
-                    self.filter(&range, &tags.clone().into())?.positions(),
-                    range,
-                    tags,
-                )
-            }
+            Command::Report { range, tags } => Operation::Report(
+                self.filter(&range, &tags.clone().into())?.positions(),
+                range,
+                tags,
+            ),
             Command::ExportCSV {
                 range,
                 tags,
                 columns,
             } => {
-                let tags = tags.clone().into();
+                let tags = tags.into();
                 Operation::ExportCSV(
                     self.filter(&range, &tags)?.positions(),
                     range,
@@ -518,11 +515,11 @@ impl Jobs {
                 let tags = if tags.is_empty() {
                     None
                 } else {
-                    let tags: Vec<String> = tags.split(",").map(|t| t.to_string()).collect();
+                    let tags: TagSet = tags.as_str().into();
                     new_tags.insert_many(tags.clone());
                     Some(tags)
                 };
-                self.push(Job::new(start, end, message, TagSet::from_option_vec(tags)).unwrap());
+                self.push(Job::new(start, end, message, tags.map(|t| t.into())).unwrap());
                 self.modified = true;
                 count += 1;
             }

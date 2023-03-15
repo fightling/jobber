@@ -18,6 +18,44 @@ pub fn end(end: &Option<DateTime>) -> String {
     }
 }
 
+pub fn hours_bar(hours: f64, properties: &Properties) -> String {
+    fn bar(hours: f64) -> String {
+        if hours > 0.0 && hours < 24.0 {
+            " ".to_string()
+                + &"+".repeat(hours as usize)
+                + if hours.fract() > 0.5 {
+                    "+"
+                } else if hours.fract() > 0.25 {
+                    "-"
+                } else {
+                    ""
+                }
+        } else {
+            "".into()
+        }
+    }
+    if let Some(max_hours) = properties.max_hours {
+        if hours > max_hours as f64 {
+            return format!(
+                "{}{}{}{}{}",
+                style::Bold,
+                Fg(LightRed),
+                bar(hours),
+                Fg(Reset),
+                style::Reset
+            );
+        }
+    }
+    format!(
+        "{}{}{}{}{}",
+        style::Bold,
+        Fg(Yellow),
+        bar(hours),
+        Fg(Reset),
+        style::Reset
+    )
+}
+
 /// Format hours (considering resolution) with style & color.
 pub fn hours(hours: f64, properties: &Properties) -> String {
     if let Some(max_hours) = properties.max_hours {
@@ -27,8 +65,8 @@ pub fn hours(hours: f64, properties: &Properties) -> String {
                 style::Bold,
                 Fg(LightRed),
                 hours,
+                Fg(Reset),
                 style::Reset,
-                Fg(Reset)
             );
         }
     }
@@ -42,8 +80,8 @@ pub fn hours_pure(hours: f64) -> String {
         style::Bold,
         Fg(White),
         hours,
-        style::Reset,
-        Fg(Reset)
+        Fg(Reset),
+        style::Reset
     )
 }
 

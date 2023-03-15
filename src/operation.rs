@@ -120,7 +120,7 @@ impl std::fmt::Display for Operation {
                     write!(
                         f,
                         "Configuration for tag {}:\n\n{}",
-                        TagSet::from(tag),
+                        TagSet::from(tag.as_str()),
                         properties
                     )?;
                 }

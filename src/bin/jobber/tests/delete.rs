@@ -80,7 +80,7 @@ fn test_add() {
         r#"    Pos: 2
   Start: Wed Feb 01 2023, 11:00
     End: Wed Feb 01 2023, 12:30
-  Hours: 1.5
+  Hours: 1.5 +-
    Tags:  tag 
 Message: second job
 
