@@ -2,21 +2,27 @@
 
 use itertools::Itertools;
 
+/// Range between two Positions (including both ends).
 pub struct PositionalRanges(Vec<(usize, usize)>);
 
 impl PositionalRanges {
+    /// Create empty positional range.
     pub const fn new() -> Self {
         Self(Vec::new())
     }
+    // Return `true` if list is emtpy.
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+    /// Add new position to list.
     pub fn push(&mut self, item: (usize, usize)) {
         self.0.push(item)
     }
+    /// Return last position in list.
     pub fn last(&self) -> Option<&(usize, usize)> {
         self.0.last()
     }
+    /// Return last position in list as mutable.
     pub fn last_mut(&mut self) -> Option<&mut (usize, usize)> {
         self.0.last_mut()
     }
@@ -41,6 +47,7 @@ impl std::fmt::Display for PositionalRanges {
     }
 }
 
+/// List of positions (indexes) within the database.
 #[derive(Clone, Debug)]
 pub struct Positions(Vec<usize>);
 
@@ -58,9 +65,11 @@ impl Positions {
         }
         ranges
     }
+    /// Return read-only iterator.
     pub fn iter(&self) -> core::slice::Iter<'_, usize> {
         self.0.iter()
     }
+    /// Return `true` if list contains position
     pub fn contains(&self, position: &usize) -> bool {
         self.0.contains(&position)
     }
