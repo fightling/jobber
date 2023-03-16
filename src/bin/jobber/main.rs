@@ -484,6 +484,6 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
     } else if let Some(range) = list_tags {
         Command::ListTags { range, tags }
     } else {
-        panic!("unknown command")
+        Command::Info
     }
 }

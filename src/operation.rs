@@ -6,7 +6,7 @@ use super::prelude::*;
 #[derive(Clone, Debug)]
 pub enum Operation {
     /// No change
-    Nothing,
+    Welcome,
     /// Push a new `Job` into database.
     Push(usize, Job),
     /// Change an existing `Job` at index `usize` into database but return error if message is missing.
@@ -29,11 +29,20 @@ pub enum Operation {
     ShowConfiguration(Configuration),
 }
 
+impl Operation {
+    pub fn reports_open_job(&self) -> bool {
+        match self {
+            Operation::Welcome | Operation::Push(_, _) => true,
+            _ => false,
+        }
+    }
+}
+
 impl std::fmt::Display for Operation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Operation::Nothing => {
-                write!(f, "Database unchanged.")
+            Operation::Welcome => {
+                write!(f, "\nAnd don't work too much!")
             }
             Operation::Push(position, job) => {
                 if job.is_open() {

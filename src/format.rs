@@ -10,12 +10,8 @@ pub fn start(start: &DateTime) -> String {
 }
 
 /// Format end date and time with color.
-pub fn end(end: &Option<DateTime>) -> String {
-    if let Some(end) = &end {
-        format!("{}{}{}", Fg(Magenta), end, Fg(Reset))
-    } else {
-        format!("{}- open -{}", Fg(Magenta), Fg(Reset))
-    }
+pub fn end(end: &DateTime) -> String {
+    format!("{}{}{}", Fg(Magenta), end, Fg(Reset))
 }
 
 pub fn hours_bar(hours: f64, properties: &Properties) -> String {

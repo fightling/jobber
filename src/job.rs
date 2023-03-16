@@ -146,22 +146,26 @@ impl Job {
         properties: &Properties,
     ) -> std::fmt::Result {
         writeln!(f, "  Start: {}", format::start(&self.start))?;
-        writeln!(f, "    End: {}", format::end(&self.end))?;
+        if let Some(end) = &self.end {
+            writeln!(f, "    End: {}", format::end(end))?;
+        }
         let hours = self.hours(properties);
-        writeln!(
-            f,
-            "  Hours: {}{}",
-            format::hours(hours, properties),
-            format::hours_bar(hours, properties)
-        )?;
+        if hours > 0.0 {
+            writeln!(
+                f,
+                "  Hours: {}{}",
+                format::hours(hours, properties),
+                format::hours_bar(hours, properties)
+            )?;
+        }
         if properties.rate.is_some() {
             writeln!(f, "  Costs: {}", format::pay(hours, properties))?;
         }
-        if !self.tags.is_empty() {
-            writeln!(f, "   Tags: {}", self.tags)?;
-        }
         if let Some(message) = &self.message {
             writeln!(f, "Message: {}", format::message(&message, 9))?;
+        }
+        if !self.tags.is_empty() {
+            writeln!(f, "   Tags: {}", self.tags)?;
         }
         Ok(())
     }

@@ -22,4 +22,8 @@ impl Context {
     pub fn time(&self) -> DateTime {
         DateTime::from(self.0)
     }
+    /// Return time in context
+    pub fn date(&self) -> Date {
+        DateTime::from(self.0).date()
+    }
 }

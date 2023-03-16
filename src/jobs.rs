@@ -86,10 +86,9 @@ impl Jobs {
         context: &Context,
     ) -> Result<Operation, Error> {
         let mut operation = self.interpret(command)?;
-        eprintln!("");
         self.operate(w, &mut operation, check, context)?;
-        eprintln!("");
-        if let Some(job) = self.get_open_with_pos() {
+        if operation.reports_open_job() {
+        } else if let Some(job) = self.get_open_with_pos() {
             eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
         }
         Ok(operation)
@@ -188,9 +187,9 @@ impl Jobs {
             } else {
                 Err(Error::DatabaseEmpty)
             }
-        } else if let Some(message) = message {
+        } else if let Some(Some(message)) = message {
             // use given message
-            Ok(message)
+            Ok(Some(message))
         } else {
             // no message via argument nor via last job -> please enter one
             Self::check_force_enter_message(message)
@@ -217,6 +216,7 @@ impl Jobs {
     fn interpret(&self, command: &Command) -> Result<Operation, Error> {
         // process command and potentially get `Some(job)` change
         Ok(match command.clone() {
+            Command::Info => Operation::Welcome,
             Command::Start {
                 start,
                 message,
@@ -349,6 +349,23 @@ impl Jobs {
             }
         })
     }
+    fn first_date(&self) -> Option<Date> {
+        if let Some(first) = self.jobs.first() {
+            Some(first.start.date())
+        } else {
+            None
+        }
+    }
+    fn last_date(&self, context: &Context) -> Option<Date> {
+        if let Some(last) = self.jobs.last() {
+            return Some(if let Some(end) = last.end {
+                end.date()
+            } else {
+                context.date()
+            });
+        }
+        None
+    }
     /// Process an operation with the database.
     fn operate<'a, W: std::io::Write>(
         &mut self,
@@ -358,6 +375,9 @@ impl Jobs {
         context: &Context,
     ) -> Result<(), Error> {
         match operation {
+            Operation::Welcome => {
+                self.welcome(context)?;
+            }
             Operation::Push(position, job) => {
                 assert!(*position == self.jobs.len());
                 if job.is_open() {
@@ -525,6 +545,52 @@ impl Jobs {
             }
         }
         Ok((count, new_tags.filter(|t| tags.contains(t))))
+    }
+    fn welcome(&self, context: &Context) -> Result<(), Error> {
+        eprintln!("\nWelcome to jobber!\n");
+        if let Some(from) = self.first_date() {
+            if let Some(to) = self.last_date(context) {
+                eprintln!(
+                    "You have {count} jobs in the database from {from} to {to}.\n",
+                    count = self.count(),
+                )
+            } else {
+                eprintln!(
+                    "You have {count} job(s) in the database from {from} until now.\n",
+                    count = self.count(),
+                )
+            }
+        }
+        if self.get_open().is_some() {
+            eprintln!("There is an open job:\n")
+        } else {
+            eprintln!("This was your last finished job:\n")
+        }
+        eprint!(
+            "{}",
+            self.list(&self.filter(&Range::Count(1), &TagSet::new())?.positions(),)
+        );
+        if self.get_open().is_some() {
+            eprint!(
+                "
+Use 'jobber -e' to finish the open job,
+    'jobber -l' list existing jobs,"
+            )
+        } else {
+            eprint!(
+                "
+Use 'jobber -b' to continue your work,
+    'jobber -s' to start a new job,"
+            )
+        }
+        eprintln!(
+            "
+    'jobber -l' list existing jobs,
+    'jobber -r' to get a monthly report or
+    'jobber -h' to get further help.
+"
+        );
+        Ok(())
     }
 }
 

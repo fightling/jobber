@@ -93,23 +93,7 @@ pub struct Args {
     pub filename: Option<String>,
 
     /// Add job now or at the given starting time
-    #[arg(
-        short,
-        long,
-        required_unless_present("back"),
-        required_unless_present("end"),
-        required_unless_present("list"),
-        required_unless_present("report"),
-        required_unless_present("export"),
-        required_unless_present("configuration"),
-        required_unless_present("resolution"),
-        required_unless_present("rate"),
-        required_unless_present("max_hours"),
-        required_unless_present("legacy_import"),
-        required_unless_present("list_tags"),
-        required_unless_present("edit"),
-        required_unless_present("delete")
-    )]
+    #[arg(short, long)]
     pub start: Option<Option<String>>,
 
     /// Back to work copies description from last job to start now or at the given starting time

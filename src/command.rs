@@ -16,6 +16,7 @@ pub enum EndOrDuration {
 /// Commands which can be applied to jobber's database.
 #[derive(PartialEq, Clone, Debug)]
 pub enum Command {
+    Info,
     /// Start a new job by specifying start time if there is no open job-
     Start {
         start: DateTime,
@@ -49,9 +50,15 @@ pub enum Command {
         tags: Option<TagSet>,
     },
     /// List jobs
-    List { range: Range, tags: Option<TagSet> },
+    List {
+        range: Range,
+        tags: Option<TagSet>,
+    },
     /// Report jobs
-    Report { range: Range, tags: Option<TagSet> },
+    Report {
+        range: Range,
+        tags: Option<TagSet>,
+    },
     /// Report jobs as CSV
     ExportCSV {
         range: Range,
@@ -66,9 +73,14 @@ pub enum Command {
         update: Properties,
     },
     /// Import CSV database of legacy Ruby *jobber* version
-    LegacyImport { filename: String },
+    LegacyImport {
+        filename: String,
+    },
     /// List all known tags
-    ListTags { range: Range, tags: Option<TagSet> },
+    ListTags {
+        range: Range,
+        tags: Option<TagSet>,
+    },
     /// Edit an existing job.
     Edit {
         pos: usize,
@@ -78,7 +90,10 @@ pub enum Command {
         tags: Option<TagSet>,
     },
     /// Delete an existing job.
-    Delete { range: Range, tags: Option<TagSet> },
+    Delete {
+        range: Range,
+        tags: Option<TagSet>,
+    },
 }
 
 impl Command {
