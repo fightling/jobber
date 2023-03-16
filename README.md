@@ -123,6 +123,7 @@ We use the start option `-s` to start a new job:
 Beginning new database file 'jobber.json'
 Started new job:
 
+    Pos: 1
   Start: Sat Mar 04 2023, 16:25
     End: - open -
 
