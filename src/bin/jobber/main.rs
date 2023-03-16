@@ -452,11 +452,15 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
             }
         }
     } else if let Some(end) = end {
-        let end = end.into(if let Some(open_start) = open_start {
-            open_start
-        } else {
+        let end = if PartialDateTime::None == end {
             context.time()
-        });
+        } else {
+            end.into(if let Some(open_start) = open_start {
+                open_start
+            } else {
+                context.time()
+            })
+        };
         Command::End { end, message, tags }
     } else if let Some(range) = list {
         Command::List { range, tags }
