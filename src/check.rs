@@ -38,6 +38,11 @@ impl Checks {
     pub fn omit() -> Self {
         Self { 0: HashSet::new() }
     }
+    pub fn no_confirm() -> Self {
+        Self {
+            0: HashSet::from([Check::Overlaps]),
+        }
+    }
     /// Return `true` if the given check is included.
     pub fn has(&self, check: Check) -> bool {
         self.0.contains(&check)

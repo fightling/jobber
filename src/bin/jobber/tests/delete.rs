@@ -81,10 +81,9 @@ fn test_add() {
   Start: Wed Feb 01 2023, 11:00
     End: Wed Feb 01 2023, 12:30
   Hours: 1.5 +-
-   Tags:  tag 
 Message: second job
+   Tags:  tag 
 
-Total: 1 job(s), 1.5 hours
 "#
         .to_string()
     );
