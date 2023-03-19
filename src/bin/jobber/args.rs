@@ -163,7 +163,7 @@ pub struct Args {
 
     /// Edit some items of a job by it's position
     #[arg(long="edit", conflicts_with_all(["back","list","report","delete"]))]
-    pub edit: Option<usize>,
+    pub edit: Option<Option<usize>>,
 
     /// Delete some jobs by it's position
     #[arg(long="delete", conflicts_with_all(["start","back","end","list","report","edit"]))]

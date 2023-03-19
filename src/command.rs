@@ -83,7 +83,7 @@ pub enum Command {
     },
     /// Edit an existing job.
     Edit {
-        pos: usize,
+        pos: Option<usize>,
         start: Option<DateTime>,
         end: EndOrDuration,
         message: Option<Option<String>>,

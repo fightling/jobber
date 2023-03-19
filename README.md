@@ -281,7 +281,7 @@ Using a suffix is mandatory if you start the tag list with a `-` because *jobber
 
 ### Editing Jobs
 
-Jobs can be edited by using `--edit <POS>` then add some `-s`, `-e`, `-d`, `-m` or `-t` to change single properties.
+Jobs can be edited by using `--edit [<POS>]` then add some `-s`, `-e`, `-d`, `-m` or `-t` to change single properties.
 The only property which can be forced to change to empty is `-t`.
 By giving no tags to `-t` tags will be deleted when editing.
 

@@ -73,14 +73,12 @@ impl Checks {
         if self.has(Check::Overlaps) {
             let mut overlapping = JobList::new_from(jobs);
             for (n, j) in jobs.iter().enumerate() {
-                if job.overlaps(&j, context) {
-                    if let Some(pos) = pos {
-                        if n != pos {
-                            overlapping.push(n, j);
-                        }
-                    } else {
+                if let Some(pos) = pos {
+                    if n != pos && job.overlaps(&j, context) {
                         overlapping.push(n, j);
                     }
+                } else if job.overlaps(&j, context) {
+                    overlapping.push(n, j);
                 }
             }
             if !overlapping.is_empty() {

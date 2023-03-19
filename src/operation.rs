@@ -53,7 +53,7 @@ impl std::fmt::Display for Operation {
             }
             Operation::Modify(position, job) => {
                 if job.is_open() {
-                    write!(f, "Ended open job:\n\n    Pos: {}\n{job}", position + 1)
+                    write!(f, "Modified open job:\n\n    Pos: {}\n{job}", position + 1)
                 } else {
                     write!(f, "Modified job:\n\n    Pos: {}\n{job}", position + 1)
                 }

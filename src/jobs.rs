@@ -71,6 +71,13 @@ impl Jobs {
     pub fn count(&self) -> usize {
         self.iter().filter(|j| !j.is_deleted()).count()
     }
+    /// return the last job's position
+    fn last_position(&self) -> Option<usize> {
+        match self.jobs.len() {
+            0 => None,
+            len => Some(len - 1),
+        }
+    }
     /// Return `true` if the database was modified sind last load.
     pub fn modified(&self) -> bool {
         self.modified
@@ -319,6 +326,15 @@ impl Jobs {
                 message,
                 tags,
             } => {
+                let pos = if let Some(pos) = pos {
+                    pos
+                } else {
+                    if let Some(position) = self.last_position() {
+                        position
+                    } else {
+                        return Err(Error::DatabaseEmpty);
+                    }
+                };
                 if let Some(job) = self.get(pos) {
                     let mut job = job.clone();
                     if let Some(start) = start {

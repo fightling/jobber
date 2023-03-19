@@ -285,7 +285,12 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
     };
 
     let edit = if let Some(edit) = args.edit {
-        Some(edit - 1)
+        if let Some(edit) = edit {
+            // de-humanize position
+            Some(Some(edit - 1))
+        } else {
+            Some(None)
+        }
     } else {
         None
     };

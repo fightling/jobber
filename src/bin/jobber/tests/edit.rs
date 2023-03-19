@@ -136,3 +136,35 @@ fn test_edit() {
     assert_eq!(jobs.count(), 1);
     assert!(jobs[0].tags.is_empty());
 }
+
+/// Edit several items of jobs in a database.
+///
+/// - [x] checks argument parsing
+/// - [x] check database modification
+///
+#[test]
+fn test_edit_open() {
+    let context = Context::new_test("2023-2-1 12:00");
+
+    // start new job and edit it
+    let jobs = run_args(
+        &mut std::io::stdout(),
+        &["jobber", "-s"],
+        None,
+        Checks::all(),
+        &context,
+    )
+    .unwrap();
+    let jobs = run_args(
+        &mut std::io::stdout(),
+        &["jobber", "--edit", "-t", "tag", "-m", "message"],
+        Some(jobs),
+        Checks::no_confirm(),
+        &context,
+    )
+    .unwrap();
+    assert_eq!(jobs.count(), 1);
+    assert!(jobs[0].tags == "tag".into());
+    assert!(jobs[0].message == Some("message".into()));
+    assert!(jobs[0].end == None);
+}
