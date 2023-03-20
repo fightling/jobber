@@ -12,6 +12,7 @@ use args::Args;
 use clap::Parser;
 use jobberdb::prelude::*;
 use serde::{Deserialize, Serialize};
+use termion::{color::*, style};
 
 /// System side configuration.
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,7 +37,13 @@ fn main() {
     let args = Args::parse();
     let context = Context::new();
     if let Err(err) = run(&mut std::io::stdout(), args, Checks::all(), &context) {
-        eprintln!("ERROR: {err}");
+        eprintln!(
+            "\n{}{}ERROR{}{}: {err}",
+            style::Bold,
+            Fg(Red),
+            Fg(Reset),
+            style::Reset
+        );
     }
 }
 
@@ -159,7 +166,15 @@ pub fn run_args_mut<W: std::io::Write>(
 
 /// Ask user on console a yes-no-question.
 fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
-    eprintln!("{} ({})", question, if default_yes { "Y/n" } else { "y/N" });
+    eprintln!(
+        "{}{}{} ({}){}{}",
+        style::Bold,
+        Fg(Yellow),
+        question,
+        if default_yes { "Y/n" } else { "y/N" },
+        Fg(Reset),
+        style::Reset
+    );
 
     let mut buffer = String::new();
     std::io::stdin()
@@ -175,7 +190,14 @@ fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
 
 /// Ask user for a multi line input.
 fn enter(question: &str) -> Result<String, Error> {
-    eprintln!("{}", question);
+    eprintln!(
+        "{}{}{}{}{}",
+        style::Bold,
+        Fg(Yellow),
+        question,
+        Fg(Reset),
+        style::Reset
+    );
 
     let mut result = String::new();
     loop {
