@@ -15,7 +15,7 @@ chrono = { version="^0.4.20", features = ["serde"] }
 clap = { version = "4.1", features = ["derive","cargo"] }
 confy = "0.5.1"
 days-in-month = "2.0.0"
-directories = "4.0.1"
+directories = "5.0"
 itertools = "0.10.5"
 regex = "1.7"
 separator = "0.4.1"
