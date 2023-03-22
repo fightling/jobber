@@ -28,18 +28,20 @@ pub enum Range {
 
 impl Range {
     /// Parse a range from a string like told in the manual.
-    pub fn parse(list: Option<String>, context: &Context) -> Self {
+    pub fn parse(list: Option<String>, context: &Context) -> Result<Self, Error> {
         if let Some(list) = list {
-            Self::parse_count(&list).or(Self::parse_at(&list).or(Self::parse_position_range(&list)
-                .or(
-                    Self::parse_time_range(&list, context).or(
-                        Self::parse_day(&list, context)
-                            .or(Self::parse_from_position(&list)
-                                .or(Self::parse_since(&list, context))),
-                    ),
-                )))
+            match Self::parse_count(&list).or(Self::parse_at(&list).or(Self::parse_position_range(
+                &list,
+            )
+            .or(
+                Self::parse_time_range(&list, context).or(Self::parse_day(&list, context)
+                    .or(Self::parse_from_position(&list).or(Self::parse_since(&list, context)))),
+            ))) {
+                Range::None => Err(Error::RangeFormat(list)),
+                range => Ok(range),
+            }
         } else {
-            Self::All
+            Ok(Range::All)
         }
     }
     /// Return self or another.
@@ -91,7 +93,7 @@ impl Range {
     }
     /// Parse `Day`.
     fn parse_day(list: &str, context: &Context) -> Range {
-        let pt = PartialDateTime::parse(Some(list.to_string()));
+        let pt = PartialDateTime::parse_opt(Some(list.to_string()));
         match pt {
             PartialDateTime::None => Self::None,
             _ => Range::Day(Date::from(pt.into(context.time()))),
@@ -111,8 +113,8 @@ impl Range {
             }
         };
         if list.len() == 2 {
-            let from = PartialDateTime::parse(Some(list[0].to_string()));
-            let to = PartialDateTime::parse(Some(list[1].to_string()));
+            let from = PartialDateTime::parse_opt(Some(list[0].to_string()));
+            let to = PartialDateTime::parse_opt(Some(list[1].to_string()));
             match (from, to) {
                 (PartialDateTime::None, PartialDateTime::None) => Self::None,
                 (from, PartialDateTime::None) => {
@@ -122,12 +124,12 @@ impl Range {
                     use chrono::{TimeZone, Utc};
                     Self::TimeRange(
                         Utc.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap().into(),
-                        to.into(context.time()),
+                        to.into(context.time()) + Duration::days(1),
                     )
                 }
                 (from, to) => {
                     let from = from.into(context.time());
-                    Self::TimeRange(from, to.into(from))
+                    Self::TimeRange(from, to.into(from) + Duration::days(1))
                 }
             }
         } else {
@@ -138,7 +140,7 @@ impl Range {
     fn parse_since(list: &str, context: &Context) -> Range {
         let re = Regex::new(r"^(.+)\.\.$").unwrap();
         for cap in re.captures_iter(list) {
-            let pt = PartialDateTime::parse(Some(cap[1].to_string()));
+            let pt = PartialDateTime::parse_opt(Some(cap[1].to_string()));
             return match pt {
                 PartialDateTime::None => Self::None,
                 _ => Range::Since(pt.into(context.time())),
@@ -174,4 +176,71 @@ impl std::fmt::Display for Range {
             Self::Since(since) => write!(f, "job(s) since {since}"),
         }
     }
+}
+
+#[cfg(test)]
+fn new_job(start: &str, end: Option<&str>, message: Option<&str>, tags: Option<&str>) -> Job {
+    Job::new(
+        DateTime::from_local_str(start),
+        if let Some(end) = end {
+            Some(DateTime::from_local_str(end))
+        } else {
+            None
+        },
+        if let Some(message) = message {
+            Some(message.to_string())
+        } else {
+            None
+        },
+        if let Some(tags) = tags {
+            Some(tags.into())
+        } else {
+            None
+        },
+    )
+    .expect("can't parse new job")
+}
+
+/// Test several range parsings.
+#[test]
+fn test_parse_time_range() {
+    // include start and end days in time range
+    let context = Context::new_test("2023-2-1 12:00");
+
+    // prepare some jobs around 2023-1-1
+    let mut jobs = Jobs::new();
+    jobs._push(new_job(
+        "2022-12-31 18:00",
+        Some("2022-12-31 23:59"),
+        None,
+        None,
+    ));
+    jobs._push(new_job(
+        "2023-01-01 00:00",
+        Some("2023-01-01 00:10"),
+        None,
+        None,
+    ));
+
+    //
+    let january = Range::parse(Some("1.1...31.1.".into()), &context).unwrap();
+
+    assert!(jobs._filter(&january, &TagSet::new()).unwrap().len() == 1);
+
+    assert_eq!(
+        january,
+        Range::TimeRange(
+            DateTime::from_local_str("2023-1-1 00:00"),
+            DateTime::from_local_str("2023-2-1 00:00")
+        )
+    );
+}
+
+/// Test several failing range parsings.
+#[test]
+fn test_parse_fails() {
+    // include start and end days in time range
+    let context = Context::new_test("2023-2-1 12:00");
+
+    assert!(Range::parse(Some("1.1.-".into()), &context).is_err());
 }

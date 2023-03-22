@@ -1,5 +1,6 @@
 //! Duration in time
 
+use crate::prelude::*;
 use regex::Regex;
 
 /// Duration in time.
@@ -20,8 +21,13 @@ impl Duration {
         }
     }
     /// Parse duration from a string.
-    pub fn parse(duration: String) -> Self {
-        Self::parse_hm(&duration).or(Self::parse_hours(&duration).or(Self::parse_hm2(&duration)))
+    pub fn parse(duration: String) -> Result<Self, Error> {
+        match Self::parse_hm(&duration)
+            .or(Self::parse_hours(&duration).or(Self::parse_hm2(&duration)))
+        {
+            Duration::Zero => Err(Error::DurationFormat(duration)),
+            duration => Ok(duration),
+        }
     }
     /// Set duration in this instance if none was set before.
     pub fn or(self, d: Self) -> Self {
@@ -124,56 +130,56 @@ impl std::fmt::Display for Duration {
 #[test]
 fn test_duration() {
     assert_eq!(
-        Duration::parse("2:30".to_string()),
+        Duration::parse("2:30".to_string()).unwrap(),
         Duration::HM {
             hours: 2,
             minutes: 30
         }
     );
     assert_eq!(
-        Duration::parse("2.5".to_string()),
+        Duration::parse("2.5".to_string()).unwrap(),
         Duration::HM {
             hours: 2,
             minutes: 30
         }
     );
     assert_eq!(
-        Duration::parse(".25".to_string()),
+        Duration::parse(".25".to_string()).unwrap(),
         Duration::HM {
             hours: 0,
             minutes: 15
         }
     );
     assert_eq!(
-        Duration::parse(".5".to_string()),
+        Duration::parse(".5".to_string()).unwrap(),
         Duration::HM {
             hours: 0,
             minutes: 30
         }
     );
     assert_eq!(
-        Duration::parse("2".to_string()),
+        Duration::parse("2".to_string()).unwrap(),
         Duration::HM {
             hours: 2,
             minutes: 0
         }
     );
     assert_eq!(
-        Duration::parse("2h30m".to_string()),
+        Duration::parse("2h30m".to_string()).unwrap(),
         Duration::HM {
             hours: 2,
             minutes: 30
         }
     );
     assert_eq!(
-        Duration::parse("2h".to_string()),
+        Duration::parse("2h".to_string()).unwrap(),
         Duration::HM {
             hours: 2,
             minutes: 0
         }
     );
     assert_eq!(
-        Duration::parse("15m".to_string()),
+        Duration::parse("15m".to_string()).unwrap(),
         Duration::HM {
             hours: 0,
             minutes: 15

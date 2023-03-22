@@ -63,6 +63,15 @@ pub enum Error {
     /// To few jobs in database to process operation
     #[error("To few jobs in database to process operation in range {0}-{0}")]
     ToFewJobs(usize, usize),
+    /// Parsing of a range failed
+    #[error("Parsing of range '{0}' failed")]
+    RangeFormat(String),
+    /// Parsing of a duration failed
+    #[error("Parsing of duration '{0}' failed")]
+    DurationFormat(String),
+    /// Parsing of a partial date and time failed
+    #[error("Parsing of partial date and time '{0}' failed")]
+    PartialDateTimeFormat(String),
 }
 
 impl From<std::io::Error> for Error {

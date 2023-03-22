@@ -14,7 +14,7 @@ fn test_start() {
 
     // start a new job at the current time
     assert_eq!(
-        parse(Args::parse_from(["jobber", "-s"]), None, &context),
+        parse(Args::parse_from(["jobber", "-s"]), None, &context).unwrap(),
         Command::Start {
             start: DateTime::from_local_str("2023-01-01 12:00"),
             message: None,
@@ -28,7 +28,8 @@ fn test_start() {
             Args::parse_from(["jobber", "-s", "1.1.,12:00"]),
             None,
             &context
-        ),
+        )
+        .unwrap(),
         Command::Start {
             start: DateTime::from_local_str("2023-01-01 12:00"),
             message: None,

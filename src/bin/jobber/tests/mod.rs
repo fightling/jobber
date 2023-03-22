@@ -3,6 +3,7 @@ mod back;
 mod delete;
 mod edit;
 mod export;
+mod range;
 mod start;
 
 use regex::Regex;

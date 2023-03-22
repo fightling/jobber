@@ -82,7 +82,7 @@ fn run<W: std::io::Write>(
     };
 
     // parse and process command
-    let mut command = parse(args, jobs.open_start(), context);
+    let mut command = parse(args, jobs.open_start(), context)?;
     match jobs.process(w, &command, checks, context) {
         Err(Error::Warnings(warnings)) => {
             if warnings.len() == 1 {
@@ -160,7 +160,7 @@ pub fn run_args_mut<W: std::io::Write>(
     checks: Checks,
     context: &Context,
 ) -> Result<Operation, Error> {
-    let command = parse(Args::parse_from(args), None, context);
+    let command = parse(Args::parse_from(args), None, context)?;
     jobs.process(w, &command, checks, context)
 }
 
@@ -244,26 +244,30 @@ fn edit_message<W: std::io::Write>(
 /// # Arguments
 /// * `args` - arguments to parse
 /// * `open_start` - if data base has an open job this shall give its starting time
-pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Command {
+pub fn parse(
+    args: Args,
+    open_start: Option<DateTime>,
+    context: &Context,
+) -> Result<Command, Error> {
     // 1) parse everything from arguments...
 
     let start = if let Some(start) = args.start {
-        Some(PartialDateTime::parse(start))
+        Some(PartialDateTime::parse(start)?)
     } else {
         None
     };
     let back = if let Some(back) = args.back {
-        Some(PartialDateTime::parse(back))
+        Some(PartialDateTime::parse(back)?)
     } else {
         None
     };
     let end = if let Some(end) = args.end {
-        Some(PartialDateTime::parse(end))
+        Some(PartialDateTime::parse(end)?)
     } else {
         None
     };
     let duration = if let Some(duration) = args.duration {
-        Some(Duration::parse(duration))
+        Some(Duration::parse(duration)?)
     } else {
         None
     };
@@ -274,17 +278,17 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         None
     };
     let list = if let Some(list) = args.list {
-        Some(Range::parse(list, context))
+        Some(Range::parse(list, context)?)
     } else {
         None
     };
     let report = if let Some(report) = args.report {
-        Some(Range::parse(report, context))
+        Some(Range::parse(report, context)?)
     } else {
         None
     };
     let export = if let Some(export) = args.export {
-        Some(Range::parse(export, context))
+        Some(Range::parse(export, context)?)
     } else {
         None
     };
@@ -301,7 +305,7 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
     let legacy_import = args.legacy_import;
 
     let list_tags = if let Some(list_tags) = args.list_tags {
-        Some(Range::parse(list_tags, context))
+        Some(Range::parse(list_tags, context)?)
     } else {
         None
     };
@@ -317,14 +321,14 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         None
     };
     let delete = if let Some(delete) = args.delete {
-        Some(Range::parse(Some(delete), context))
+        Some(Range::parse(Some(delete), context)?)
     } else {
         None
     };
 
     // 2) create command depending on what arguments were given...
 
-    if let Some(pos) = edit {
+    Ok(if let Some(pos) = edit {
         if let Some(start) = start {
             let mut start = start.into(context.time());
             if let Some(end) = end {
@@ -516,5 +520,5 @@ pub fn parse(args: Args, open_start: Option<DateTime>, context: &Context) -> Com
         Command::ListTags { range, tags }
     } else {
         Command::Info
-    }
+    })
 }

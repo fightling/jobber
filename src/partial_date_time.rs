@@ -34,7 +34,18 @@ pub enum PartialDateTime {
 
 impl PartialDateTime {
     /// Parse a partial date from optional string.
-    pub fn parse(dt: Option<String>) -> Self {
+    pub fn parse(dt: Option<String>) -> Result<Self, Error> {
+        if let Some(dt) = dt {
+            match Self::parse_date_time(dt.clone()) {
+                PartialDateTime::None => Err(Error::PartialDateTimeFormat(dt)),
+                pdt => Ok(pdt),
+            }
+        } else {
+            Ok(PartialDateTime::None)
+        }
+    }
+    /// Parse optional partial date from optional string.
+    pub fn parse_opt(dt: Option<String>) -> Self {
         if let Some(dt) = dt {
             Self::parse_date_time(dt)
         } else {

@@ -54,6 +54,11 @@ impl Jobs {
             configuration: Default::default(),
         }
     }
+    // public version of push fpr testing
+    #[cfg(test)]
+    pub fn _push(&mut self, job: Job) {
+        self.push(job)
+    }
     /// Append a new job into the database.
     fn push(&mut self, job: Job) {
         tags::update(&job);
@@ -122,6 +127,11 @@ impl Jobs {
         }
         tags
     }
+    // public version of filter fpr testing
+    #[cfg(test)]
+    pub fn _filter(&self, range: &Range, tags: &TagSet) -> Result<JobList, Error> {
+        self.filter(range, tags)
+    }
     /// Filter jobs by range and tags and return a job list with the result.
     /// Deleted jobs will be omitted.
     fn filter(&self, range: &Range, tags: &TagSet) -> Result<JobList, Error> {
@@ -155,7 +165,7 @@ impl Jobs {
                         }
                 }
                 Range::TimeRange(f, t) => {
-                    job.start <= *t
+                    job.start < *t
                         && if let Some(end) = job.end {
                             end >= *f
                         } else {

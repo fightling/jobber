@@ -17,7 +17,8 @@ fn test_add() {
             Args::parse_from(&["jobber", "-s", "12:00", "-e", "13:00"]),
             None,
             &context
-        ),
+        )
+        .unwrap(),
         Command::Add {
             start: DateTime::from_local_str("2023-2-1 12:00"),
             end: DateTime::from_local_str("2023-2-1 13:00"),
@@ -32,7 +33,8 @@ fn test_add() {
             Args::parse_from(&["jobber", "-s", "23:00", "-e", "1:00"]),
             None,
             &context
-        ),
+        )
+        .unwrap(),
         Command::Add {
             start: DateTime::from_local_str("2023-2-1 23:00"),
             end: DateTime::from_local_str("2023-2-2 1:00"),
@@ -47,7 +49,8 @@ fn test_add() {
             Args::parse_from(&["jobber", "-s", "23:00", "-e"]),
             None,
             &context
-        ),
+        )
+        .unwrap(),
         Command::Add {
             start: DateTime::from_local_str("2023-1-31 23:00"),
             end: DateTime::from_local_str("2023-2-1 12:00"),
