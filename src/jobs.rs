@@ -68,6 +68,15 @@ impl Jobs {
     fn get(&self, pos: usize) -> Option<&Job> {
         self.jobs.get(pos)
     }
+    /// return last (and not deleted) job in database
+    fn last(&self) -> Option<&Job> {
+        for job in self.jobs.iter().rev() {
+            if !job.is_deleted() {
+                return Some(&job);
+            }
+        }
+        None
+    }
     /// Get read-only iterator over all jobs (even the deleted ones).
     pub fn iter(&self) -> core::slice::Iter<'_, Job> {
         self.jobs.iter()
@@ -78,10 +87,12 @@ impl Jobs {
     }
     /// return the last job's position
     fn last_position(&self) -> Option<usize> {
-        match self.jobs.len() {
-            0 => None,
-            len => Some(len - 1),
+        for (pos, job) in self.jobs.iter().rev().enumerate() {
+            if !job.is_deleted() {
+                return Some(pos);
+            }
         }
+        None
     }
     /// Return `true` if the database was modified sind last load.
     pub fn modified(&self) -> bool {
@@ -199,7 +210,7 @@ impl Jobs {
         // check if parameter -m was not given
         if message.is_none() {
             // check if there is a last job
-            if let Some(last) = self.jobs.last() {
+            if let Some(last) = self.last() {
                 Ok(last.message.clone())
             } else {
                 Err(Error::DatabaseEmpty)
@@ -221,7 +232,7 @@ impl Jobs {
     }
     /// Modify tags of the last job.
     fn modify_last_tags_or_given(&self, tags: Option<TagSet>) -> Result<Option<TagSet>, Error> {
-        if let Some(last) = self.jobs.last() {
+        if let Some(last) = self.last() {
             if let Some(tags) = &tags {
                 return Ok(Some(last.tags.clone().modify(tags)));
             }
@@ -383,7 +394,7 @@ impl Jobs {
         }
     }
     fn last_date(&self, context: &Context) -> Option<Date> {
-        if let Some(last) = self.jobs.last() {
+        if let Some(last) = self.last() {
             return Some(if let Some(end) = last.end {
                 end.date()
             } else {

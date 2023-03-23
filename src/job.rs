@@ -89,7 +89,7 @@ impl Job {
             if let Some(other_end) = other.end {
                 self.start < other_end && context.time() > other.start
             } else {
-                panic!("checking intersection of two open jobs!")
+                panic!("checking intersection of two open jobs: {} {}", self, other)
             }
         }
     }
