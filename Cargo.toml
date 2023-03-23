@@ -1,6 +1,6 @@
 [package]
 name = "jobber"
-version = "0.10.2"
+version = "0.10.3"
 edition = "2021"
 description = "Command line tool for tracking work time"
 license = "MIT"
