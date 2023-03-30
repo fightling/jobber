@@ -115,7 +115,7 @@ fn test_edit() {
     // modify tags
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-t", ",new_tag-,+newer_tag"],
+        &["jobber", "--edit", "1", "-t", ",-new_tag,+newer_tag"],
         Some(jobs),
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -200,7 +200,7 @@ fn test_edit_tags() {
     )
     .unwrap();
 
-    // edit first job
+    // add tag to first job
     run_args_mut(
         &mut std::io::stdout(),
         &["jobber", "--edit", "-t", "+tag3"],
@@ -212,8 +212,8 @@ fn test_edit_tags() {
     assert_eq!(jobs.count(), 1);
     assert_eq!(jobs.iter().len(), 1);
     assert!(jobs[0].tags.contains(&"tag1".into()));
-    assert!(!jobs[0].tags.contains(&"tag2".into()));
-    assert!(!jobs[0].tags.contains(&"tag3".into()));
+    assert!(jobs[0].tags.contains(&"tag2".into()));
+    assert!(jobs[0].tags.contains(&"tag3".into()));
 }
 
 /// Create a new job, delete it and create a it using different options.

@@ -45,7 +45,10 @@ impl TagSet {
         {
             let mut tags = self.clone();
             for tag in modification.iter() {
-                if tag.starts_with('-') || tag.ends_with('-') {
+                if tag.is_empty() {
+                    // ignore empty tags
+                    continue;
+                } else if tag.starts_with('-') || tag.ends_with('-') {
                     tags.remove(tag[1..].into());
                 } else {
                     tags.insert(tag[1..].into());
