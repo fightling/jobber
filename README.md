@@ -42,6 +42,8 @@ The command line tool to track your personal work time.
     - [The job you want to add overlaps existing one(s)](#the-job-you-want-to-add-overlaps-existing-ones)
     - [You have used some tags which are unknown](#you-have-used-some-tags-which-are-unknown)
   - [Errors](#errors)
+    - [Database is empty](#database-is-empty)
+    - [Global configuration error](#global-configuration-error)
     - [I/O error](#io-error)
     - [JSON error](#json-error)
     - [There still is an open job](#there-still-is-an-open-job)
@@ -51,7 +53,14 @@ The command line tool to track your personal work time.
     - [Can not use tags within same job because they have different configurations](#can-not-use-tags-within-same-job-because-they-have-different-configurations)
     - [User needs to enter message](#user-needs-to-enter-message)
     - [Unknown column name](#unknown-column-name)
+    - [Output file already exists](#output-file-already-exists)
     - [Date/Time parse error](#datetime-parse-error)
+    - [No job found at position](#no-job-found-at-position)
+    - [A value is required](#a-value-is-required)
+    - [Too few jobs in database to process operation in range](#too-few-jobs-in-database-to-process-operation-in-range)
+    - [Parsing of a range failed](#parsing-of-a-range-failed)
+    - [Parsing of a duration failed](#parsing-of-a-duration-failed)
+    - [Parsing of a partial date and time failed](#parsing-of-a-partial-date-and-time-failed)
   - [Configuration](#configuration)
     - [Location of Database](#location-of-database)
     - [Database Internal Configuration](#database-internal-configuration)
@@ -604,6 +613,14 @@ To list which tags are already known you can use the option `-T` (see section *T
 
 ## Errors
 
+### Database is empty
+
+You tried to continue an existing job but the database is empty.
+
+### Global configuration error
+
+Your configuration (`.config/jobber/config.toml`) has an error in it.
+
 ### I/O error
 
 Reading or writing to file has failed.
@@ -640,9 +657,41 @@ You need to enter a message but you did not.
 
 You stated a column name that is unknown while exporting jobs into a *CSV* file (only `pos`, `start`, `end`, `hours`, `message` and `tags` are available).
 
+### Output file already exists
+
+Trying to write an output file which already exists.
+
 ### Date/Time parse error
 
 Parsing of a date and or time went wrong.
+
+### No job found at position
+
+You gave a position which is not within the database.
+
+### A value is required
+
+A value is required for '-t <TAGS>' but none was supplied.
+
+### Too few jobs in database to process operation in range
+
+You gave a positional range but it exceeded the database's range.
+
+### Parsing of a range failed
+
+You gave a range which could not be parsed.
+
+### Parsing of a duration failed
+
+You gave a duration which could not be parsed.
+
+### Parsing of a partial date and time failed
+
+You gave a partial date and time which could not be parsed.
+
+
+
+
 
 ## Configuration
 

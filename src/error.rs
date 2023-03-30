@@ -60,8 +60,8 @@ pub enum Error {
     /// A value is required for '--tags <TAGS>' but none was supplied
     #[error("a value is required for '--tags <TAGS>' but none was supplied")]
     MissingTags,
-    /// To few jobs in database to process operation
-    #[error("To few jobs in database to process operation in range {0}-{0}")]
+    /// Too few jobs in database to process operation
+    #[error("Too few jobs in database to process operation in range {0}-{0}")]
     ToFewJobs(usize, usize),
     /// Parsing of a range failed
     #[error("Parsing of range '{0}' failed")]
