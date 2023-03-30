@@ -165,3 +165,48 @@ fn test_back_to_work_deleted_open_job() {
     assert!(jobs[2].tags.contains(&"job1".into()));
     assert!(!jobs[2].tags.contains(&"job2".into()));
 }
+
+/// Create a new job and continue it by editing several items
+///
+/// - [x] check argument parsing
+/// - [x] check database modification
+///
+#[test]
+fn test_back_to_work_edit() {
+    let context = Context::new_test("2023-2-1 12:00");
+
+    // add first job
+    let jobs = run_args(
+        &mut std::io::stdout(),
+        &[
+            "jobber",
+            "-s",
+            "8:00",
+            "-e",
+            "10:30",
+            "-m",
+            "simple job",
+            "-t",
+            "tag1,tag2",
+        ],
+        None,
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+
+    // continue back to work and remove `tag1` but add `tag3`
+    let jobs = run_args(
+        &mut std::io::stdout(),
+        &["jobber", "-b", "11:00", "-e", "12:00", "-t", "+tag3,-tag1"],
+        Some(jobs),
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+    assert_eq!(jobs.count(), 2);
+    assert_eq!(jobs[1].message, jobs[1].message);
+    assert!(!jobs[1].tags.contains(&"tag1".into()));
+    assert!(jobs[1].tags.contains(&"tag2".into()));
+    assert!(jobs[1].tags.contains(&"tag3".into()));
+}

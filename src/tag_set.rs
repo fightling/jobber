@@ -37,18 +37,20 @@ impl TagSet {
     }
     /// Modify tags like described in the manual.
     pub fn modify(&self, modification: &TagSet) -> TagSet {
-        let mut modify = false;
-        let mut tags = TagSet::new();
-        for tag in modification.iter() {
-            if tag.starts_with('+') || tag.ends_with('+') {
-                tags.insert(tag[1..].into());
-                modify = true;
-            } else if tag.starts_with('-') || tag.ends_with('-') {
-                tags.remove(tag[1..].into());
-                modify = true;
+        // check if modification markers ('+' or '-') are used
+        if modification
+            .iter()
+            .find(|tag| tag.starts_with('+') || tag.ends_with('+'))
+            .is_some()
+        {
+            let mut tags = self.clone();
+            for tag in modification.iter() {
+                if tag.starts_with('-') || tag.ends_with('-') {
+                    tags.remove(tag[1..].into());
+                } else {
+                    tags.insert(tag[1..].into());
+                }
             }
-        }
-        if modify {
             tags
         } else {
             modification.clone()
