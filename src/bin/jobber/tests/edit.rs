@@ -115,7 +115,7 @@ fn test_edit() {
     // modify tags
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-t", ",new_tag-,+newer_tag"],
+        &["jobber", "--edit", "1", "-t", ",-new_tag,+newer_tag"],
         Some(jobs),
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -167,4 +167,118 @@ fn test_edit_open() {
     assert!(jobs[0].tags == "tag".into());
     assert!(jobs[0].message == Some("message".into()));
     assert!(jobs[0].end == None);
+}
+
+/// Create a new job, delete it and create a it using different options.
+///
+/// - [x] check argument parsing
+/// - [x] check database modification
+///
+#[test]
+fn test_edit_tags() {
+    let context = Context::new_test("2023-2-1 12:00");
+
+    let mut jobs = Jobs::new();
+
+    // add first job
+    run_args_mut(
+        &mut std::io::stdout(),
+        &[
+            "jobber",
+            "-s",
+            "8:00",
+            "-e",
+            "9:00",
+            "-m",
+            "job #1",
+            "-t",
+            "tag1,tag2",
+        ],
+        &mut jobs,
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+
+    // add tag to first job
+    run_args_mut(
+        &mut std::io::stdout(),
+        &["jobber", "--edit", "-t", "+tag3"],
+        &mut jobs,
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+    assert_eq!(jobs.count(), 1);
+    assert_eq!(jobs.iter().len(), 1);
+    assert!(jobs[0].tags.contains(&"tag1".into()));
+    assert!(jobs[0].tags.contains(&"tag2".into()));
+    assert!(jobs[0].tags.contains(&"tag3".into()));
+}
+
+/// Create a new job, delete it and create a it using different options.
+///
+/// - [x] check argument parsing
+/// - [x] check database modification
+///
+#[test]
+fn test_edit_last() {
+    let context = Context::new_test("2023-2-1 12:00");
+
+    let mut jobs = Jobs::new();
+
+    // add first job
+    run_args_mut(
+        &mut std::io::stdout(),
+        &[
+            "jobber",
+            "-s",
+            "8:00",
+            "-e",
+            "9:00",
+            "-m",
+            "job #1",
+            "-t",
+            "tag1,tag2",
+        ],
+        &mut jobs,
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+
+    // add another job
+    run_args_mut(
+        &mut std::io::stdout(),
+        &[
+            "jobber",
+            "-s",
+            "10:00",
+            "-e",
+            "11:00",
+            "-m",
+            "job #2",
+            "-t",
+            "tag2,tag3",
+        ],
+        &mut jobs,
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+
+    // edit
+    run_args_mut(
+        &mut std::io::stdout(),
+        &["jobber", "--edit", "-t", "+tag4,-tag2"],
+        &mut jobs,
+        Checks::all_but(Check::UnknownTags),
+        &context,
+    )
+    .unwrap();
+    assert_eq!(jobs.count(), 2);
+    assert!(!jobs[1].tags.contains(&"tag1".into()));
+    assert!(!jobs[1].tags.contains(&"tag2".into()));
+    assert!(jobs[1].tags.contains(&"tag3".into()));
+    assert!(jobs[1].tags.contains(&"tag4".into()));
 }
