@@ -1,6 +1,16 @@
 //! Operations that can be processed at a jobber database.
 
 use super::prelude::*;
+use rand::Rng;
+
+const MOTD: &[&str] = &[
+    "And don't work too much!",
+    "Work smarter, not harder.",
+    "Time is money.",
+    "If you want something done right, do it yourself.",
+    "Hard work beats talent when talent doesn't work hard.",
+    "No pain, no gain.",
+];
 
 /// Catches what to change the jobs within the database.
 #[derive(Clone, Debug)]
@@ -42,7 +52,9 @@ impl std::fmt::Display for Operation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Operation::Welcome => {
-                write!(f, "\nAnd don't work too much!")
+                let mut rng = rand::thread_rng();
+                let motd = MOTD[rng.gen_range(0..MOTD.len())];
+                write!(f, "\n{}", motd)
             }
             Operation::Push(position, job) => {
                 if job.is_open() {
