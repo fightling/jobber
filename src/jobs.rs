@@ -89,7 +89,7 @@ impl Jobs {
     fn last_position(&self) -> Option<usize> {
         for (pos, job) in self.jobs.iter().rev().enumerate() {
             if !job.is_deleted() {
-                return Some(pos);
+                return Some(self.jobs.iter().len() - pos - 1);
             }
         }
         None
