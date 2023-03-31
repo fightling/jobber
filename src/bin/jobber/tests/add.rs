@@ -6,6 +6,7 @@ use crate::*;
 ///
 /// - [x] check argument parsing
 /// - [ ] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_add() {
@@ -20,8 +21,8 @@ fn test_add() {
         )
         .unwrap(),
         Command::Add {
-            start: DateTime::from_local_str("2023-2-1 12:00"),
-            end: DateTime::from_local_str("2023-2-1 13:00"),
+            start: "2023-2-1 12:00".into(),
+            end: "2023-2-1 13:00".into(),
             message: None,
             tags: None
         }
@@ -36,8 +37,8 @@ fn test_add() {
         )
         .unwrap(),
         Command::Add {
-            start: DateTime::from_local_str("2023-2-1 23:00"),
-            end: DateTime::from_local_str("2023-2-2 1:00"),
+            start: "2023-2-1 23:00".into(),
+            end: "2023-2-2 1:00".into(),
             message: None,
             tags: None
         }
@@ -52,8 +53,8 @@ fn test_add() {
         )
         .unwrap(),
         Command::Add {
-            start: DateTime::from_local_str("2023-1-31 23:00"),
-            end: DateTime::from_local_str("2023-2-1 12:00"),
+            start: "2023-1-31 23:00".into(),
+            end: "2023-2-1 12:00".into(),
             message: None,
             tags: None
         }

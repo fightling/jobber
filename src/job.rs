@@ -194,8 +194,8 @@ impl Ord for Job {
 fn test_split() {
     let context = Context::new();
     let job = Job::new(
-        DateTime::from_local_str("2023-1-1 20:00"),
-        Some(DateTime::from_local_str("2023-1-3 2:00")),
+        "2023-1-1 20:00".into(),
+        Some("2023-1-3 2:00".into()),
         None,
         None,
     )
@@ -238,9 +238,9 @@ fn test_overlap(
 ) -> bool {
     let context = Context::new();
     Job::new(
-        DateTime::from_local_str(left_start),
+        left_start.into(),
         if let Some(left_end) = left_end {
-            Some(DateTime::from_local_str(left_end))
+            Some(left_end.into())
         } else {
             None
         },
@@ -250,9 +250,9 @@ fn test_overlap(
     .unwrap()
     .overlaps(
         &Job::new(
-            DateTime::from_local_str(right_start),
+            right_start.into(),
             if let Some(right_end) = right_end {
-                Some(DateTime::from_local_str(right_end))
+                Some(right_end.into())
             } else {
                 None
             },

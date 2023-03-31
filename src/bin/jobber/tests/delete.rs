@@ -3,13 +3,14 @@
 use super::clean;
 use crate::*;
 
-/// Add several jobs.
+/// Verify output of -l, -r and -E.
 ///
 /// - [x] check argument parsing
 /// - [ ] check database modification
+/// - [ ] check output
 ///
 #[test]
-fn test_add() {
+fn test_delete() {
     let context = Context::new_test("2023-2-1 12:00");
     let mut jobs = Jobs::new();
 

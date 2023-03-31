@@ -6,6 +6,7 @@ use crate::*;
 ///
 /// - [x] check argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_back_to_work() {
@@ -107,6 +108,7 @@ fn test_back_to_work() {
 ///
 /// - [x] check argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_back_to_work_deleted_open_job() {
@@ -170,6 +172,7 @@ fn test_back_to_work_deleted_open_job() {
 ///
 /// - [x] check argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_back_to_work_edit() {

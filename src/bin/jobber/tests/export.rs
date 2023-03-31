@@ -6,6 +6,7 @@ use crate::*;
 /// Export database to CSV.
 ///
 /// - [x] checks argument parsing
+/// - [ ] check database modification
 /// - [x] check output
 ///
 #[test]

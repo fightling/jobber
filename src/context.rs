@@ -16,7 +16,7 @@ impl Context {
     /// Create new context with given time.
     /// Only use in tests!
     pub fn new_test(local: &str) -> Self {
-        Self(DateTime::from_local_str(local))
+        Self(local.into())
     }
     /// Return time in context
     pub fn time(&self) -> DateTime {

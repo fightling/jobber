@@ -6,6 +6,7 @@ use crate::*;
 ///
 /// - [x] check argument parsing
 /// - [ ] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_start() {
@@ -16,22 +17,32 @@ fn test_start() {
     assert_eq!(
         parse(Args::parse_from(["jobber", "-s"]), None, &context).unwrap(),
         Command::Start {
-            start: DateTime::from_local_str("2023-01-01 12:00"),
+            start: "2023-01-01 12:00".into(),
             message: None,
             tags: None
         }
     );
 
-    // start a new job at a specified time
+    // start a new job at a specified date and time
     assert_eq!(
         parse(
-            Args::parse_from(["jobber", "-s", "1.1.,12:00"]),
+            Args::parse_from(["jobber", "-s", "1.2.,13:00"]),
             None,
             &context
         )
         .unwrap(),
         Command::Start {
-            start: DateTime::from_local_str("2023-01-01 12:00"),
+            start: "2023-02-01 13:00".into(),
+            message: None,
+            tags: None
+        }
+    );
+
+    // start a new job today at a specified time
+    assert_eq!(
+        parse(Args::parse_from(["jobber", "-s", "13:00"]), None, &context).unwrap(),
+        Command::Start {
+            start: "2023-01-01 13:00".into(),
             message: None,
             tags: None
         }

@@ -6,6 +6,7 @@ use crate::*;
 ///
 /// - [x] checks argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_edit() {
@@ -41,7 +42,7 @@ fn test_edit() {
     )
     .unwrap();
     assert_eq!(jobs.count(), 1);
-    assert_eq!(jobs[0].start, DateTime::from_local_str("2023-2-1 9:00"));
+    assert_eq!(jobs[0].start, "2023-2-1 9:00".into());
 
     // failed edit start (end before start)
     assert!(run_args(
@@ -63,10 +64,7 @@ fn test_edit() {
     )
     .unwrap();
     assert_eq!(jobs.count(), 1);
-    assert_eq!(
-        jobs[0].end,
-        Some(DateTime::from_local_str("2023-2-1 11:00"))
-    );
+    assert_eq!(jobs[0].end, Some("2023-2-1 11:00".into()));
 
     // failed edit end (end before start)
     assert!(run_args(
@@ -141,6 +139,7 @@ fn test_edit() {
 ///
 /// - [x] checks argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_edit_open() {
@@ -173,6 +172,7 @@ fn test_edit_open() {
 ///
 /// - [x] check argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_edit_tags() {
@@ -220,6 +220,7 @@ fn test_edit_tags() {
 ///
 /// - [x] check argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
 fn test_edit_last() {

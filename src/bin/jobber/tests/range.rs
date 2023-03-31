@@ -6,9 +6,10 @@ use crate::*;
 ///
 /// - [x] checks argument parsing
 /// - [x] check database modification
+/// - [ ] check output
 ///
 #[test]
-fn test_edit() {
+fn test_range() {
     let context = Context::new_test("2023-1-1 12:00");
 
     // create database

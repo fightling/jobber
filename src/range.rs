@@ -181,9 +181,9 @@ impl std::fmt::Display for Range {
 #[cfg(test)]
 fn new_job(start: &str, end: Option<&str>, message: Option<&str>, tags: Option<&str>) -> Job {
     Job::new(
-        DateTime::from_local_str(start),
+        start.into(),
         if let Some(end) = end {
-            Some(DateTime::from_local_str(end))
+            Some(end.into())
         } else {
             None
         },
@@ -229,10 +229,7 @@ fn test_parse_time_range() {
 
     assert_eq!(
         january,
-        Range::TimeRange(
-            DateTime::from_local_str("2023-1-1 00:00"),
-            DateTime::from_local_str("2023-2-1 00:00")
-        )
+        Range::TimeRange("2023-1-1 00:00".into(), "2023-2-1 00:00".into())
     );
 }
 
