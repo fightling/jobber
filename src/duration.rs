@@ -99,6 +99,7 @@ impl Duration {
         }
         Self::Zero
     }
+    /// Return duration in minutes.
     pub fn num_minutes(&self) -> i64 {
         match self {
             Duration::Zero => 0,

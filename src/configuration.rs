@@ -14,7 +14,7 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    ///
+    /// Partially overwrite properties of configurations which match the given tags.
     pub fn set(&mut self, tags: &Option<TagSet>, update: &Properties) -> bool {
         let mut modified = false;
         if let Some(tags) = tags {
@@ -35,7 +35,7 @@ impl Configuration {
         }
         modified
     }
-    /// provides configurations for display trait implementation
+    /// get properties for the given tags and additionally return which tag was relevant
     pub fn get_and_why(&self, tags: &TagSet) -> (Option<String>, &Properties) {
         for tag in &tags.0 {
             if let Some(properties) = self.tags.get(tag) {
@@ -44,12 +44,14 @@ impl Configuration {
         }
         (None, &self.base)
     }
+    /// get properties for the given tags
     pub fn get(&self, tags: &TagSet) -> &Properties {
         match &self.get_checked(tags) {
             Ok(properties) => properties,
             _ => panic!("unexpected tag collision"),
         }
     }
+    /// get properties for the given tags and also check tag configuration consistency
     pub fn get_checked(&self, tags: &TagSet) -> Result<&Properties, Error> {
         let mut found = TagSet::new();
         let mut properties = None;

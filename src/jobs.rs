@@ -40,7 +40,9 @@ impl std::ops::Index<usize> for Jobs {
 /// Adds a version number to the database when serializing.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Versioned<T> {
+    /// Version number string.
     version: String,
+    /// Jobber database.
     #[serde(flatten)]
     jobs: T,
 }
@@ -67,6 +69,15 @@ impl Jobs {
     /// get job at specific position.
     fn get(&self, pos: usize) -> Option<&Job> {
         self.jobs.get(pos)
+    }
+    /// return first (and not deleted) job in database
+    fn first(&self) -> Option<&Job> {
+        for job in self.jobs.iter() {
+            if !job.is_deleted() {
+                return Some(&job);
+            }
+        }
+        None
     }
     /// return last (and not deleted) job in database
     fn last(&self) -> Option<&Job> {
@@ -234,7 +245,7 @@ impl Jobs {
     fn modify_last_tags_or_given(&self, tags: Option<TagSet>) -> Result<Option<TagSet>, Error> {
         if let Some(last) = self.last() {
             if let Some(tags) = &tags {
-                return Ok(Some(last.tags.clone().modify(tags)));
+                return Ok(Some(last.tags.modify(tags)));
             }
             return Ok(Some(last.tags.clone()));
         }
@@ -244,7 +255,7 @@ impl Jobs {
     fn interpret(&self, command: &Command) -> Result<Operation, Error> {
         // process command and potentially get `Some(job)` change
         Ok(match command.clone() {
-            Command::Info => Operation::Welcome,
+            Command::Intro => Operation::Intro,
             Command::Start {
                 start,
                 message,
@@ -297,16 +308,20 @@ impl Jobs {
             Command::End { end, message, tags } => {
                 self.check_open()?;
                 let message = Self::check_force_enter_message(message)?;
+                // find open job
                 if let Some((pos, job)) = self.get_open_with_pos() {
-                    let mut new_job = job.clone();
-                    new_job.end = Some(end);
+                    // clone open job
+                    let mut open_job = job.clone();
+                    // finish open job
+                    open_job.end = Some(end);
+                    // maybe overwrite message
                     if message.is_some() {
-                        new_job.message = message;
+                        open_job.message = message;
                     }
                     if let Some(tags) = tags {
-                        new_job.tags = tags;
+                        open_job.tags = tags;
                     }
-                    Operation::Modify(pos, new_job)
+                    Operation::Modify(pos, open_job)
                 } else {
                     return Err(Error::NoOpenJob);
                 }
@@ -347,6 +362,7 @@ impl Jobs {
                 message,
                 tags,
             } => {
+                // use given pos or the last undeleted job
                 let pos = if let Some(pos) = pos {
                     pos
                 } else {
@@ -356,11 +372,15 @@ impl Jobs {
                         return Err(Error::DatabaseEmpty);
                     }
                 };
+                // find job at that position
                 if let Some(job) = self.get(pos) {
+                    // make a mutable copy
                     let mut job = job.clone();
+                    // maybe overwrite start
                     if let Some(start) = start {
                         job.start = start;
                     }
+                    // maybe overwrite end
                     match end {
                         EndOrDuration::End(end) => {
                             job.end = Some(end);
@@ -370,9 +390,11 @@ impl Jobs {
                         }
                         _ => (),
                     }
+                    // maybe overwrite message
                     if let Some(message) = message {
                         job.message = message;
                     }
+                    // maybe overwrite start
                     if let Some(tags) = tags {
                         job.tags = job.tags.modify(&TagSet::from(tags));
                     }
@@ -386,13 +408,15 @@ impl Jobs {
             }
         })
     }
+    /// get start date of the first job (which is not deleted)
     fn first_date(&self) -> Option<Date> {
-        if let Some(first) = self.jobs.first() {
+        if let Some(first) = self.first() {
             Some(first.start.date())
         } else {
             None
         }
     }
+    /// get end date of the last job (which is not deleted) or context's date
     fn last_date(&self, context: &Context) -> Option<Date> {
         if let Some(last) = self.last() {
             return Some(if let Some(end) = last.end {
@@ -412,37 +436,48 @@ impl Jobs {
         context: &Context,
     ) -> Result<(), Error> {
         match operation {
-            Operation::Welcome => {
-                self.welcome(context)?;
+            Operation::Intro => {
+                // print intro message
+                self.intro(context)?;
             }
             Operation::Push(position, job) => {
+                // check position
                 assert!(*position == self.jobs.len());
+                // do not add open job if there is already one
                 if job.is_open() {
                     self.check_finished()?;
                 }
+                // check job consistency
                 checks.check(self, None, &job, context)?;
+                // finished jobs need message
                 if job.message.is_none() && !job.is_open() {
                     return Err(Error::EnterMessage);
                 } else {
+                    // add new job to database
                     self.push(job.clone());
                     self.modified = true;
                 }
             }
             Operation::Modify(pos, job) => {
+                // check job consistency
                 checks.check(self, Some(*pos), &job, context)?;
+                // finished jobs need message
                 if job.message.is_none() {
                     return Err(Error::EnterMessage);
                 } else {
+                    // overwrite job in database
                     self.jobs[*pos] = job.clone();
                     self.modified = true;
                 }
             }
             Operation::Delete(positions) => {
+                // maybe confirm deletion
                 if checks.has(Check::ConfirmDeletion) {
                     return Err(Error::Warnings(vec![Warning::ConfirmDeletion(
                         positions.clone(),
                     )]));
                 } else {
+                    // delete job(s) at given position(s)
                     for pos in positions.iter() {
                         self.jobs[*pos].delete(context);
                         self.modified = true;
@@ -583,8 +618,11 @@ impl Jobs {
         }
         Ok((count, new_tags.filter(|t| tags.contains(t))))
     }
-    fn welcome(&self, context: &Context) -> Result<(), Error> {
+    /// Print info about the database.
+    fn intro(&self, context: &Context) -> Result<(), Error> {
         eprintln!("\nWelcome to jobber!\n");
+
+        // tell something useful about the database
         if let Some(from) = self.first_date() {
             if let Some(to) = self.last_date(context) {
                 eprintln!(
@@ -598,15 +636,21 @@ impl Jobs {
                 )
             }
         }
+
+        // inform user about any open job
         if self.get_open().is_some() {
             eprintln!("There is an open job:\n")
         } else {
             eprintln!("This was your last finished job:\n")
         }
+
+        // list last job
         eprint!(
             "{}",
-            self.list(&self.filter(&Range::Count(1), &TagSet::new())?.positions(),)
+            self.list(&self.filter(&Range::Count(1), &TagSet::new())?.positions())
         );
+
+        // print help
         if self.get_open().is_some() {
             eprint!(
                 "
@@ -627,6 +671,7 @@ Use 'jobber -b' to continue your work,
     'jobber -h' to get further help.
 "
         );
+
         Ok(())
     }
 }

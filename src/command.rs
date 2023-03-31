@@ -16,7 +16,7 @@ pub enum EndOrDuration {
 /// Commands which can be applied to jobber's database.
 #[derive(PartialEq, Clone, Debug)]
 pub enum Command {
-    Info,
+    Intro,
     /// Start a new job by specifying start time if there is no open job-
     Start {
         start: DateTime,

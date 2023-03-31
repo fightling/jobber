@@ -4,7 +4,7 @@ use super::prelude::*;
 use chrono::{Datelike, Local, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Date and time.
+/// Date and time (hours & minutes).
 #[derive(Clone, Copy, PartialOrd, PartialEq, Serialize, Deserialize, Ord, Eq)]
 #[serde(transparent)]
 pub struct DateTime(chrono::DateTime<Utc>);
@@ -26,15 +26,19 @@ impl DateTime {
     pub fn now() -> Self {
         DateTime(Utc::now())
     }
+    /// Return year.
     pub fn year(&self) -> i32 {
         self.0.year()
     }
+    /// Return month.
     pub fn month(&self) -> u32 {
         self.0.month()
     }
+    /// Return day.
     pub fn day(&self) -> u32 {
         self.0.day()
     }
+    /// Return date only.
     pub fn date(&self) -> Date {
         Date(self.into_local().date())
     }
@@ -48,7 +52,7 @@ impl DateTime {
         Self(chrono::DateTime::from(local))
     }
     /// Convert from naive local date and time string.
-    pub fn from_local_str(local: &str) -> Self {
+    fn from_local_str(local: &str) -> Self {
         Self(
             Utc.from_local_datetime(
                 &Local
@@ -167,6 +171,8 @@ impl std::ops::Sub for &DateTime {
         }
     }
 }
+
+/// Date only.
 #[derive(Debug, PartialEq, Clone, PartialOrd, Ord, Eq)]
 pub struct Date(chrono::NaiveDate);
 

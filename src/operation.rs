@@ -3,20 +3,13 @@
 use super::prelude::*;
 use rand::Rng;
 
-const MOTD: &[&str] = &[
-    "And don't work too much!",
-    "Work smarter, not harder.",
-    "Time is money.",
-    "If you want something done right, do it yourself.",
-    "Hard work beats talent when talent doesn't work hard.",
-    "No pain, no gain.",
-];
+const MOTD: &[&str] = &["And don't work too much!", "Work smarter, not harder."];
 
 /// Catches what to change the jobs within the database.
 #[derive(Clone, Debug)]
 pub enum Operation {
     /// No change
-    Welcome,
+    Intro,
     /// Push a new `Job` into database.
     Push(usize, Job),
     /// Change an existing `Job` at index `usize` into database but return error if message is missing.
@@ -42,7 +35,7 @@ pub enum Operation {
 impl Operation {
     pub fn reports_open_job(&self) -> bool {
         match self {
-            Operation::Welcome | Operation::Push(_, _) => true,
+            Operation::Intro | Operation::Push(_, _) => true,
             _ => false,
         }
     }
@@ -51,7 +44,7 @@ impl Operation {
 impl std::fmt::Display for Operation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Operation::Welcome => {
+            Operation::Intro => {
                 let mut rng = rand::thread_rng();
                 let motd = MOTD[rng.gen_range(0..MOTD.len())];
                 write!(f, "\n{}", motd)

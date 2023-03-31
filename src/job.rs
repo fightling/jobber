@@ -54,9 +54,11 @@ impl Job {
     pub fn is_open(&self) -> bool {
         self.end.is_none() && self.deleted.is_none()
     }
+    /// Delete this job (by marking it with a deletion date)
     pub fn delete(&mut self, context: &Context) {
         self.deleted = Some(context.time());
     }
+    /// Return `true` if job has been deleted
     pub fn is_deleted(&self) -> bool {
         self.deleted.is_some()
     }

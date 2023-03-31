@@ -1,6 +1,6 @@
 //! Library bundle `jobberdb`.
 //!
-//! See module [jobber] for the application which uses it.
+//! See module for the application which uses it.
 
 pub mod check;
 pub mod command;

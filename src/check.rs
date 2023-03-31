@@ -38,6 +38,7 @@ impl Checks {
     pub fn omit() -> Self {
         Self { 0: HashSet::new() }
     }
+    /// omit checks which lead to user confirmation
     pub fn no_confirm() -> Self {
         Self {
             0: HashSet::from([Check::Overlaps]),

@@ -14,6 +14,7 @@ pub fn end(end: &DateTime) -> String {
     format!("{}{}{}", Fg(Magenta), end, Fg(Reset))
 }
 
+/// return colored hours bar in a string
 pub fn hours_bar(hours: f64, properties: &Properties) -> String {
     fn bar(hours: f64) -> String {
         if hours > 0.0 && hours < 24.0 {

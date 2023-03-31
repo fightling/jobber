@@ -56,7 +56,7 @@ fn run<W: std::io::Write>(
 ) -> Result<(), Error> {
     let dry = args.dry;
 
-    // load database from file or create new
+    // get filename from config or arguments
     let filename = if let Some(filename) = &args.filename {
         filename.clone()
     } else {
@@ -64,6 +64,7 @@ fn run<W: std::io::Write>(
         cfg.database
     };
 
+    // load database from file or create new
     let mut jobs = match Jobs::load(&filename) {
         Ok(jobs) => {
             eprintln!(
@@ -85,23 +86,28 @@ fn run<W: std::io::Write>(
     let mut command = parse(args, jobs.open_start(), context)?;
     match jobs.process(w, &command, checks, context) {
         Err(Error::Warnings(warnings)) => {
+            // summarize
             if warnings.len() == 1 {
                 eprintln!("There ist one warning you have to omit:");
             } else {
                 eprintln!("There are {} warnings you have to omit:", warnings.len());
             }
+            // ask user if we shall ignore any warnings
             for (n, warning) in warnings.iter().enumerate() {
                 eprintln!("\nWARNING {}) {}", n + 1, warning);
                 if !ask("Do you still want to add this job?", false)? {
                     return Err(Error::Cancel);
                 }
             }
+            // process command on database
             match jobs.process(w, &command, Checks::omit(), context) {
                 Err(Error::EnterMessage) => {
+                    // ask for message
                     edit_message(w, &mut jobs, &mut command, context)?;
                 }
                 Err(err) => return Err(err),
                 Ok(change) => {
+                    // print what we did
                     eprintln!("{}", change);
                 }
             }
@@ -519,6 +525,6 @@ pub fn parse(
     } else if let Some(range) = list_tags {
         Command::ListTags { range, tags }
     } else {
-        Command::Info
+        Command::Intro
     })
 }
