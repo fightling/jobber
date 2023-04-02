@@ -637,6 +637,22 @@ impl Jobs {
             }
         }
 
+        let mut r = self.filter(
+            &Range::Since(context.date().first_day_of_month()),
+            &TagSet::new(),
+        )?;
+        if r.len() < 5 {
+            eprintln!("Last month till today:\n");
+            r = self.filter(
+                &Range::Since(context.date().first_day_of_previous_month()),
+                &TagSet::new(),
+            )?;
+        } else {
+            eprintln!("This month:\n");
+        }
+        // list last job
+        report(&mut std::io::stderr(), &r, context)?;
+
         // inform user about any open job
         if self.get_open().is_some() {
             eprintln!("There is an open job:\n")
@@ -644,10 +660,9 @@ impl Jobs {
             eprintln!("This was your last finished job:\n")
         }
 
-        // list last job
         eprint!(
             "{}",
-            self.list(&self.filter(&Range::Count(1), &TagSet::new())?.positions())
+            self.list(&self.filter(&Range::Count(1), &TagSet::new())?.positions(),)
         );
 
         // print help

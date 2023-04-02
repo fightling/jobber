@@ -176,6 +176,25 @@ impl std::ops::Sub for &DateTime {
 #[derive(Debug, PartialEq, Clone, PartialOrd, Ord, Eq)]
 pub struct Date(chrono::NaiveDate);
 
+impl Date {
+    pub fn first_day_of_month(&self) -> DateTime {
+        DateTime::from_local(
+            &chrono::NaiveDate::from_ymd_opt(self.0.year(), self.0.month(), 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+        )
+    }
+    pub fn first_day_of_previous_month(&self) -> DateTime {
+        DateTime::from_local(
+            &chrono::NaiveDate::from_ymd_opt(self.0.year(), self.0.month() - 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+        )
+    }
+}
+
 impl From<DateTime> for Date {
     fn from(value: DateTime) -> Self {
         let datetime: chrono::DateTime<Utc> = value.clone().into();
