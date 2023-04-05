@@ -648,16 +648,16 @@ impl Jobs {
                 &TagSet::new(),
             )?;
         } else {
-            eprintln!("This month:\n");
+            eprintln!("--------------------------- This Month ----------------------------\n");
         }
         // list last job
         report(&mut std::io::stderr(), &r, context)?;
 
         // inform user about any open job
         if self.get_open().is_some() {
-            eprintln!("There is an open job:\n")
+            eprintln!("\n---------------------- There is an open job -----------------------\n");
         } else {
-            eprintln!("This was your last finished job:\n")
+            eprintln!("\n----------------- This was your last finished job -----------------\n")
         }
 
         eprint!(
@@ -666,6 +666,7 @@ impl Jobs {
         );
 
         // print help
+        eprintln!("------------------------------ Help -------------------------------");
         if self.get_open().is_some() {
             eprint!(
                 "
