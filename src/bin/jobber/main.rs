@@ -14,6 +14,9 @@ use jobberdb::prelude::*;
 use serde::{Deserialize, Serialize};
 use termion::{color::*, style};
 
+const ASK_FOR_MESSAGE: &str = "You need to enter a message about what you did to finish the job.\n\
+                                Finish input with empty line (or Ctrl+C to cancel):";
+
 /// System side configuration.
 #[derive(Debug, Serialize, Deserialize)]
 struct Config {
@@ -82,9 +85,10 @@ fn run<W: std::io::Write>(
         }
     };
 
-    // parse and process command
+    // parse arguments into a command
     let mut command = parse(args, jobs.open_start(), context)?;
-    match jobs.process(w, &command, checks, context) {
+    // process command on database
+    if let Ok(operation) = match jobs.process(w, &command, checks, context) {
         Err(Error::Warnings(warnings)) => {
             // summarize
             if warnings.len() == 1 {
@@ -99,35 +103,51 @@ fn run<W: std::io::Write>(
                     return Err(Error::Cancel);
                 }
             }
-            // process command on database
+            // process command again without checks
             match jobs.process(w, &command, Checks::omit(), context) {
                 Err(Error::EnterMessage) => {
-                    // ask for message
-                    edit_message(w, &mut jobs, &mut command, context)?;
+                    // still need to enter obligatory message
+                    command.set_message(enter(ASK_FOR_MESSAGE)?);
+                    jobs.process(w, &command, Checks::omit(), context)
                 }
                 Err(err) => return Err(err),
-                Ok(change) => {
-                    // print what we did
-                    eprintln!("{}", change);
-                }
+                Ok(operation) => Ok(operation),
             }
         }
         Err(Error::EnterMessage) => {
-            eprintln!("{}", edit_message(w, &mut jobs, &mut command, context)?);
+            // need message to finish
+            command.set_message(enter(ASK_FOR_MESSAGE)?);
+            jobs.process(w, &command, Checks::omit(), context)
         }
         Err(Error::OutputFileExists(filename)) => {
             eprintln!("{}", Error::OutputFileExists(filename));
             if ask("Do you want to overwrite the existing file?", false)? {
-                jobs.process(w, &command, Checks::omit(), context)?;
+                jobs.process(w, &command, Checks::omit(), context)
             } else {
-                eprintln!("No report generated.")
+                eprintln!("No report generated.");
+                Ok(Operation::None)
             }
         }
         Err(err) => return Err(err),
-        Ok(change) => {
-            eprintln!("{}", change)
+        Ok(operation) => Ok(operation),
+    } {
+        eprintln!("{}", operation);
+        if !operation.reports_open_job() {
+            if let Some(job) = jobs.get_open_with_pos() {
+                eprintln!(
+                    "{}{}There is an open Job at position {pos}!{}{}",
+                    Fg(Yellow),
+                    style::Bold,
+                    Fg(Reset),
+                    style::Reset,
+                    pos = job.0 + 1,
+                );
+            }
         }
-    }
+    } else {
+        panic!("operation error")
+    };
+
     if jobs.modified() {
         if dry {
             eprintln!("DRY RUN: Changes were NOT saved into database file '{filename}'!");
@@ -223,21 +243,6 @@ fn enter(question: &str) -> Result<String, Error> {
             };
         }
     }
-}
-
-/// Ask user for a multi line message and enrich a command with it.
-fn edit_message<W: std::io::Write>(
-    w: &mut W,
-    jobs: &mut Jobs,
-    command: &mut Command,
-    context: &Context,
-) -> Result<Operation, Error> {
-    let message = enter(
-        "You need to enter a message about what you did to finish the job.\n\
-        Finish input with empty line (or Ctrl+C to cancel):",
-    )?;
-    command.set_message(message);
-    jobs.process(w, &command, Checks::omit(), context)
 }
 
 /// Parse arguments into a command.

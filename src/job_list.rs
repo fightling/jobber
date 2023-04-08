@@ -34,6 +34,7 @@ impl<'a> From<&'a JobListOwned> for JobList<'a> {
 
 impl<'a> std::fmt::Display for JobList<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "")?;
         let mut count = 0;
         for (pos, job) in self.iter() {
             writeln!(f, "    Pos: {}", pos + 1)?;
@@ -51,7 +52,7 @@ impl<'a> std::fmt::Display for JobList<'a> {
         if count > 1 {
             writeln!(
                 f,
-                "\nTotal: {} job(s), {} hours{}",
+                "Total: {} job(s), {} hours{}",
                 self.len(),
                 format::hours_pure(self.hours_overall()),
                 pay,

@@ -121,10 +121,6 @@ impl Jobs {
     ) -> Result<Operation, Error> {
         let mut operation = self.interpret(command)?;
         self.operate(w, &mut operation, check, context)?;
-        if operation.reports_open_job() {
-        } else if let Some(job) = self.get_open_with_pos() {
-            eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
-        }
         Ok(operation)
     }
     /// Get a list of all jobs in database
@@ -514,7 +510,7 @@ impl Jobs {
         self.jobs.iter().find(|j| j.is_open())
     }
     /// Get open job and it's position if there is any.
-    fn get_open_with_pos(&self) -> Option<(usize, &Job)> {
+    pub fn get_open_with_pos(&self) -> Option<(usize, &Job)> {
         self.jobs.iter().enumerate().find(|(_, j)| j.is_open())
     }
     /// Return [Error::NoOpenJob] if there is none.

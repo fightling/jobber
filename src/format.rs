@@ -60,7 +60,7 @@ pub fn hours(hours: f64, properties: &Properties) -> String {
             return format!(
                 "{}{}{}{}{}",
                 style::Bold,
-                Fg(LightRed),
+                Fg(LightYellow),
                 hours,
                 Fg(Reset),
                 style::Reset,
@@ -72,14 +72,25 @@ pub fn hours(hours: f64, properties: &Properties) -> String {
 
 /// Format exact hours with style & color.
 pub fn hours_pure(hours: f64) -> String {
-    format!(
-        "{}{}{}{}{}",
-        style::Bold,
-        Fg(White),
-        hours,
-        Fg(Reset),
-        style::Reset
-    )
+    if hours > 24 as f64 {
+        return format!(
+            "{}{}{}{}{}",
+            style::Bold,
+            Fg(LightRed),
+            hours,
+            Fg(Reset),
+            style::Reset,
+        );
+    } else {
+        format!(
+            "{}{}{}{}{}",
+            style::Bold,
+            Fg(White),
+            hours,
+            Fg(Reset),
+            style::Reset
+        )
+    }
 }
 
 /// Format payment (considering resolution) with style & color.

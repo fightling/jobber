@@ -8,6 +8,8 @@ const MOTD: &[&str] = &["And don't work too much!", "Work smarter, not harder."]
 /// Catches what to change the jobs within the database.
 #[derive(Clone, Debug)]
 pub enum Operation {
+    /// No operation
+    None,
     /// No change
     Intro,
     /// Push a new `Job` into database.
@@ -44,6 +46,7 @@ impl Operation {
 impl std::fmt::Display for Operation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Operation::None => Ok(()),
             Operation::Intro => {
                 let mut rng = rand::thread_rng();
                 let motd = MOTD[rng.gen_range(0..MOTD.len())];

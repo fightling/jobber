@@ -124,12 +124,11 @@ pub struct Args {
     #[arg(short, long, conflicts_with_all(["start","end","back","message","list","edit"]))]
     pub report: Option<Option<String>>,
 
-    /// export all jobs or selective by position(s) or time(s) as CSV
+    /// Export all jobs or selective by position(s) or time(s) as CSV
     #[arg(short='E', long="export", conflicts_with_all(["start","end","back","message","list","report","edit"]))]
     pub export: Option<Option<String>>,
 
-    /// customize CSV export columns by comma separated list of column names
-    /// customize CSV export columns by comma separated list of column names
+    /// Customize CSV export columns by comma separated list of column names
     #[arg(
         long = "csv",
         requires("export"),
