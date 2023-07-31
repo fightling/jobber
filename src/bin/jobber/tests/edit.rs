@@ -15,17 +15,7 @@ fn test_edit() {
     // add first job
     let jobs = run_args(
         &mut std::io::stdout(),
-        &[
-            "jobber",
-            "-s",
-            "8:00",
-            "-e",
-            "10:30",
-            "-m",
-            "simple job",
-            "-t",
-            "tag",
-        ],
+        "jobber -s 8:00 -e 10:30 -m simple job -t tag",
         None,
         Checks::no_confirm(),
         &context,
@@ -35,7 +25,7 @@ fn test_edit() {
     // edit start
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-s", "9:00"],
+        "jobber --edit 1 -s 9:00",
         Some(jobs),
         Checks::all(),
         &context,
@@ -47,7 +37,7 @@ fn test_edit() {
     // failed edit start (end before start)
     assert!(run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-s", "11:00"],
+        "jobber --edit 1 -s 11:00",
         Some(jobs.clone()),
         Checks::all(),
         &context,
@@ -57,7 +47,7 @@ fn test_edit() {
     // edit end
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-e", "11:00"],
+        "jobber --edit 1 -e 11:00",
         Some(jobs),
         Checks::all(),
         &context,
@@ -69,7 +59,7 @@ fn test_edit() {
     // failed edit end (end before start)
     assert!(run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-e", "8:00"],
+        "jobber --edit 1 -e 8:00",
         Some(jobs.clone()),
         Checks::all(),
         &context,
@@ -79,7 +69,7 @@ fn test_edit() {
     // edit message
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-m", "bigger job"],
+        "jobber --edit 1 -m bigger job",
         Some(jobs),
         Checks::all(),
         &context,
@@ -91,7 +81,7 @@ fn test_edit() {
     // edit message
     assert!(run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-m"],
+        "jobber --edit 1 -m",
         Some(jobs.clone()),
         Checks::all(),
         &context
@@ -101,7 +91,7 @@ fn test_edit() {
     // edit tags
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-t", "new_tag"],
+        "jobber --edit 1 -t new_tag",
         Some(jobs),
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -113,7 +103,7 @@ fn test_edit() {
     // modify tags
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-t", ",-new_tag,+newer_tag"],
+        "jobber --edit 1 -t ,-new_tag,+newer_tag",
         Some(jobs),
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -125,7 +115,7 @@ fn test_edit() {
     // clear tags
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "1", "-t"],
+        "jobber --edit 1 -t",
         Some(jobs),
         Checks::all(),
         &context,
@@ -148,7 +138,7 @@ fn test_edit_open() {
     // start new job and edit it
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "-s"],
+        "jobber -s",
         None,
         Checks::all(),
         &context,
@@ -156,7 +146,7 @@ fn test_edit_open() {
     .unwrap();
     let jobs = run_args(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "-t", "tag", "-m", "message"],
+        "jobber --edit -t tag -m message",
         Some(jobs),
         Checks::no_confirm(),
         &context,
@@ -183,17 +173,7 @@ fn test_edit_tags() {
     // add first job
     run_args_mut(
         &mut std::io::stdout(),
-        &[
-            "jobber",
-            "-s",
-            "8:00",
-            "-e",
-            "9:00",
-            "-m",
-            "job #1",
-            "-t",
-            "tag1,tag2",
-        ],
+        &["jobber -s 8:00 -e 9:00 -m job #1 -t tag1,tag2"],
         &mut jobs,
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -203,7 +183,7 @@ fn test_edit_tags() {
     // add tag to first job
     run_args_mut(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "-t", "+tag3"],
+        "jobber --edit -t +tag3",
         &mut jobs,
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -231,17 +211,7 @@ fn test_edit_last() {
     // add first job
     run_args_mut(
         &mut std::io::stdout(),
-        &[
-            "jobber",
-            "-s",
-            "8:00",
-            "-e",
-            "9:00",
-            "-m",
-            "job #1",
-            "-t",
-            "tag1,tag2",
-        ],
+        &["jobber -s 8:00 -e 9:00 -m job #1 -t tag1,tag2"],
         &mut jobs,
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -251,17 +221,7 @@ fn test_edit_last() {
     // add another job
     run_args_mut(
         &mut std::io::stdout(),
-        &[
-            "jobber",
-            "-s",
-            "10:00",
-            "-e",
-            "11:00",
-            "-m",
-            "job #2",
-            "-t",
-            "tag2,tag3",
-        ],
+        &["jobber -s 10:00 -e 11:00 -m job #2 -t tag2,tag3"],
         &mut jobs,
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -271,7 +231,7 @@ fn test_edit_last() {
     // edit
     run_args_mut(
         &mut std::io::stdout(),
-        &["jobber", "--edit", "-t", "+tag4,-tag2"],
+        "jobber --edit -t +tag4,-tag2",
         &mut jobs,
         Checks::all_but(Check::UnknownTags),
         &context,

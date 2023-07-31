@@ -16,14 +16,7 @@ fn test_csv_date() {
     let mut jobs = Jobs::new();
     run_args_mut(
         &mut output,
-        &[
-            "jobber",
-            "-s",
-            "-d",
-            "2:00",
-            "-m",
-            "two hours job at twelve",
-        ],
+        "jobber -s -d 2:00 -m two hours job at twelve",
         &mut jobs,
         Checks::all(),
         &context,
@@ -31,7 +24,7 @@ fn test_csv_date() {
     .unwrap();
     run_args_mut(
         &mut output,
-        &["jobber", "-E", "--csv", "tags,start,hours,message"],
+        "jobber -E --csv tags,start,hours,message",
         &mut jobs,
         Checks::all(),
         &context,

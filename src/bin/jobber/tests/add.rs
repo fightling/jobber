@@ -14,12 +14,7 @@ fn test_add() {
 
     // give start and end to add a job
     assert_eq!(
-        crate::parse(
-            Args::parse_from(&["jobber", "-s", "12:00", "-e", "13:00"]),
-            None,
-            &context
-        )
-        .unwrap(),
+        crate::parse("jobber -s 12:00 -e 13:00", None, &context).unwrap(),
         Command::Add {
             start: "2023-2-1 12:00".into(),
             end: "2023-2-1 13:00".into(),
@@ -30,12 +25,7 @@ fn test_add() {
 
     // add overnight job
     assert_eq!(
-        crate::parse(
-            Args::parse_from(&["jobber", "-s", "23:00", "-e", "1:00"]),
-            None,
-            &context
-        )
-        .unwrap(),
+        crate::parse("jobber -s 23:00 -e 1:00", None, &context).unwrap(),
         Command::Add {
             start: "2023-2-1 23:00".into(),
             end: "2023-2-2 1:00".into(),
@@ -46,12 +36,7 @@ fn test_add() {
 
     // add overnight job (shall start yesterday)
     assert_eq!(
-        crate::parse(
-            Args::parse_from(&["jobber", "-s", "23:00", "-e"]),
-            None,
-            &context
-        )
-        .unwrap(),
+        crate::parse("jobber -s 23:00 -e", None, &context).unwrap(),
         Command::Add {
             start: "2023-1-31 23:00".into(),
             end: "2023-2-1 12:00".into(),

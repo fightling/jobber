@@ -15,7 +15,7 @@ fn test_start() {
 
     // start a new job at the current time
     assert_eq!(
-        parse(Args::parse_from(["jobber", "-s"]), None, &context).unwrap(),
+        parse_line("jobber -s", None, &context).unwrap(),
         Command::Start {
             start: "2023-01-01 12:00".into(),
             message: None,
@@ -25,12 +25,7 @@ fn test_start() {
 
     // start a new job at a specified date and time
     assert_eq!(
-        parse(
-            Args::parse_from(["jobber", "-s", "1.2.,13:00"]),
-            None,
-            &context
-        )
-        .unwrap(),
+        parse_line("jobber -s 1.2.,13:00", None, &context).unwrap(),
         Command::Start {
             start: "2023-02-01 13:00".into(),
             message: None,
@@ -40,7 +35,7 @@ fn test_start() {
 
     // start a new job today at a specified time
     assert_eq!(
-        parse(Args::parse_from(["jobber", "-s", "13:00"]), None, &context).unwrap(),
+        parse_line("jobber -s 13:00", None, &context).unwrap(),
         Command::Start {
             start: "2023-01-01 13:00".into(),
             message: None,

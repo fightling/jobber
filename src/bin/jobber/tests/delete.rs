@@ -17,17 +17,7 @@ fn test_delete() {
     // add first job
     run_args_mut(
         &mut std::io::stdout(),
-        &[
-            "jobber",
-            "-s",
-            "8:00",
-            "-e",
-            "10:30",
-            "-m",
-            "first job",
-            "-t",
-            "tag",
-        ],
+        "jobber -s 8:00 -e 10:30 -m first job -t tag",
         &mut jobs,
         Checks::omit(),
         &context,
@@ -37,17 +27,7 @@ fn test_delete() {
     // add second job
     run_args_mut(
         &mut std::io::stdout(),
-        &[
-            "jobber",
-            "-s",
-            "11:00",
-            "-e",
-            "12:30",
-            "-m",
-            "second job",
-            "-t",
-            "tag",
-        ],
+        "jobber -s 11:00 -e 12:30 -m second job -t tag",
         &mut jobs,
         Checks::omit(),
         &context,
@@ -57,7 +37,7 @@ fn test_delete() {
     // delete first job
     run_args_mut(
         &mut std::io::stdout(),
-        &["jobber", "--delete", "1"],
+        "jobber --delete 1",
         &mut jobs,
         Checks::omit(),
         &context,
@@ -69,7 +49,7 @@ fn test_delete() {
     let mut output = Vec::new();
     run_args_mut(
         &mut output,
-        &["jobber", "-l", "--csv", "pos"],
+        "jobber -l --csv pos",
         &mut jobs,
         Checks::omit(),
         &context,
@@ -93,7 +73,7 @@ Message: second job
     let mut output = Vec::new();
     run_args_mut(
         &mut output,
-        &["jobber", "-r"],
+        "jobber -r",
         &mut jobs,
         Checks::omit(),
         &context,
@@ -119,7 +99,7 @@ Total: 1 job(s), 1.5 hours
     let mut output = Vec::new();
     run_args_mut(
         &mut output,
-        &["jobber", "-E", "--csv", "pos"],
+        "jobber -E --csv pos",
         &mut jobs,
         Checks::omit(),
         &context,

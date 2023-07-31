@@ -38,7 +38,7 @@ impl Default for Config {
 /// Main which just catches errors.
 fn main() {
     let args = Args::parse();
-    let context = Context::new();
+    let context = Context::now();
     if let Err(err) = run(&mut std::io::stdout(), args, Checks::all(), &context) {
         eprintln!(
             "\n{}{}ERROR{}{}: {err}",
@@ -159,6 +159,24 @@ fn run<W: std::io::Write>(
     Ok(())
 }
 
+/// Run argument line on given database (or create one) and return the resulting database it.
+#[cfg(test)]
+pub fn run_line<W: std::io::Write>(
+    w: &mut W,
+    line: &str,
+    jobs: Option<Jobs>,
+    checks: Checks,
+    context: &Context,
+) -> Result<Jobs, Error> {
+    let mut jobs = if let Some(jobs) = jobs {
+        jobs
+    } else {
+        Jobs::new()
+    };
+    run_args(w, line.split_ascii_whitespace(), &mut jobs, checks, context)?;
+    Ok(jobs)
+}
+
 /// Run arguments on given database (or create one) and return the resulting database it.
 #[cfg(test)]
 pub fn run_args<W: std::io::Write>(
@@ -175,6 +193,19 @@ pub fn run_args<W: std::io::Write>(
     };
     run_args_mut(w, args, &mut jobs, checks, context)?;
     Ok(jobs)
+}
+
+/// Run argument line on given mutable database and return the processed operation.
+#[cfg(test)]
+pub fn run_line_mut<W: std::io::Write>(
+    w: &mut W,
+    line: &str,
+    jobs: &mut Jobs,
+    checks: Checks,
+    context: &Context,
+) -> Result<Operation, Error> {
+    let command = parse(Args::parse_from(line.split_ascii_whitespace()), None, context)?;
+    jobs.process(w, &command, checks, context)
 }
 
 /// Run arguments on given mutable database and return the processed operation.
@@ -245,6 +276,19 @@ fn enter(question: &str) -> Result<String, Error> {
     }
 }
 
+/// Parse argument line into a command.
+/// TODO: improve split by quotations?
+/// # Arguments
+/// * `line` - argument line to parse
+/// * `open_start` - if data base has an open job this shall give its starting time
+/// * `context` - reality
+pub fn parse_line(line :&str,
+    open_start: Option<DateTime>,
+    context: &Context,
+) -> Result<Command, Error> {
+    parse(line.split_whitespace(),open_start,context)
+}
+
 /// Parse arguments into a command.
 ///
 /// First a list of data will be extracted from the given arguments (1) and
@@ -255,6 +299,7 @@ fn enter(question: &str) -> Result<String, Error> {
 /// # Arguments
 /// * `args` - arguments to parse
 /// * `open_start` - if data base has an open job this shall give its starting time
+/// * `context` - reality
 pub fn parse(
     args: Args,
     open_start: Option<DateTime>,
