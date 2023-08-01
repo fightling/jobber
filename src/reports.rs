@@ -11,31 +11,26 @@ use termion::{color::*, style};
 /// Report in calendar form.
 pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) -> Result<(), Error> {
     // resort job hours into nested maps of year -> month -> day -> hours
-    let mut years: HashMap<i32, HashMap<u32, HashMap<u32, HashMap<Option<String>, f64>>>> =
-        HashMap::new();
+    type Days = HashMap<u32, HashMap<Option<String>, f64>>;
+    type Month = HashMap<u32, Days>;
+    let mut years: HashMap<i32, Month> = HashMap::new();
     for (_, job) in jobs.iter() {
         for job in job.split(context) {
             // insert year if not already in map
             let year = job.start.year();
-            if !years.contains_key(&year) {
-                years.insert(year, HashMap::new());
-            }
+            years.entry(year).or_insert_with(HashMap::new);
             // get months in that year
             let months = years.get_mut(&year).unwrap();
 
             // insert month if not already in year
             let month = job.start.month();
-            if !months.contains_key(&month) {
-                months.insert(month, HashMap::new());
-            }
+            months.entry(month).or_insert_with(HashMap::new);
             // get days in that month
             let days = months.get_mut(&month).unwrap();
 
             // insert day if not already in month
             let day = job.start.day();
-            if !days.contains_key(&day) {
-                days.insert(day, HashMap::new());
-            }
+            days.entry(day).or_insert_with(HashMap::new);
             // get tagged hours of that day
             let tag_hours = days.get_mut(&day).unwrap();
 
@@ -188,7 +183,7 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
             writeln!(w, "{:>67}", monthly_hours)?;
             month_hours = 0.0;
             month_costs = None;
-            writeln!(w, "")?;
+            writeln!(w)?;
         }
     }
 

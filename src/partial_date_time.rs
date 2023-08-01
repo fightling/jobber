@@ -100,7 +100,7 @@ impl PartialDateTime {
     }
     /// Parse date and time from `String`.
     fn parse_date_time(dt: String) -> Self {
-        let dt: Vec<&str> = dt.split(",").collect();
+        let dt: Vec<&str> = dt.split(',').collect();
         match dt.len() {
             1 => Self::parse_dmy(dt[0]).or(Self::parse_mdy(dt[0]).or(Self::parse_ymd(dt[0])
                 .or(Self::parse_dm(dt[0]).or(Self::parse_md(dt[0]).or(Self::parse_hm(dt[0])))))),
@@ -125,7 +125,7 @@ impl PartialDateTime {
     /// Parse time from "HH:MM" format.
     fn parse_hm(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2}):(\d{1,2})$").unwrap();
-        for cap in re.captures_iter(dt) {
+        if let Some(cap) = re.captures_iter(dt).next() {
             return Self::HM {
                 hour: cap[1].parse::<u32>().unwrap(),
                 minute: cap[2].parse::<u32>().unwrap(),
@@ -137,7 +137,7 @@ impl PartialDateTime {
     /// Parse German date without year and time from "dd.mm." format.
     fn parse_dm(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})\.(\d{1,2})\.$").unwrap();
-        for cap in re.captures_iter(dt) {
+        if let Some(cap) = re.captures_iter(dt).next() {
             return Self::MD {
                 month: cap[2].parse::<u32>().unwrap(),
                 day: cap[1].parse::<u32>().unwrap(),
@@ -149,7 +149,7 @@ impl PartialDateTime {
     /// Parse English date without year and month from "mm/dd" format.
     fn parse_md(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})/(\d{1,2})$").unwrap();
-        for cap in re.captures_iter(dt) {
+        if let Some(cap) = re.captures_iter(dt).next() {
             return Self::MD {
                 month: cap[1].parse::<u32>().unwrap(),
                 day: cap[2].parse::<u32>().unwrap(),
@@ -160,7 +160,7 @@ impl PartialDateTime {
     /// Parse German date without year and time from "dd.mm.yyyy" format.
     fn parse_dmy(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})$").unwrap();
-        for cap in re.captures_iter(dt) {
+        if let Some(cap) = re.captures_iter(dt).next() {
             return Self::YMD {
                 year: cap[3].parse::<i32>().unwrap(),
                 month: cap[2].parse::<u32>().unwrap(),
@@ -172,7 +172,7 @@ impl PartialDateTime {
     /// Parse German date without year and time from "yyy-mm-dd" format.
     fn parse_ymd(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{4})-(\d{1,2})-(\d{1,2})$").unwrap();
-        for cap in re.captures_iter(dt) {
+        if let Some(cap) = re.captures_iter(dt).next() {
             return Self::YMD {
                 year: cap[1].parse::<i32>().unwrap(),
                 month: cap[2].parse::<u32>().unwrap(),
@@ -184,7 +184,7 @@ impl PartialDateTime {
     /// Parse German date without year and time from "mm/dd/yyyy" format.
     fn parse_mdy(dt: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})/(\d{1,2})/(\d{4})$").unwrap();
-        for cap in re.captures_iter(dt) {
+        if let Some(cap) = re.captures_iter(dt).next() {
             return Self::YMD {
                 year: cap[3].parse::<i32>().unwrap(),
                 month: cap[1].parse::<u32>().unwrap(),

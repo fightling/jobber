@@ -24,25 +24,19 @@ pub struct Checks(HashSet<Check>);
 impl Checks {
     /// Select all checks.
     pub fn all() -> Self {
-        Self {
-            0: HashSet::from_iter(Check::iter()),
-        }
+        Self(HashSet::from_iter(Check::iter()))
     }
     /// Select all checks but the given one.
     pub fn all_but(check: Check) -> Self {
-        Self {
-            0: HashSet::from_iter(Check::iter().filter(|c| *c != check)),
-        }
+        Self(HashSet::from_iter(Check::iter().filter(|c| *c != check)))
     }
     /// Omit all checks.
     pub fn omit() -> Self {
-        Self { 0: HashSet::new() }
+        Self(HashSet::new())
     }
     /// omit checks which lead to user confirmation
     pub fn no_confirm() -> Self {
-        Self {
-            0: HashSet::from([Check::Overlaps]),
-        }
+        Self(HashSet::from([Check::Overlaps]))
     }
     /// Return `true` if the given check is included.
     pub fn has(&self, check: Check) -> bool {
@@ -76,10 +70,10 @@ impl Checks {
             for (n, j) in jobs.iter().enumerate() {
                 if !j.is_deleted() {
                     if let Some(pos) = pos {
-                        if n != pos && job.overlaps(&j, context) {
+                        if n != pos && job.overlaps(j, context) {
                             overlapping.push(n, j);
                         }
-                    } else if job.overlaps(&j, context) {
+                    } else if job.overlaps(j, context) {
                         overlapping.push(n, j);
                     }
                 }

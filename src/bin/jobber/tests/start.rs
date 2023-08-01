@@ -10,7 +10,6 @@ use crate::*;
 ///
 #[test]
 fn test_start() {
-    use clap::Parser;
     let context = Context::new_test("2023-01-01 12:00");
 
     // start a new job at the current time

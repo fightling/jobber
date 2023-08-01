@@ -67,7 +67,7 @@ impl DateTime {
     pub fn from_rfc3339(rfc3339: &str) -> Result<Self, Error> {
         Ok(Self(
             chrono::DateTime::parse_from_rfc3339(rfc3339)
-                .map_err(|e| Error::DateTimeParse(e))?
+                .map_err(Error::DateTimeParse)?
                 .into(),
         ))
     }
@@ -89,15 +89,15 @@ impl From<&str> for DateTime {
     }
 }
 
-impl Into<chrono::DateTime<Utc>> for DateTime {
-    fn into(self) -> chrono::DateTime<Utc> {
-        self.0
+impl From<DateTime> for chrono::DateTime<Utc> {
+    fn from(val: DateTime) -> Self {
+        val.0
     }
 }
 
-impl Into<chrono::DateTime<Local>> for DateTime {
-    fn into(self) -> chrono::DateTime<Local> {
-        self.0.into()
+impl From<DateTime> for chrono::DateTime<Local> {
+    fn from(val: DateTime) -> Self {
+        val.0.into()
     }
 }
 
@@ -197,7 +197,7 @@ impl Date {
 
 impl From<DateTime> for Date {
     fn from(value: DateTime) -> Self {
-        let datetime: chrono::DateTime<Utc> = value.clone().into();
+        let datetime: chrono::DateTime<Utc> = value.into();
         Date(datetime.date_naive())
     }
 }

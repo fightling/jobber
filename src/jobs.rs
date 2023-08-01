@@ -72,21 +72,11 @@ impl Jobs {
     }
     /// return first (and not deleted) job in database
     fn first(&self) -> Option<&Job> {
-        for job in self.jobs.iter() {
-            if !job.is_deleted() {
-                return Some(&job);
-            }
-        }
-        None
+        self.jobs.iter().find(|&job| !job.is_deleted())
     }
     /// return last (and not deleted) job in database
     fn last(&self) -> Option<&Job> {
-        for job in self.jobs.iter().rev() {
-            if !job.is_deleted() {
-                return Some(&job);
-            }
-        }
-        None
+        self.jobs.iter().rev().find(|&job| !job.is_deleted())
     }
     /// Get read-only iterator over all jobs (even the deleted ones).
     pub fn iter(&self) -> core::slice::Iter<'_, Job> {
@@ -126,7 +116,7 @@ impl Jobs {
     /// Get a list of all jobs in database
     pub fn all(&self) -> JobList {
         let result: Vec<IndexedJob> = self.iter().enumerate().collect();
-        JobList::new(result.into(), &self.configuration)
+        JobList::new(result, &self.configuration)
     }
     /// Generate a list of some jobs.
     pub fn list(&self, positions: &Positions) -> JobList {
@@ -135,7 +125,7 @@ impl Jobs {
             .enumerate()
             .filter(|(p, _)| positions.contains(p))
             .collect();
-        JobList::new(result.into(), &self.configuration)
+        JobList::new(result, &self.configuration)
     }
     /// Collect all tags within the database
     pub fn tags(&self) -> TagSet {
@@ -153,7 +143,7 @@ impl Jobs {
     /// Filter jobs by range and tags and return a job list with the result.
     /// Deleted jobs will be omitted.
     fn filter(&self, range: &Range, tags: &TagSet) -> Result<JobList, Error> {
-        let mut jobs = JobList::new_from(&self);
+        let mut jobs = JobList::new_from(self);
         for (n, job) in self.jobs.iter().enumerate() {
             // sort out any deleted jobs
             if job.is_deleted() {
@@ -161,7 +151,7 @@ impl Jobs {
             }
             let mut tag_ok = true;
             for tag in &tags.0 {
-                if !job.tags.0.contains(&tag) {
+                if !job.tags.0.contains(tag) {
                     tag_ok = false;
                     break;
                 };
@@ -361,12 +351,10 @@ impl Jobs {
                 // use given pos or the last undeleted job
                 let pos = if let Some(pos) = pos {
                     pos
+                } else if let Some(position) = self.last_position() {
+                    position
                 } else {
-                    if let Some(position) = self.last_position() {
-                        position
-                    } else {
-                        return Err(Error::DatabaseEmpty);
-                    }
+                    return Err(Error::DatabaseEmpty);
                 };
                 // find job at that position
                 if let Some(job) = self.get(pos) {
@@ -392,7 +380,7 @@ impl Jobs {
                     }
                     // maybe overwrite start
                     if let Some(tags) = tags {
-                        job.tags = job.tags.modify(&TagSet::from(tags));
+                        job.tags = job.tags.modify(&tags);
                     }
                     Operation::Modify(pos, job.clone())
                 } else {
@@ -406,11 +394,7 @@ impl Jobs {
     }
     /// get start date of the first job (which is not deleted)
     fn first_date(&self) -> Option<Date> {
-        if let Some(first) = self.first() {
-            Some(first.start.date())
-        } else {
-            None
-        }
+        self.first().map(|first| first.start.date())
     }
     /// get end date of the last job (which is not deleted) or context's date
     fn last_date(&self, context: &Context) -> Option<Date> {
@@ -424,10 +408,10 @@ impl Jobs {
         None
     }
     /// Process an operation with the database.
-    fn operate<'a, W: std::io::Write>(
+    fn operate<W: std::io::Write>(
         &mut self,
         w: &mut W,
-        operation: &'a mut Operation,
+        operation: &mut Operation,
         checks: Checks,
         context: &Context,
     ) -> Result<(), Error> {
@@ -444,7 +428,7 @@ impl Jobs {
                     self.check_finished()?;
                 }
                 // check job consistency
-                checks.check(self, None, &job, context)?;
+                checks.check(self, None, job, context)?;
                 // finished jobs need message
                 if job.message.is_none() && !job.is_open() {
                     return Err(Error::EnterMessage);
@@ -456,7 +440,7 @@ impl Jobs {
             }
             Operation::Modify(pos, job) => {
                 // check job consistency
-                checks.check(self, Some(*pos), &job, context)?;
+                checks.check(self, Some(*pos), job, context)?;
                 // finished jobs need message
                 if job.message.is_none() {
                     return Err(Error::EnterMessage);
@@ -481,18 +465,18 @@ impl Jobs {
                 }
             }
             Operation::Import(filename, count, new_tags) => {
-                (*count, *new_tags) = self.legacy_import(&filename)?;
+                (*count, *new_tags) = self.legacy_import(filename)?;
                 self.modified = *count > 0;
             }
             Operation::Configure(tags, update) => {
-                self.modified = self.configuration.set(&tags, update);
+                self.modified = self.configuration.set(tags, update);
             }
             Operation::List(positions, _, _) => {
                 write!(w, "{}", self.list(positions))?;
             }
-            Operation::Report(positions, _, _) => report(w, &self.list(positions), &context)?,
+            Operation::Report(positions, _, _) => report(w, &self.list(positions), context)?,
             Operation::ExportCSV(positions, _, _, columns) => {
-                export_csv(w, &self.list(positions), columns, &context)?
+                export_csv(w, &self.list(positions), columns, context)?
             }
             _ => (),
         }
@@ -532,10 +516,10 @@ impl Jobs {
         let file = File::options()
             .read(true)
             .open(filename)
-            .map_err(|err| Error::Io(err))?;
+            .map_err(Error::Io)?;
         let reader = BufReader::new(file);
         let versioned = serde_json::from_reader::<_, Versioned<Jobs>>(reader)
-            .map_err(|err| Error::Json(err))?;
+            .map_err(Error::Json)?;
         tags::init(&versioned.jobs);
         Ok(versioned.jobs)
     }
@@ -553,7 +537,7 @@ impl Jobs {
             jobs: &self,
         };
         // pretty print when running tests
-        serde_json::to_writer_pretty(writer, &versioned_jobs).map_err(|err| Error::Json(err))?;
+        serde_json::to_writer_pretty(writer, &versioned_jobs).map_err(Error::Json)?;
 
         self.modified = false;
         Ok(())
@@ -578,7 +562,7 @@ impl Jobs {
         let file = File::options()
             .read(true)
             .open(filename)
-            .map_err(|err| Error::Io(err))?;
+            .map_err(Error::Io)?;
         let reader = BufReader::new(file);
         let tags = self.tags();
         let mut count = 0;
@@ -586,7 +570,7 @@ impl Jobs {
         for line in reader.lines() {
             let re = Regex::new(r#""(.*)";"(.*)";"(.*)";"(.*)"$"#).unwrap();
             for cap in re.captures_iter(&line.unwrap()) {
-                let start = DateTime::from_rfc3339(&cap[1].to_string())?;
+                let start = DateTime::from_rfc3339(&cap[1])?;
                 let end = cap[2].to_string();
                 let end = if end.is_empty() {
                     None
@@ -607,7 +591,7 @@ impl Jobs {
                     new_tags.insert_many(tags.clone());
                     Some(tags)
                 };
-                self.push(Job::new(start, end, message, tags.map(|t| t.into())).unwrap());
+                self.push(Job::new(start, end, message, tags).unwrap());
                 self.modified = true;
                 count += 1;
             }
@@ -685,6 +669,12 @@ Use 'jobber -b' to continue your work,
         );
 
         Ok(())
+    }
+}
+
+impl Default for Jobs {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

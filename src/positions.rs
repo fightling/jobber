@@ -71,7 +71,7 @@ impl Positions {
     }
     /// Return `true` if list contains position
     pub fn contains(&self, position: &usize) -> bool {
-        self.0.contains(&position)
+        self.0.contains(position)
     }
 }
 

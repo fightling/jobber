@@ -40,8 +40,7 @@ impl TagSet {
         // check if modification markers ('+' or '-') are used
         if modification
             .iter()
-            .find(|tag| tag.starts_with('+') || tag.ends_with('+'))
-            .is_some()
+            .any(|tag| tag.starts_with('+') || tag.ends_with('+'))
         {
             let mut tags = self.clone();
             for tag in modification.iter() {
@@ -74,7 +73,7 @@ impl TagSet {
     /// Insert a lot of tags.
     pub fn insert_many(&mut self, tags: TagSet) {
         for tag in tags.iter() {
-            self.insert(&tag);
+            self.insert(tag);
         }
     }
     /// Remove a tag from the set.
@@ -123,7 +122,7 @@ impl From<&Option<String>> for TagSet {
 impl From<&str> for TagSet {
     /// convert from comma separated string of tag names without spaces
     fn from(tag: &str) -> Self {
-        assert!(!tag.contains(" "));
+        assert!(!tag.contains(' '));
         Self(tag.split(',').map(|t| t.to_string()).collect())
     }
 }

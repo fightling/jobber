@@ -28,10 +28,8 @@ impl Configuration {
                     modified = true;
                 }
             }
-        } else {
-            if self.base.update(update.clone()) {
-                modified = true;
-            }
+        } else if self.base.update(update.clone()) {
+            modified = true;
         }
         modified
     }

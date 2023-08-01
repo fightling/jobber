@@ -63,7 +63,7 @@ fn run<W: std::io::Write>(
     let filename = if let Some(filename) = &args.filename {
         filename.clone()
     } else {
-        let cfg: Config = confy::load("jobber", "config").map_err(|e| Error::Confy(e))?;
+        let cfg: Config = confy::load("jobber", "config").map_err(Error::Confy)?;
         cfg.database
     };
 
@@ -173,7 +173,7 @@ pub fn run_line<W: std::io::Write>(
     } else {
         Jobs::new()
     };
-    run_args(w, line.split_ascii_whitespace(), &mut jobs, checks, context)?;
+    run_line_mut(w,line, &mut jobs, checks, context)?;
     Ok(jobs)
 }
 
@@ -236,7 +236,7 @@ fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
     let mut buffer = String::new();
     std::io::stdin()
         .read_line(&mut buffer)
-        .map_err(|err| Error::Io(err))?;
+        .map_err(Error::Io)?;
 
     Ok(match buffer.trim_end().to_lowercase().as_str() {
         "y" | "yes" => true,
@@ -261,7 +261,7 @@ fn enter(question: &str) -> Result<String, Error> {
         let mut buffer = String::new();
         std::io::stdin()
             .read_line(&mut buffer)
-            .map_err(|err| Error::Io(err))?;
+            .map_err(Error::Io)?;
 
         let line = buffer.trim_end();
         result += line;
@@ -286,7 +286,7 @@ pub fn parse_line(line :&str,
     open_start: Option<DateTime>,
     context: &Context,
 ) -> Result<Command, Error> {
-    parse(line.split_whitespace(),open_start,context)
+    parse(Args::parse_from(line.split_whitespace()),open_start,context)
 }
 
 /// Parse arguments into a command.
@@ -328,11 +328,7 @@ pub fn parse(
         None
     };
     let message = args.message;
-    let tags = if let Some(tags) = args.tags {
-        Some(TagSet::from(&tags))
-    } else {
-        None
-    };
+    let tags = args.tags.map(|tags| TagSet::from(&tags));
     let list = if let Some(list) = args.list {
         Some(Range::parse(list, context)?)
     } else {
@@ -426,32 +422,30 @@ pub fn parse(
                     tags,
                 }
             }
+        } else if let Some(end) = end {
+            let end = end.into(context.time());
+            Command::Edit {
+                pos,
+                start: None,
+                end: EndOrDuration::End(end),
+                message,
+                tags,
+            }
+        } else if let Some(duration) = duration {
+            Command::Edit {
+                pos,
+                start: None,
+                end: EndOrDuration::Duration(duration),
+                message,
+                tags,
+            }
         } else {
-            if let Some(end) = end {
-                let end = end.into(context.time());
-                Command::Edit {
-                    pos,
-                    start: None,
-                    end: EndOrDuration::End(end),
-                    message,
-                    tags,
-                }
-            } else if let Some(duration) = duration {
-                Command::Edit {
-                    pos,
-                    start: None,
-                    end: EndOrDuration::Duration(duration),
-                    message,
-                    tags,
-                }
-            } else {
-                Command::Edit {
-                    pos,
-                    start: None,
-                    end: EndOrDuration::None,
-                    message,
-                    tags,
-                }
+            Command::Edit {
+                pos,
+                start: None,
+                end: EndOrDuration::None,
+                message,
+                tags,
             }
         }
     } else if let Some(range) = delete {

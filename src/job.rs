@@ -87,12 +87,10 @@ impl Job {
             } else {
                 self_end < other.start
             }
+        } else if let Some(other_end) = other.end {
+            self.start < other_end && context.time() > other.start
         } else {
-            if let Some(other_end) = other.end {
-                self.start < other_end && context.time() > other.start
-            } else {
-                panic!("checking intersection of two open jobs: {} {}", self, other)
-            }
+            panic!("checking intersection of two open jobs: {} {}", self, other)
         }
     }
     /// Get start time as local time.
@@ -164,7 +162,7 @@ impl Job {
             writeln!(f, "  Costs: {}", format::pay(hours, properties))?;
         }
         if let Some(message) = &self.message {
-            writeln!(f, "Message: {}", format::message(&message, 9))?;
+            writeln!(f, "Message: {}", format::message(message, 9))?;
         }
         if !self.tags.is_empty() {
             writeln!(f, "   Tags: {}", self.tags)?;
@@ -194,7 +192,7 @@ impl Ord for Job {
 /// Test job splitting.
 #[test]
 fn test_split() {
-    let context = Context::new();
+    let context = Context::now();
     let job = Job::new(
         "2023-1-1 20:00".into(),
         Some("2023-1-3 2:00".into()),
@@ -238,14 +236,10 @@ fn test_overlap(
     right_start: &str,
     right_end: Option<&str>,
 ) -> bool {
-    let context = Context::new();
+    let context = Context::now();
     Job::new(
         left_start.into(),
-        if let Some(left_end) = left_end {
-            Some(left_end.into())
-        } else {
-            None
-        },
+        left_end.map(|left_end| left_end.into()),
         None,
         None,
     )
@@ -253,11 +247,7 @@ fn test_overlap(
     .overlaps(
         &Job::new(
             right_start.into(),
-            if let Some(right_end) = right_end {
-                Some(right_end.into())
-            } else {
-                None
-            },
+            right_end.map(|right_end| right_end.into()),
             None,
             None,
         )

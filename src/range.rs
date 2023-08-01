@@ -54,7 +54,8 @@ impl Range {
     /// Parse `Count`.
     fn parse_count(list: &str) -> Range {
         let re = Regex::new(r"^~(\d+)$").unwrap();
-        for cap in re.captures_iter(list) {
+
+        if let Some(cap) = re.captures_iter(list).next() {
             return Self::Count(cap[1].parse::<usize>().unwrap());
         }
         Self::None
@@ -62,10 +63,10 @@ impl Range {
     /// Parse `At`.
     fn parse_at(list: &str) -> Range {
         let re = Regex::new(r"^([\d,]+)$").unwrap();
-        for cap in re.captures_iter(list) {
+        if let Some(cap) = re.captures_iter(list).next() {
             return Self::At(
                 cap[1]
-                    .split(",")
+                    .split(',')
                     .map(|c| c.parse::<usize>().unwrap() - 1)
                     .collect(),
             );
@@ -75,7 +76,7 @@ impl Range {
     /// Parse `PositionRange`.
     fn parse_position_range(list: &str) -> Range {
         let re = Regex::new(r"^(\d+)-(\d+)$").unwrap();
-        for cap in re.captures_iter(list) {
+        if let Some(cap) = re.captures_iter(list).next() {
             return Self::PositionRange(
                 cap[1].parse::<usize>().unwrap() - 1,
                 cap[2].parse::<usize>().unwrap() - 1,
@@ -86,7 +87,7 @@ impl Range {
     /// Parse `FromPosition`.
     fn parse_from_position(list: &str) -> Range {
         let re = Regex::new(r"^(\d+)-$").unwrap();
-        for cap in re.captures_iter(list) {
+        if let Some(cap) = re.captures_iter(list).next() {
             return Self::FromPosition(cap[1].parse::<usize>().unwrap() - 1);
         }
         Self::None
@@ -139,7 +140,7 @@ impl Range {
     /// Parse `Since`.
     fn parse_since(list: &str, context: &Context) -> Range {
         let re = Regex::new(r"^(.+)\.\.$").unwrap();
-        for cap in re.captures_iter(list) {
+        if let Some(cap) = re.captures_iter(list).next() {
             let pt = PartialDateTime::parse_opt(Some(cap[1].to_string()));
             return match pt {
                 PartialDateTime::None => Self::None,
@@ -182,21 +183,9 @@ impl std::fmt::Display for Range {
 fn new_job(start: &str, end: Option<&str>, message: Option<&str>, tags: Option<&str>) -> Job {
     Job::new(
         start.into(),
-        if let Some(end) = end {
-            Some(end.into())
-        } else {
-            None
-        },
-        if let Some(message) = message {
-            Some(message.to_string())
-        } else {
-            None
-        },
-        if let Some(tags) = tags {
-            Some(tags.into())
-        } else {
-            None
-        },
+        end.map(|end| end.into()),
+        message.map(|message| message.to_string()),
+        tags.map(|tags| tags.into()),
     )
     .expect("can't parse new job")
 }

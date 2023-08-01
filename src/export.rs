@@ -21,7 +21,7 @@ pub enum Column {
 
 impl Column {
     // Create column from String.
-    pub fn from(column: &String) -> Result<Self, Error> {
+    pub fn from(column: &str) -> Result<Self, Error> {
         Ok(match column.to_lowercase().as_str() {
             "#" | "pos" => Column::Pos,
             "s" | "start" => Column::Start,
@@ -33,7 +33,7 @@ impl Column {
             "p" | "pay" => Column::Pay,
             "rate" => Column::Rate,
             "resolution" => Column::Resolution,
-            _ => return Err(Error::UnknownColumn(column.clone())),
+            _ => return Err(Error::UnknownColumn(column.to_string())),
         })
     }
 }
@@ -79,7 +79,7 @@ impl From<String> for Columns {
         Columns(
             value
                 .split(',')
-                .map(|c| Column::from(&c.into()).expect("unknown column"))
+                .map(|c| Column::from(c).expect("unknown column"))
                 .collect(),
         )
     }
@@ -102,7 +102,7 @@ pub fn export_csv<W: std::io::Write>(
         .collect::<Vec<String>>()
         .join(",");
     writeln!(w, "{}", title)?;
-    for (pos, job) in jobs.iter().sorted_by(|l, r| l.1.cmp(&r.1)) {
+    for (pos, job) in jobs.iter().sorted_by(|l, r| l.1.cmp(r.1)) {
         for (c, column) in columns.iter().enumerate() {
             if c > 0 {
                 write!(w, ",")?;
@@ -138,11 +138,11 @@ pub fn export_csv<W: std::io::Write>(
                         "\"\""
                     )
                 )?,
-                Column::Hours => write!(w, "{}", job.hours(&properties))?,
+                Column::Hours => write!(w, "{}", job.hours(properties))?,
                 Column::Tags => write!(w, r#""{}""#, job.tags.0.join(","))?,
                 Column::Pay => {
                     if let Some(rate) = properties.rate {
-                        write!(w, "{}", job.hours(&properties) * rate)?;
+                        write!(w, "{}", job.hours(properties) * rate)?;
                     }
                 }
                 Column::Rate => {
@@ -162,7 +162,7 @@ pub fn export_csv<W: std::io::Write>(
                 }
             }
         }
-        writeln!(w, "")?;
+        writeln!(w)?;
     }
     Ok(())
 }

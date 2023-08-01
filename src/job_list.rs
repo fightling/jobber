@@ -34,12 +34,12 @@ impl<'a> From<&'a JobListOwned> for JobList<'a> {
 
 impl<'a> std::fmt::Display for JobList<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "")?;
+        writeln!(f)?;
         let mut count = 0;
         for (pos, job) in self.iter() {
             writeln!(f, "    Pos: {}", pos + 1)?;
             job.writeln(f, self.configuration.get(&job.tags))?;
-            writeln!(f, "")?;
+            writeln!(f)?;
             count += 1;
         }
         let pay = {

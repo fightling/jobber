@@ -72,15 +72,15 @@ pub fn hours(hours: f64, properties: &Properties) -> String {
 
 /// Format exact hours with style & color.
 pub fn hours_pure(hours: f64) -> String {
-    if hours > 24 as f64 {
-        return format!(
+    if hours > 24_f64 {
+        format!(
             "{}{}{}{}{}",
             style::Bold,
             Fg(LightRed),
             hours,
             Fg(Reset),
             style::Reset,
-        );
+        )
     } else {
         format!(
             "{}{}{}{}{}",
@@ -103,18 +103,18 @@ pub fn pay(hours: f64, configuration: &Properties) -> String {
 
 /// Format exact payment with style & color.
 pub fn pay_pure(pay: f64) -> String {
-    return format!(
+    format!(
         "{}{}{}{}{}",
         style::Bold,
         Fg(White),
         pay.separated_string(),
         style::Reset,
         Fg(Reset)
-    );
+    )
 }
 
 /// Format message with style.
-pub fn message(message: &String, indent: usize) -> String {
+pub fn message(message: &str, indent: usize) -> String {
     let mut output = String::new();
     let lines = message.split('\n');
     for line in lines {
@@ -125,7 +125,7 @@ pub fn message(message: &String, indent: usize) -> String {
             for _ in 0..indent {
                 output += " ";
             }
-            output += &format!("{}", line);
+            output += line;
         }
     }
     output + &format!("{}{}", Fg(Reset), style::Reset)

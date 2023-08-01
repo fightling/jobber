@@ -15,9 +15,9 @@ fn test_delete() {
     let mut jobs = Jobs::new();
 
     // add first job
-    run_args_mut(
+    run_line_mut(
         &mut std::io::stdout(),
-        "jobber -s 8:00 -e 10:30 -m first job -t tag",
+        "jobber -s 8:00 -e 10:30 -m first-job -t tag",
         &mut jobs,
         Checks::omit(),
         &context,
@@ -25,9 +25,9 @@ fn test_delete() {
     .unwrap();
 
     // add second job
-    run_args_mut(
+    run_line_mut(
         &mut std::io::stdout(),
-        "jobber -s 11:00 -e 12:30 -m second job -t tag",
+        "jobber -s 11:00 -e 12:30 -m second-job -t tag",
         &mut jobs,
         Checks::omit(),
         &context,
@@ -35,7 +35,7 @@ fn test_delete() {
     .unwrap();
 
     // delete first job
-    run_args_mut(
+    run_line_mut(
         &mut std::io::stdout(),
         "jobber --delete 1",
         &mut jobs,
@@ -47,7 +47,7 @@ fn test_delete() {
 
     // check if deleted job is removed from list output
     let mut output = Vec::new();
-    run_args_mut(
+    run_line_mut(
         &mut output,
         "jobber -l --csv pos",
         &mut jobs,
@@ -58,11 +58,12 @@ fn test_delete() {
 
     assert_eq!(
         clean(&output),
-        r#"    Pos: 2
+        r#"
+    Pos: 2
   Start: Wed Feb 01 2023, 11:00
     End: Wed Feb 01 2023, 12:30
   Hours: 1.5 +-
-Message: second job
+Message: second-job
    Tags:  tag 
 
 "#
@@ -71,7 +72,7 @@ Message: second job
 
     // check if deleted job is removed from report output
     let mut output = Vec::new();
-    run_args_mut(
+    run_line_mut(
         &mut output,
         "jobber -r",
         &mut jobs,
@@ -97,7 +98,7 @@ Total: 1 job(s), 1.5 hours
 
     // check if deleted job is removed from export output
     let mut output = Vec::new();
-    run_args_mut(
+    run_line_mut(
         &mut output,
         "jobber -E --csv pos",
         &mut jobs,

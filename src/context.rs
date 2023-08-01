@@ -10,7 +10,7 @@ pub struct Context(DateTime);
 
 impl Context {
     /// Create new context with current time.
-    pub fn new() -> Self {
+    pub fn now() -> Self {
         Self(DateTime::now())
     }
     /// Create new context with given time.
@@ -20,10 +20,10 @@ impl Context {
     }
     /// Return time in context
     pub fn time(&self) -> DateTime {
-        DateTime::from(self.0)
+        self.0
     }
     /// Return time in context
     pub fn date(&self) -> Date {
-        DateTime::from(self.0).date()
+        self.0.date()
     }
 }

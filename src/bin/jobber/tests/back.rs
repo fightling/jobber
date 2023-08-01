@@ -15,7 +15,7 @@ fn test_back_to_work() {
     // add first job
     let jobs = run_line(
         &mut std::io::stdout(),
-        "jobber -s 8:00 -e 10:30 -m simple job -t tag",
+        "jobber -s 8:00 -e 10:30 -m simple-job -t tag",
         None,
         Checks::all_but(Check::UnknownTags),
         &context,
@@ -36,7 +36,7 @@ fn test_back_to_work() {
     assert_eq!(jobs[0].tags, jobs[1].tags);
 
     // end job
-    let jobs = run_args(
+    let jobs = run_line(
         &mut std::io::stdout(),
         "jobber -e 12:30",
         Some(jobs),
@@ -46,7 +46,7 @@ fn test_back_to_work() {
     .unwrap();
 
     // add continued job and update tags
-    let jobs = run_args(
+    let jobs = run_line(
         &mut std::io::stdout(),
         "jobber -b 13:00 -e 14:30 -t new_tag",
         Some(jobs),
@@ -60,7 +60,7 @@ fn test_back_to_work() {
     assert!(jobs[2].tags.contains(&"new_tag".into()));
 
     // add continued job and modify tags
-    let jobs = run_args(
+    let jobs = run_line(
         &mut std::io::stdout(),
         "jobber -b 15:00 -e 16:30 -t +newer_tag,-new_tag",
         Some(jobs),
@@ -73,16 +73,16 @@ fn test_back_to_work() {
     assert!(jobs[3].tags.contains(&"newer_tag".into()));
 
     // add continued job and update message
-    let jobs = run_args(
+    let jobs = run_line(
         &mut std::io::stdout(),
-        "jobber -b 17:00 -e 18:30 -m new message",
+        "jobber -b 17:00 -e 18:30 -m new-message",
         Some(jobs),
         Checks::all(),
         &context,
     )
     .unwrap();
     assert_eq!(jobs.count(), 5);
-    assert_eq!(jobs[4].message, Some("new message".into()));
+    assert_eq!(jobs[4].message, Some("new-message".into()));
     assert_eq!(jobs[4].tags, jobs[3].tags);
 }
 
@@ -101,7 +101,7 @@ fn test_back_to_work_deleted_open_job() {
     // add first job
     run_line_mut(
         &mut std::io::stdout(),
-        "jobber -s 8:00 -e 9:00 -m job #1 -t job1",
+        "jobber -s 8:00 -e 9:00 -m job#1 -t job1",
         &mut jobs,
         Checks::no_confirm(),
         &context,
@@ -111,7 +111,7 @@ fn test_back_to_work_deleted_open_job() {
     // add second job
     run_line_mut(
         &mut std::io::stdout(),
-        "jobber -s 9:00 -e 10:00 -m job #2 -t job2",
+        "jobber -s 9:00 -e 10:00 -m job#2 -t job2",
         &mut jobs,
         Checks::no_confirm(),
         &context,
@@ -144,7 +144,7 @@ fn test_back_to_work_deleted_open_job() {
     .unwrap();
     assert_eq!(jobs.count(), 2);
     assert_eq!(jobs.iter().len(), 3);
-    assert_eq!(jobs[2].message, Some("job #1".into()));
+    assert_eq!(jobs[2].message, Some("job#1".into()));
     assert!(jobs[2].tags.contains(&"job1".into()));
     assert!(!jobs[2].tags.contains(&"job2".into()));
 }
@@ -162,7 +162,7 @@ fn test_back_to_work_edit() {
     // add first job
     let jobs = run_line(
         &mut std::io::stdout(),
-        "jobber -s 8:00 -e 10:30 -m simple job -t tag1,tag2",
+        "jobber -s 8:00 -e 10:30 -m simple-job -t tag1,tag2",
         None,
         Checks::all_but(Check::UnknownTags),
         &context,

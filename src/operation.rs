@@ -36,10 +36,7 @@ pub enum Operation {
 
 impl Operation {
     pub fn reports_open_job(&self) -> bool {
-        match self {
-            Operation::Intro | Operation::Push(_, _) => true,
-            _ => false,
-        }
+        matches!(self, Operation::Intro | Operation::Push(_, _))
     }
 }
 

@@ -18,11 +18,11 @@ pub fn update(job: &Job) {
 /// Decorate tag with color.
 pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
     use termion::{
-        color::{Bg, Fg, *},
+        color::*,
         style,
     };
     write!(f, "{}", style::Bold)?;
-    if let Some(position) = position(&tag) {
+    if let Some(position) = position(tag) {
         match position % 11 {
             0 => write!(f, "{}{} {} ", Bg(LightCyan), Fg(Black), &tag,)?,
             1 => write!(f, "{}{} {} ", Bg(LightMagenta), Fg(Black), &tag,)?,
@@ -46,10 +46,6 @@ pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
 /// get the position of a tag within the tag index `TAGS` (to assign a color)
 fn position(tag: &String) -> Option<usize> {
     unsafe {
-        if let Some(position) = TAGS.0.iter().position(|t| t == tag).into() {
-            Some(position)
-        } else {
-            None
-        }
+        TAGS.0.iter().position(|t| t == tag)
     }
 }

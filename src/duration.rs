@@ -39,7 +39,7 @@ impl Duration {
     /// Parse time from string in format `HH:MM`.
     fn parse_hm(duration: &str) -> Self {
         let re = Regex::new(r"^(\d+):(\d{1,2})$").unwrap();
-        for cap in re.captures_iter(duration) {
+        if let Some(cap) = re.captures_iter(duration).next() {
             return Self::HM {
                 hours: cap[1].parse::<i64>().unwrap(),
                 minutes: cap[2].parse::<i64>().unwrap(),
@@ -50,23 +50,23 @@ impl Duration {
     /// Parse duration from fractional hours string.
     fn parse_hours(duration: &str) -> Self {
         let re = Regex::new(r"^(\d+)[,.](\d{1,2})$").unwrap();
-        for cap in re.captures_iter(duration) {
+        if let Some(cap) = re.captures_iter(duration).next() {
             return Self::HM {
                 hours: cap[1].parse::<i64>().unwrap(),
-                minutes: (format!(".{}", cap[2].to_string()).parse::<f64>().unwrap() * 60f64)
+                minutes: (format!(".{}", &cap[2]).parse::<f64>().unwrap() * 60f64)
                     as i64,
             };
         }
         let re = Regex::new(r"^[,.](\d{1,2})$").unwrap();
-        for cap in re.captures_iter(duration) {
+        if let Some(cap) = re.captures_iter(duration).next() {
             return Self::HM {
                 hours: 0,
-                minutes: (format!(".{}", cap[1].to_string()).parse::<f64>().unwrap() * 60f64)
+                minutes: (format!(".{}", &cap[1]).parse::<f64>().unwrap() * 60f64)
                     as i64,
             };
         }
         let re = Regex::new(r"^(\d{1,2})$").unwrap();
-        for cap in re.captures_iter(duration) {
+        if let Some(cap) = re.captures_iter(duration).next() {
             return Self::HM {
                 hours: cap[1].parse::<u32>().unwrap() as i64,
                 minutes: 0,
@@ -77,21 +77,21 @@ impl Duration {
     /// Parse alternative Duration with `h` and `m`.
     fn parse_hm2(duration: &str) -> Self {
         let re = Regex::new(r"^(\d{1,2})h(\d{1,2})m$").unwrap();
-        for cap in re.captures_iter(duration) {
+        if let Some(cap) = re.captures_iter(duration).next() {
             return Self::HM {
                 hours: cap[1].parse::<u32>().unwrap() as i64,
                 minutes: cap[2].parse::<u32>().unwrap() as i64,
             };
         }
         let re = Regex::new(r"^(\d{1,2})m$").unwrap();
-        for cap in re.captures_iter(duration) {
+        if let Some(cap) = re.captures_iter(duration).next() {
             return Self::HM {
                 hours: 0,
                 minutes: cap[1].parse::<u32>().unwrap() as i64,
             };
         }
         let re = Regex::new(r"^(\d{1,2})h$").unwrap();
-        for cap in re.captures_iter(duration) {
+        if let Some(cap) = re.captures_iter(duration).next() {
             return Self::HM {
                 hours: cap[1].parse::<u32>().unwrap() as i64,
                 minutes: 0,
@@ -107,12 +107,12 @@ impl Duration {
         }
     }
 }
-impl Into<chrono::Duration> for Duration {
-    fn into(self) -> chrono::Duration {
-        match self {
+impl From<Duration> for chrono::Duration {
+    fn from(val: Duration) -> Self {
+        match val {
             Duration::Zero => chrono::Duration::zero(),
             Duration::HM { hours, minutes } => {
-                chrono::Duration::hours(hours) + chrono::Duration::minutes(minutes as i64)
+                chrono::Duration::hours(hours) + chrono::Duration::minutes(minutes)
             }
         }
     }
