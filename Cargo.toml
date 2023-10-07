@@ -23,7 +23,7 @@ serde = { version="1.0.152", features = ["derive","std"] }
 serde_json = "1.0.91"
 strum = "0.25.0"
 strum_macros = "0.25.1"
-termion = "2.0.1"
+termion = { version = "2.0.1", optional = true }
 thiserror = "1.0.38"
 rand ="0.8"
 
@@ -32,3 +32,7 @@ name="jobberdb"
 
 [[bin]]
 name="jobber"
+
+[features]
+colors = ["dep:termion"]
+

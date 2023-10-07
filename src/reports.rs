@@ -6,6 +6,8 @@ use days_in_month::days_in_month;
 use itertools::Itertools;
 use separator::Separatable;
 use std::collections::HashMap;
+
+#[cfg(feature = "colors")]
 use termion::{color::*, style};
 
 /// Report in calendar form.
@@ -110,12 +112,16 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
                     // sum up all hours at this day and determine if work limit is exceeded for any tag
                     let mut day_hours = 0.0;
                     let mut day_costs: Option<f64> = None;
+                    
+                    #[cfg(feature = "colors")]
                     let mut exceeded = false;
                     for (tag, hours) in tag_hours {
                         let properties = jobs
                             .configuration
                             .get_checked(&tag.into())
                             .expect("unexpected tag collision");
+                        
+                        #[cfg(feature = "colors")]
                         if let Some(max_hours) = properties.max_hours {
                             if *hours > max_hours as f64 {
                                 exceeded = true;
@@ -129,16 +135,23 @@ pub fn report<W: std::io::Write>(mut w: W, jobs: &JobList, context: &Context) ->
                             day_costs = Some(day_costs.unwrap() + hours * rate);
                         }
                     }
-                    // print hours at this day and mark yellow if exceeded and red if >24h/day
-                    write!(w, "{}", style::Bold)?;
-                    if day_hours > 24.0 {
-                        write!(w, "{}{:>8}{}", Fg(LightRed), day_hours, Fg(Reset),)?;
-                    } else if exceeded {
-                        write!(w, "{}{:>8}{}", Fg(Yellow), day_hours, Fg(Reset),)?;
-                    } else {
-                        write!(w, "{}{:>8}{}", Fg(LightWhite), day_hours, Fg(Reset),)?;
+
+                    #[cfg(feature = "colors")] {
+                        // print hours at this day and mark yellow if exceeded and red if >24h/day
+                        write!(w, "{}", style::Bold)?;
+                        if day_hours > 24.0 {
+                            write!(w, "{}{:>8}{}", Fg(LightRed), day_hours, Fg(Reset),)?;
+                        } else if exceeded {
+                            write!(w, "{}{:>8}{}", Fg(Yellow), day_hours, Fg(Reset),)?;
+                        } else {
+                            write!(w, "{}{:>8}{}", Fg(LightWhite), day_hours, Fg(Reset),)?;
+                        }
+                        write!(w, "{}", style::Reset)?;
                     }
-                    write!(w, "{}", style::Reset)?;
+
+                    #[cfg(not(feature = "colors"))] {
+                        write!(w, "{}", day_hours)?;
+                    }
 
                     // sum up weekly and monthly hours
                     week_hours += day_hours;
