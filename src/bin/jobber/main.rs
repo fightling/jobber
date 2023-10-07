@@ -12,6 +12,8 @@ use args::Args;
 use clap::Parser;
 use jobberdb::prelude::*;
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "colors")]
 use termion::{color::*, style};
 
 const ASK_FOR_MESSAGE: &str = "You need to enter a message about what you did to finish the job.\n\
@@ -40,6 +42,7 @@ fn main() {
     let args = Args::parse();
     let context = Context::now();
     if let Err(err) = run(&mut std::io::stdout(), args, Checks::all(), &context) {
+        #[cfg(feature = "colors")]
         eprintln!(
             "\n{}{}ERROR{}{}: {err}",
             style::Bold,
@@ -47,6 +50,9 @@ fn main() {
             Fg(Reset),
             style::Reset
         );
+
+        #[cfg(not(feature = "colors"))]
+        eprintln!("\nERROR: {err}");
     }
 }
 
@@ -134,6 +140,7 @@ fn run<W: std::io::Write>(
         eprintln!("{}", operation);
         if !operation.reports_open_job() {
             if let Some(job) = jobs.get_open_with_pos() {
+                #[cfg(feature = "colors")]
                 eprintln!(
                     "{}{}There is an open Job at position {pos}!{}{}",
                     Fg(Yellow),
@@ -142,6 +149,9 @@ fn run<W: std::io::Write>(
                     style::Reset,
                     pos = job.0 + 1,
                 );
+
+                #[cfg(not(feature = "colors"))]
+                eprintln!("There is an open Job at position {pos}!", pos = job.0 + 1);
             }
         }
     } else {
@@ -223,6 +233,7 @@ pub fn run_args_mut<W: std::io::Write>(
 
 /// Ask user on console a yes-no-question.
 fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
+    #[cfg(feature = "colors")]
     eprintln!(
         "{}{}{} ({}){}{}",
         style::Bold,
@@ -232,6 +243,9 @@ fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
         Fg(Reset),
         style::Reset
     );
+
+    #[cfg(not(feature = "colors"))]
+    eprintln!("{} ({})", question, if default_yes { "Y/n" } else { "y/N" });
 
     let mut buffer = String::new();
     std::io::stdin()
@@ -247,6 +261,7 @@ fn ask(question: &str, default_yes: bool) -> Result<bool, Error> {
 
 /// Ask user for a multi line input.
 fn enter(question: &str) -> Result<String, Error> {
+    #[cfg(feature = "colors")]
     eprintln!(
         "{}{}{}{}{}",
         style::Bold,
@@ -256,6 +271,9 @@ fn enter(question: &str) -> Result<String, Error> {
         style::Reset
     );
 
+    #[cfg(not(feature = "colors"))]
+    eprintln!("{}", question);
+    
     let mut result = String::new();
     loop {
         let mut buffer = String::new();

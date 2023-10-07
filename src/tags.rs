@@ -16,6 +16,7 @@ pub fn update(job: &Job) {
 }
 
 /// Decorate tag with color.
+#[cfg(feature = "colors")]
 pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
     use termion::{
         color::*,
@@ -43,7 +44,14 @@ pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
     write!(f, "{}{}{}", style::Reset, Fg(Reset), Bg(Reset))
 }
 
+
+#[cfg(not(feature = "colors"))]
+pub fn format(f: &mut std::fmt::Formatter, tag: &String) -> std::fmt::Result {
+    write!(f, "{}", &tag)
+}
+
 /// get the position of a tag within the tag index `TAGS` (to assign a color)
+#[cfg(feature = "colors")]
 fn position(tag: &String) -> Option<usize> {
     unsafe {
         TAGS.0.iter().position(|t| t == tag)
